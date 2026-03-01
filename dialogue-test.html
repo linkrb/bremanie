@@ -41,76 +41,23 @@
         import { DialogueEngine } from './js/DialogueEngine.js';
 
         const engine = new DialogueEngine({
-            basePath: '/bremanie/images/',
+            basePath:     '/bremanie/images/',
+            dialoguePath: '/bremanie/dialogues/',
             typeSpeed: 25,
         });
 
-        // ─── Scène : Le Prologue ──────────────────────────────────
-        const PROLOGUE = [
-            {
-                char: 'romain',
-                side: 'left',
-                emotion: 'worried',
-                bg: 'scenes/anna_bow.png',
-                text: "Les éclaireurs n'ont renvoyé aucun signal depuis cette nuit..."
-            },
-            {
-                char: 'anna',
-                side: 'right',
-                emotion: 'determined',
-                text: "J'ai vu des ombres bouger vers la forêt de l'Est. Ce n'était pas des animaux."
-            },
-            {
-                char: 'romain',
-                emotion: 'angry',
-                text: "Le nécromancien. Il ose approcher de nos frontières."
-            },
-            {
-                char: 'anna',
-                emotion: 'worried',
-                text: "Père... Nathan est parti seul inspecter le col de Cendre."
-            },
-            {
-                char: 'romain',
-                emotion: 'surprised',
-                text: "Quoi ?!"
-            },
-            {
-                char: 'anna',
-                emotion: 'sad',
-                text: "Il voulait te protéger. Il n'a rien dit pour ne pas t'inquiéter."
-            },
-            {
-                char: 'romain',
-                emotion: 'determined',
-                bg: 'scenes/nathan_field.png',
-                text: "Prépare les défenses. Toutes les tours. Je pars le chercher."
-            },
-            {
-                char: 'anna',
-                emotion: 'proud',
-                text: "Je t'accompagne. Et cette fois... tu ne peux pas me dire non."
-            },
-            {
-                char: 'romain',
-                emotion: 'laughing',
-                text: "Tu ressembles tellement à ta mère quand tu fais cette tête."
-            },
-            {
-                char: 'anna',
-                emotion: 'laughing',
-                text: "C'est pour ça que ça marche !"
-            },
-            {
-                char: 'romain',
-                emotion: 'determined',
-                text: "Allons-y. La Brémanie doit tenir."
-            },
+        // Sélecteur de scène pour tester différents scripts
+        const scenes = [
+            'prologue/intro',
+            'level1/intro',
         ];
+        let current = 0;
 
         document.getElementById('btn').addEventListener('click', () => {
-            engine.play(PROLOGUE, () => {
-                console.log('Scène terminée — lancer le jeu !');
+            const scene = scenes[current % scenes.length];
+            current++;
+            engine.load(scene, () => {
+                console.log(`[${scene}] terminé`);
             });
         });
     </script>

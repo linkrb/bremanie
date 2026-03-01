@@ -1,0 +1,25 @@
+# Prologue — L'Ombre du Nécromancien
+
+@bg scenes/anna_bow.png
+
+romain(left):worried Les éclaireurs n'ont renvoyé aucun signal depuis cette nuit...
+anna(right):determined J'ai vu des ombres bouger vers la forêt de l'Est. Ce n'étaient pas des animaux.
+romain:angry Le nécromancien. Il ose approcher de nos frontières.
+anna:worried Père... Nathan est parti seul inspecter le col de Cendre.
+romain:surprised Quoi ?!
+anna:sad Il voulait te protéger. Il n'a rien dit pour ne pas t'inquiéter.
+
+@bg scenes/nathan_field.png
+
+romain:determined Prépare les défenses. Toutes les tours. Je pars le chercher.
+anna:proud Je t'accompagne. Et cette fois... tu ne peux pas me dire non.
+romain:laughing Tu ressembles tellement à ta mère quand tu fais cette tête.
+anna:laughing C'est pour ça que ça marche !
+romain:determined Allons-y. La Brémanie doit tenir.
+
+@scene scenes/nathan_field.png
+> Quelque part dans les plaines de Brémanie, un jeune homme marchait seul.
+> Il ne savait pas encore que son père était déjà en chemin.
+> Et que les ténèbres, elles, n'attendraient pas.
+
+romain(left):worried Nathan...

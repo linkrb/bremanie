@@ -1,0 +1,12 @@
+# Niveau 1 — La Prairie de Brume
+
+@bg scenes/nathan_field.png
+
+romain(left):worried Le col de Cendre... c'est ici que tout a commencé il y a vingt ans.
+anna(right):curious Les villageois parlent d'une armée de l'ombre. Tu y crois ?
+romain:determined Je n'ai pas besoin d'y croire. Je l'ai déjà combattue.
+anna:surprised Tu ne nous en as jamais parlé.
+romain:sad Certaines batailles sont trop lourdes à porter pour des enfants.
+anna:determined Nous ne sommes plus des enfants, père.
+romain:proud Non. Vous ne l'êtes plus.
+romain:determined Prenez position. Les premiers éclaireurs ennemis approchent.

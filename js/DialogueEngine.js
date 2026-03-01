@@ -35,12 +35,13 @@ const CSS = `
     inset: 0;
     background-size: cover;
     background-position: center;
-    transition: opacity 0.6s ease;
+    transition: background-image 0s, opacity 0.5s ease;
 }
 .dlg-bg::after {
     content: '';
     position: absolute;
     inset: 0;
+    transition: opacity 0.5s ease;
     background:
         linear-gradient(to bottom,
             rgba(0,0,0,0.1) 0%,
@@ -192,12 +193,34 @@ const CSS = `
     text-transform: uppercase;
     pointer-events: none;
 }
+
+/* ── Mode cinématique (@scene) ── */
+/* Cache les portraits, fond plein écran sans dégradé parasite */
+#dlg-overlay.cinematic .dlg-char {
+    opacity: 0 !important;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+#dlg-overlay.cinematic .dlg-bg::after {
+    opacity: 0; /* supprime le dégradé intermédiaire */
+}
+
+/* Texte de narration : centré, italique, plus grand, sans namebox */
+.dlg-narration {
+    font-style: italic;
+    font-size: clamp(0.9rem, 2.6vw, 1.15rem);
+    color: #f0e8d0;
+    text-align: center;
+    line-height: 1.9;
+    letter-spacing: 0.04em;
+}
 `;
 
 export class DialogueEngine {
     constructor(options = {}) {
-        this.basePath = options.basePath || '/bremanie/images/';
-        this.typeSpeed = options.typeSpeed ?? 28; // ms per char
+        this.basePath     = options.basePath     || '/bremanie/images/';
+        this.dialoguePath = options.dialoguePath || '/bremanie/dialogues/';
+        this.typeSpeed    = options.typeSpeed     ?? 28; // ms per char
 
         this.overlay  = null;
         this.els      = {};
@@ -304,6 +327,82 @@ export class DialogueEngine {
 
     close() { this._end(); }
 
+    // ── Script loader ────────────────────────────────────────
+    // Charge un fichier .txt depuis dialoguePath et joue la scène
+    // Usage : await engine.load('prologue/intro', () => startGame())
+    async load(scriptName, onComplete) {
+        const url = `${this.dialoguePath}${scriptName}.txt`;
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`Script introuvable : ${url}`);
+            const text = await resp.text();
+            const script = DialogueEngine.parse(text);
+            if (script.length === 0) {
+                onComplete?.();
+                return;
+            }
+            this.play(script, onComplete);
+        } catch (e) {
+            console.warn('[DialogueEngine] load() failed:', e.message);
+            onComplete?.();
+        }
+    }
+
+    // ── Parser de script texte ───────────────────────────────
+    // Format :
+    //   # Commentaire
+    //   @bg scenes/anna_bow.png    ← change le fond (une seule fois)
+    //   romain(left):worried Texte...
+    //   anna:laughing Texte...
+    static parse(text) {
+        const lines  = text.split('\n');
+        const script = [];
+        let pendingBg    = null;
+        let pendingScene = null; // @scene → mode cinématique
+
+        for (const raw of lines) {
+            const line = raw.trim();
+
+            // Commentaires et lignes vides
+            if (!line || line.startsWith('#')) continue;
+
+            // ── Directives ──────────────────────────────────────
+            if (line.startsWith('@')) {
+                const [cmd, ...args] = line.slice(1).split(/\s+/);
+                const val = args.join(' ');
+                if (cmd === 'bg')    pendingBg    = val;
+                if (cmd === 'scene') pendingScene = val; // plein écran, pas de persos
+                continue;
+            }
+
+            // ── Narration : > Texte de narration ────────────────
+            if (line.startsWith('>')) {
+                const text = line.slice(1).trim();
+                const entry = { type: 'narration', text };
+                if (pendingScene) { entry.scene = pendingScene; pendingScene = null; }
+                else if (pendingBg) { entry.bg = pendingBg; pendingBg = null; }
+                script.push(entry);
+                continue;
+            }
+
+            // ── Dialogue : char(side):emotion texte ─────────────
+            const match = line.match(/^(\w+)(?:\((\w+)\))?:(\w+)\s+(.+)$/);
+            if (!match) continue;
+
+            const [, char, side, emotion, text] = match;
+            const entry = { char, emotion, text };
+            if (side) entry.side = side;
+
+            // Si on sortait d'un @scene, signaler la reprise
+            if (pendingScene) { entry.scene = pendingScene; pendingScene = null; entry.resumeChars = true; }
+            else if (pendingBg) { entry.bg = pendingBg; pendingBg = null; }
+
+            script.push(entry);
+        }
+
+        return script;
+    }
+
     // ── Internal ─────────────────────────────────────────────
 
     _isOpen() {
@@ -329,8 +428,35 @@ export class DialogueEngine {
     }
 
     _showLine(line) {
-        // Background
+        // ── Mode cinématique (@scene) ────────────────────────
+        if (line.scene) {
+            this.els.bg.style.backgroundImage =
+                `url('${this.basePath}${line.scene}')`;
+            this.overlay.classList.add('cinematic');
+        }
+
+        // Reprise après @scene (premier dialogue après)
+        if (line.resumeChars) {
+            this.overlay.classList.remove('cinematic');
+        }
+
+        // ── Narration (>) ────────────────────────────────────
+        if (line.type === 'narration') {
+            if (line.bg) this.els.bg.style.backgroundImage = `url('${this.basePath}${line.bg}')`;
+            this.els.namebox.style.display = 'none';
+            this.els.text.className = 'dlg-text dlg-narration';
+            this.els.arrow.classList.add('hidden');
+            this._typeText(line.text);
+            return;
+        }
+
+        // Reprise du mode normal (namebox visible)
+        this.els.namebox.style.display = '';
+        this.els.text.className = 'dlg-text';
+
+        // Background classique
         if (line.bg) {
+            this.overlay.classList.remove('cinematic');
             this.els.bg.style.backgroundImage =
                 `url('${this.basePath}${line.bg}')`;
         }
@@ -409,6 +535,7 @@ export class DialogueEngine {
     _end() {
         clearTimeout(this.typeTimer);
         this.typing = false;
+        this.overlay.classList.remove('cinematic');
         this.overlay.style.display = 'none';
 
         // Reset portraits for next use
