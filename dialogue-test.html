@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dialogue Test – La Brémanie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: 'Cinzel', serif;
+        }
+        .launch-btn {
+            color: #f5e6b8;
+            border: 1px solid rgba(201,168,76,0.6);
+            background: rgba(0,0,0,0.5);
+            padding: 1em 2.5em;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.2em;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        .launch-btn:hover {
+            background: rgba(201,168,76,0.2);
+            border-color: #c9a84c;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="launch-btn" id="btn">▶ Lancer la scène</button>
+
+    <script type="module">
+        import { DialogueEngine } from './js/DialogueEngine.js';
+
+        const engine = new DialogueEngine({
+            basePath: '/bremanie/images/',
+            typeSpeed: 25,
+        });
+
+        // ─── Scène : Le Prologue ──────────────────────────────────
+        const PROLOGUE = [
+            {
+                char: 'romain',
+                side: 'left',
+                emotion: 'worried',
+                bg: 'scenes/anna_bow.png',
+                text: "Les éclaireurs n'ont renvoyé aucun signal depuis cette nuit..."
+            },
+            {
+                char: 'anna',
+                side: 'right',
+                emotion: 'determined',
+                text: "J'ai vu des ombres bouger vers la forêt de l'Est. Ce n'était pas des animaux."
+            },
+            {
+                char: 'romain',
+                emotion: 'angry',
+                text: "Le nécromancien. Il ose approcher de nos frontières."
+            },
+            {
+                char: 'anna',
+                emotion: 'worried',
+                text: "Père... Nathan est parti seul inspecter le col de Cendre."
+            },
+            {
+                char: 'romain',
+                emotion: 'surprised',
+                text: "Quoi ?!"
+            },
+            {
+                char: 'anna',
+                emotion: 'sad',
+                text: "Il voulait te protéger. Il n'a rien dit pour ne pas t'inquiéter."
+            },
+            {
+                char: 'romain',
+                emotion: 'determined',
+                bg: 'scenes/nathan_field.png',
+                text: "Prépare les défenses. Toutes les tours. Je pars le chercher."
+            },
+            {
+                char: 'anna',
+                emotion: 'proud',
+                text: "Je t'accompagne. Et cette fois... tu ne peux pas me dire non."
+            },
+            {
+                char: 'romain',
+                emotion: 'laughing',
+                text: "Tu ressembles tellement à ta mère quand tu fais cette tête."
+            },
+            {
+                char: 'anna',
+                emotion: 'laughing',
+                text: "C'est pour ça que ça marche !"
+            },
+            {
+                char: 'romain',
+                emotion: 'determined',
+                text: "Allons-y. La Brémanie doit tenir."
+            },
+        ];
+
+        document.getElementById('btn').addEventListener('click', () => {
+            engine.play(PROLOGUE, () => {
+                console.log('Scène terminée — lancer le jeu !');
+            });
+        });
+    </script>
+
+</body>
+</html>
