@@ -23,6 +23,7 @@ const CSS = `
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
     cursor: pointer;
 }
 
