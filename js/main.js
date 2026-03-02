@@ -14,7 +14,10 @@ const game = new TowerDefenseGame();
 audio.preload('main_theme',      '/bremanie/audio/main_theme.mp3');
 audio.preload('prologue_siege',  '/bremanie/audio/prologue_siege.mp3');
 audio.preload('wind',            '/bremanie/audio/wind.mp3');
-audio.preload('title_sting',    '/bremanie/audio/title_sting.mp3');
+audio.preload('title_sting',     '/bremanie/audio/title_sting.mp3');
+audio.preload('combat_theme',    '/bremanie/audio/combat_theme.mp3');
+audio.preload('combat_sting',    '/bremanie/audio/combat_sting.mp3');
+audio.preload('tower_place',     '/bremanie/audio/tower_place.mp3');
 
 dlg.onMusic = (track) => audio.crossfadeTo(track, 1500);
 dlg.onSfx     = (track) => audio.playSfx(track);
@@ -66,26 +69,138 @@ function showDialogue(script, onEnd) {
     dlg.load(script, onEnd);
 }
 
+const screenGame  = document.getElementById('screen-game');
+const combatBadge = document.getElementById('combat-badge');
+const victoryBadge = document.getElementById('victory-badge');
+const defeatBadge  = document.getElementById('defeat-badge');
+let combatMusicStarted = false;
+let skipEntryWaveBadge = false; // évite le double badge au démarrage d'un combat
+
+function showBadge(el, duration = 3100) {
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), duration);
+}
+
+function showCombatBadge()  { audio.playSfx('combat_sting'); showBadge(combatBadge, 1900); }
+function showVictoryBadge() { showBadge(victoryBadge, 3100); }
+function showDefeatBadge()  { showBadge(defeatBadge,  3100); }
+
+// Badge interactif générique : entre en scène (classe .hold), attend le clic, puis appelle next()
+function showBadgeInteractive(el, next) {
+    el.classList.remove('show', 'hold');
+    void el.offsetWidth;
+    el.classList.add('hold');
+
+    let ready = false;
+    setTimeout(() => { ready = true; }, 900);
+
+    function advance() {
+        if (!ready) return;
+        document.removeEventListener('pointerup', advance);
+        document.removeEventListener('keydown', onKey);
+        el.style.transition = 'opacity 0.6s ease';
+        el.style.opacity = '0';
+        setTimeout(() => {
+            el.classList.remove('hold');
+            el.style.transition = '';
+            el.style.opacity = '';
+            next();
+        }, 600);
+    }
+    function onKey(e) {
+        if (['Space', 'Enter', 'ArrowRight'].includes(e.code)) advance();
+    }
+    document.addEventListener('pointerup', advance);
+    document.addEventListener('keydown', onKey);
+}
+
+function showVictoryBadgeInteractive(next) { showBadgeInteractive(victoryBadge, next); }
+function showDefeatBadgeInteractive(next)  { showBadgeInteractive(defeatBadge,  next); }
+
+function startCombatMusic() {
+    if (combatMusicStarted) return;
+    combatMusicStarted = true;
+    audio.crossfadeTo('combat_theme', 2000);
+}
+
+function setCombatMode(on) {
+    screenGame.classList.toggle('combat-mode', on);
+    combatMusicStarted = false;
+}
+
 function showGame(mode) {
     showScreen('screen-game');
-    if (mode === 'scripted')  game.setScriptedMode();
-    else if (mode === 'tutorial') game.setTutorialMode();
-    else                      game.setNormalMode();
+    if (mode === 'scripted') {
+        setCombatMode(true);
+        startCombatMusic();
+        showCombatBadge();
+        skipEntryWaveBadge = true; // la première vague auto ne doit pas rejouer le badge
+        game.setScriptedMode();
+    } else if (mode === 'tutorial') {
+        setCombatMode(true);
+        startCombatMusic();
+        showCombatBadge();
+        skipEntryWaveBadge = true; // le clic sur "lancer la vague" ne doit pas rejouer le badge
+        game.setTutorialMode();
+    } else {
+        skipEntryWaveBadge = false;
+        setCombatMode(false);
+        game.setNormalMode();
+    }
 }
+
+// Son de pose de tour
+game.onTowerPlaced = () => audio.playSfx('tower_place');
+
+// Pastille + musique à chaque début de vague (pause moteur pendant le logo)
+game.onWaveStarted = () => {
+    if (skipEntryWaveBadge) {
+        // Badge déjà affiché à l'entrée de l'écran — on saute badge + pause pour cette vague
+        skipEntryWaveBadge = false;
+        startCombatMusic(); // idempotent (combatMusicStarted guard)
+        return;
+    }
+    showCombatBadge();
+    startCombatMusic();
+    game.engine.paused = true;
+    setTimeout(() => { game.engine.paused = false; }, 1900);
+};
 
 // ── Callbacks du jeu ─────────────────────────────────────────
 
 game.onScriptedDefeat = () => {
-    showDialogue('chapter1/nathan_power', () => {
-        showDialogue('chapter1/towers_appear', () => {
-            showGame('tutorial');
+    audio.crossfadeTo('wind', 2000);
+    showDefeatBadgeInteractive(() => {
+        showDialogue('chapter1/nathan_power', () => {
+            showDialogue('chapter1/towers_appear', () => {
+                showGame('tutorial');
+            });
         });
     });
 };
 
+// Badge victoire interactif (avant dialogue tutorial_win)
+game.onTutorialVictory = (next) => {
+    showVictoryBadgeInteractive(next);
+};
+
 game.onTutorialWin = () => {
-    audio.crossfadeTo('main_theme', 2000);
-    showGame('normal');
+    // Après dialogue tutorial_win → fondu + "Fin du Chapitre I"
+    audio.stop(2000);
+    const chapterEnd = document.getElementById('chapter-end');
+    fadeToBlack(2000).then(() => {
+        chapterEnd.style.opacity = '1';
+        setTimeout(() => {
+            chapterEnd.style.opacity = '0';
+            setTimeout(() => {
+                showGame('normal');
+                audio.crossfadeTo('main_theme', 2000);
+                fadeFromBlack(1500);
+            }, 1200);
+        }, 3000);
+    });
 };
 
 // ── Bouton "Rejouer" (mode normal) ───────────────────────────
@@ -129,7 +244,7 @@ document.getElementById('btn-start').addEventListener('click', () => {
             label: 'Prologue',
             title: "L'Ombre",
             sub:   'du Nécromancien',
-            bg:    '/images/td/splash_bremanie.jpg',
+            bg:    '/bremanie/images/td/splash_bremanie.jpg',
         }, () => {
             showDialogue('prologue/siege', () => {
                 audio.stop(1500);
@@ -157,4 +272,10 @@ await game.init(document.getElementById('game-container'));
 window.game = game; // accès dev console
 
 document.getElementById('loader').classList.add('hidden');
+
+// ── Dev shortcuts ─────────────────────────────────────────────
+const dev = new URLSearchParams(location.search).get('dev');
+if (dev === 'combat')   showGame('scripted');
+if (dev === 'tutorial') showGame('tutorial');
+if (dev === 'normal')   showGame('normal');
 setTimeout(() => document.getElementById('loader').remove(), 600);
