@@ -1,0 +1,16 @@
+# Chapitre I — La Révélation
+
+@scene scenes/nathan_towers.jpg
+> La lumière prit forme.
+> D'abord une. Puis deux. Puis plusieurs.
+> Des structures de pierre et d'énergie, surgies du néant.
+> Nathan n'avait rien décidé. Son pouvoir avait agi seul.
+
+anna(right):surprised C'est... toi qui as fait ça ?
+nathan(left):surprised Je... je crois que oui.
+anna:worried Est-ce que tu contrôles ça ?
+nathan:determined Je vais apprendre.
+anna:proud Ces tours... elles peuvent nous protéger.
+nathan:determined Alors on se bat. Pour papa. Pour Brémanie.
+anna:determined Ensemble.
+

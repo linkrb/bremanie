@@ -1,0 +1,50 @@
+# Prologue — Le Château Assiégé
+
+@bgpos 30% top
+@scene scenes/castle_bremanie.jpg
+> Dans le château de la Brémanie,
+> lieu habituellement paisible,
+> une tragédie se prépare.
+
+@music prologue_siege
+@bg scenes/castle_hall.jpg
+
+garde(right):worried Mon Roi... nos défenses ne tiennent pas. Les vagues ennemies sont trop nombreuses.
+romain(left):surprised Combien de temps nous reste-t-il ?
+garde:neutral Moins d'une heure, Sire. Peut-être bien moins.
+romain:angry Et les renforts du Col de Cendre ?
+garde:sad Il n'y a plus de renforts, Monseigneur. Le col est tombé cette nuit.
+romain:worried Le col est tombé...
+garde:neutral Vos ordres, mon Roi ?
+romain:determined Prenez les couleurs et fuyez par la porte nord. C'est un ordre.
+garde:angry Jamais, Sire. Nous mourrons à vos côtés jusqu'au dernier.
+romain:angry Ce n'est pas une invitation, soldat.
+garde:sad ...À vos ordres, mon Roi. Que les dieux vous gardent.
+
+@scene scenes/castle_hall.jpg
+> Romain trouva Nathan et Anna dans la grande salle.
+> Ils avaient tout entendu.
+
+anna(right):determined Père. On ne part pas sans toi.
+romain(left):angry Vous n'avez pas le choix.
+nathan(right):angry On est les enfants du Roi de Brémanie. On se bat.
+romain:sad Je sais. Et c'est exactement pour ça que vous devez fuir.
+anna:worried Mais toi—
+romain:determined Moi je reste. C'est mon château, c'est ma responsabilité.
+nathan:sad ...Ce n'est pas juste.
+romain:proud Non. Ça ne l'est pas.
+
+@bgpos center 40%
+@scene scenes/family_embrace.jpg
+> Il les serra tous les deux contre lui.
+> Longtemps. Comme s'il voulait graver ce moment.
+> Nathan ne pleura pas. Anna non plus.
+> Ils étaient bien les enfants de leur père.
+
+@bg scenes/castle_hall.jpg
+romain(left):proud Vous êtes tout ce que j'ai de plus précieux dans ce monde.
+anna(right):sad Père...
+romain:laughing Hé. Je suis encore vivant, non ?
+romain:determined Maintenant allez. Vite. Et ne vous retournez pas.
+anna:sad On reviendra te chercher. Je te le jure.
+romain:proud Je sais, ma fille. Je sais.

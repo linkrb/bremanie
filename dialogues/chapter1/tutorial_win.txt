@@ -1,0 +1,12 @@
+# Chapitre I — Premier Souffle
+
+@bg scenes/chapter1_bg.jpg
+
+anna(right):surprised Nathan... tu les as repoussés. Tous.
+nathan(left):proud Je... ouais. Je crois que j'ai compris.
+anna:laughing Tu crois ?
+nathan:laughing Ok. J'ai compris.
+anna:determined On continue vers le fort de l'Oncle David.
+nathan:determined Et on revient chercher papa.
+anna:proud On revient le chercher.
+

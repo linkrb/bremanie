@@ -1,0 +1,35 @@
+# Chapitre I — L'Éveil
+
+@bg scenes/battle_aftermath.jpg
+
+> La vague avait tout emporté.
+> Anna était à terre. Nathan se plaça devant elle.
+
+anna(right):worried Nathan... on ne va pas y arriver. Il y en a trop.
+nathan(left):determined Jamais. Jamais je t'abandonnerai, grande sœur.
+anna:sad Nathan je t'en prie... fuis. Laisse-moi.
+nathan:angry Non.
+anna:worried Tu vas mourir ici !
+nathan:determined Alors je mourrai debout.
+
+@scene scenes/nathan_defend.jpg
+> Nathan ferma les yeux.
+> Il pensa à son père. À la chaleur de ses bras.
+> À ce qu'il lui avait dit : « Vous êtes tout ce que j'ai de plus précieux. »
+> Quelque chose se brisa — ou peut-être s'ouvrit — au fond de lui.
+
+@bg scenes/battle_aftermath.jpg
+
+anna(right):surprised Nathan... tes mains...
+nathan(left):surprised Je... je sens quelque chose.
+anna:worried C'est quoi ce—
+nathan:determined Je ne sais pas.
+nathan:proud Mais ça ne partira pas.
+
+@scene scenes/nathan_awakening.jpg
+> La lumière explosa.
+> Bleue. Froide. Absolue.
+> Les monstres reculèrent.
+> Nathan ne bougea pas.
+> Il n'avait plus peur.
+

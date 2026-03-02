@@ -1,6 +1,6 @@
 # Niveau 1 — La Prairie de Brume
 
-@bg scenes/nathan_field.png
+@bg scenes/nathan_field.jpg
 
 romain(left):worried Le col de Cendre... c'est ici que tout a commencé il y a vingt ans.
 anna(right):curious Les villageois parlent d'une armée de l'ombre. Tu y crois ?

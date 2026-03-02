@@ -5,12 +5,14 @@ const CHAR_NAMES = {
     romain: 'Romain',
     nathan: 'Nathan',
     anna:   'Anna',
+    garde:  'Garde',
 };
 
 const CHAR_COLORS = {
     romain: { bg: '#2d4f8a', border: '#7aa3d4' },
     nathan: { bg: '#6b4a12', border: '#c8952a' },
     anna:   { bg: '#7a1f1f', border: '#c85050' },
+    garde:  { bg: '#3a4455', border: '#8a9ab0' },
 };
 
 const CSS = `
@@ -29,26 +31,27 @@ const CSS = `
     inset: 0;
 }
 
-/* ── Background ── */
-.dlg-bg {
+/* ── Background (double couche pour fondu) ── */
+.dlg-bg-layer {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
-    transition: background-image 0s, opacity 0.5s ease;
+    transition: opacity 0.6s ease;
 }
-.dlg-bg::after {
+.dlg-bg-layer::after {
     content: '';
     position: absolute;
     inset: 0;
-    transition: opacity 0.5s ease;
     background:
         linear-gradient(to bottom,
             rgba(0,0,0,0.1) 0%,
             rgba(0,0,0,0.05) 40%,
             rgba(5,10,35,0.6) 65%,
             rgba(5,10,35,0.0) 100%);
+    transition: opacity 0.5s ease;
 }
+.dlg-bg-layer.hidden { opacity: 0; }
 
 /* ── Character portraits ── */
 /* bottom = hauteur réelle du cadre, mise à jour par JS au pixel près */
@@ -66,10 +69,10 @@ const CSS = `
     filter: drop-shadow(0 8px 24px rgba(0,0,0,0.95));
 }
 
-/* Gauche : miroir → regarde vers la droite (vers le centre) */
+/* Gauche : portrait face gauche → miroir → regarde vers la droite (vers le centre) */
 .dlg-char.dlg-left  { left: -1%; }
 
-/* Droite : miroir aussi → regarde vers la gauche (vers le centre) */
+/* Droite : portrait face gauche → pas de miroir → regarde déjà vers la gauche (vers le centre) */
 .dlg-char.dlg-right { right: -1%; }
 
 /* ── Hidden (avant apparition) ── */
@@ -78,7 +81,7 @@ const CSS = `
     pointer-events: none;
 }
 .dlg-char.dlg-left.hidden  { transform: translateX(-50px) scaleX(-1); }
-.dlg-char.dlg-right.hidden { transform: translateX(50px)  scaleX(-1); }
+.dlg-char.dlg-right.hidden { transform: translateX(50px); }
 
 /* ── Active (locuteur) ── */
 .dlg-char.active {
@@ -86,7 +89,7 @@ const CSS = `
     z-index: 2;
 }
 .dlg-char.dlg-left.active  { transform: scale(1.05) scaleX(-1); }
-.dlg-char.dlg-right.active { transform: scale(1.05) scaleX(-1); }
+.dlg-char.dlg-right.active { transform: scale(1.05); }
 
 /* ── Inactive (écoute) ── */
 .dlg-char.inactive {
@@ -94,7 +97,7 @@ const CSS = `
     z-index: 1;
 }
 .dlg-char.dlg-left.inactive  { transform: scale(0.96) scaleX(-1); }
-.dlg-char.dlg-right.inactive { transform: scale(0.96) scaleX(-1); }
+.dlg-char.dlg-right.inactive { transform: scale(0.96); }
 
 /* ── Dialogue box ── */
 .dlg-box {
@@ -201,7 +204,7 @@ const CSS = `
     pointer-events: none;
     transition: opacity 0.5s ease;
 }
-#dlg-overlay.cinematic .dlg-bg::after {
+#dlg-overlay.cinematic .dlg-bg-layer::after {
     opacity: 0; /* supprime le dégradé intermédiaire */
 }
 
@@ -230,6 +233,7 @@ export class DialogueEngine {
         this.typeTimer = null;
         this._currentText = '';
         this.onComplete = null;
+        this.onMusic    = null; // callback(trackName) déclenché par @music
 
         // Track what's displayed on each side
         this.sides = {
@@ -256,7 +260,8 @@ export class DialogueEngine {
         overlay.style.display = 'none';
         overlay.innerHTML = `
             <div id="dlg-scene">
-                <div class="dlg-bg" id="dlg-bg"></div>
+                <div class="dlg-bg-layer" id="dlg-bg-a"></div>
+                <div class="dlg-bg-layer hidden" id="dlg-bg-b"></div>
                 <div class="dlg-char dlg-left hidden" id="dlg-left">
                     <img id="dlg-img-left" src="" alt="">
                 </div>
@@ -274,8 +279,10 @@ export class DialogueEngine {
         document.body.appendChild(overlay);
         this.overlay = overlay;
 
+        this._bgActive = 'a'; // 'a' ou 'b'
         this.els = {
-            bg:       overlay.querySelector('#dlg-bg'),
+            bgA:      overlay.querySelector('#dlg-bg-a'),
+            bgB:      overlay.querySelector('#dlg-bg-b'),
             left:     overlay.querySelector('#dlg-left'),
             right:    overlay.querySelector('#dlg-right'),
             imgLeft:  overlay.querySelector('#dlg-img-left'),
@@ -301,6 +308,19 @@ export class DialogueEngine {
                 this._advance();
             }
         });
+    }
+
+    // ── Background crossfade ──────────────────────────────────
+    _setBg(url, position) {
+        const next = this._bgActive === 'a' ? 'b' : 'a';
+        const elNext = next === 'a' ? this.els.bgA : this.els.bgB;
+        const elCurr = next === 'a' ? this.els.bgB : this.els.bgA;
+
+        elNext.style.backgroundImage    = url ? `url('${url}')` : '';
+        elNext.style.backgroundPosition = position || 'center';
+        elNext.classList.remove('hidden');  // fade in next
+        elCurr.classList.add('hidden');     // fade out current
+        this._bgActive = next;
     }
 
     // ── Public API ──────────────────────────────────────────
@@ -359,6 +379,8 @@ export class DialogueEngine {
         const script = [];
         let pendingBg    = null;
         let pendingScene = null; // @scene → mode cinématique
+        let pendingBgPos = null; // @bgpos → position du fond
+        let pendingMusic = null; // @music → déclenche onMusic callback
 
         for (const raw of lines) {
             const line = raw.trim();
@@ -371,7 +393,9 @@ export class DialogueEngine {
                 const [cmd, ...args] = line.slice(1).split(/\s+/);
                 const val = args.join(' ');
                 if (cmd === 'bg')    pendingBg    = val;
-                if (cmd === 'scene') pendingScene = val; // plein écran, pas de persos
+                if (cmd === 'scene') pendingScene = val;
+                if (cmd === 'bgpos') pendingBgPos = val;
+                if (cmd === 'music') pendingMusic = val;
                 continue;
             }
 
@@ -379,8 +403,9 @@ export class DialogueEngine {
             if (line.startsWith('>')) {
                 const text = line.slice(1).trim();
                 const entry = { type: 'narration', text };
-                if (pendingScene) { entry.scene = pendingScene; pendingScene = null; }
-                else if (pendingBg) { entry.bg = pendingBg; pendingBg = null; }
+                if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; }
+                else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
+                if (pendingMusic) { entry.music = pendingMusic; pendingMusic = null; }
                 script.push(entry);
                 continue;
             }
@@ -394,8 +419,9 @@ export class DialogueEngine {
             if (side) entry.side = side;
 
             // Si on sortait d'un @scene, signaler la reprise
-            if (pendingScene) { entry.scene = pendingScene; pendingScene = null; entry.resumeChars = true; }
-            else if (pendingBg) { entry.bg = pendingBg; pendingBg = null; }
+            if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; entry.resumeChars = true; }
+            else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
+            if (pendingMusic) { entry.music = pendingMusic; pendingMusic = null; }
 
             script.push(entry);
         }
@@ -428,10 +454,12 @@ export class DialogueEngine {
     }
 
     _showLine(line) {
+        // ── Musique (@music) ─────────────────────────────────
+        if (line.music) this.onMusic?.(line.music);
+
         // ── Mode cinématique (@scene) ────────────────────────
         if (line.scene) {
-            this.els.bg.style.backgroundImage =
-                `url('${this.basePath}${line.scene}')`;
+            this._setBg(`${this.basePath}${line.scene}`, line.bgPos || 'center');
             this.overlay.classList.add('cinematic');
         }
 
@@ -442,7 +470,7 @@ export class DialogueEngine {
 
         // ── Narration (>) ────────────────────────────────────
         if (line.type === 'narration') {
-            if (line.bg) this.els.bg.style.backgroundImage = `url('${this.basePath}${line.bg}')`;
+            if (line.bg) this._setBg(`${this.basePath}${line.bg}`, line.bgPos || 'center');
             this.els.namebox.style.display = 'none';
             this.els.text.className = 'dlg-text dlg-narration';
             this.els.arrow.classList.add('hidden');
@@ -454,11 +482,12 @@ export class DialogueEngine {
         this.els.namebox.style.display = '';
         this.els.text.className = 'dlg-text';
 
+        // Toujours sortir du mode cinématique dès qu'un dialogue commence
+        this.overlay.classList.remove('cinematic');
+
         // Background classique
         if (line.bg) {
-            this.overlay.classList.remove('cinematic');
-            this.els.bg.style.backgroundImage =
-                `url('${this.basePath}${line.bg}')`;
+            this._setBg(`${this.basePath}${line.bg}`, line.bgPos || 'center');
         }
 
         // Determine side

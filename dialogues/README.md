@@ -32,7 +32,7 @@ Les lignes commençant par `#` sont ignorées.
 
 ### Changer le fond (avec persos visibles)
 ```
-@bg scenes/anna_bow.png
+@bg scenes/anna_bow.jpg
 ```
 Le fond change mais les portraits restent affichés.
 
@@ -40,7 +40,7 @@ Le fond change mais les portraits restent affichés.
 
 ### Mode cinématique (sans persos)
 ```
-@scene scenes/nathan_field.png
+@scene scenes/nathan_field.jpg
 ```
 Les portraits disparaissent, le fond occupe tout l'écran. Parfait pour les **grands moments scénaristiques**.
 
@@ -99,7 +99,7 @@ anna(right):determined J'ai vu des ombres vers la forêt de l'Est.
 ```
 # Prologue — L'Ombre du Nécromancien
 
-@bg scenes/anna_bow.png
+@bg scenes/anna_bow.jpg
 
 romain(left):worried Les éclaireurs n'ont renvoyé aucun signal...
 anna(right):determined J'ai vu des ombres. Ce n'étaient pas des animaux.
@@ -111,7 +111,7 @@ romain:determined Prépare les défenses. Je pars le chercher.
 anna:laughing Cette fois tu ne peux pas me dire non !
 romain:laughing Tu ressembles tellement à ta mère...
 
-@scene scenes/nathan_field.png
+@scene scenes/nathan_field.jpg
 > Quelque part dans les plaines de Brémanie, un jeune homme marchait seul.
 > Il ne savait pas encore que son père était déjà en chemin.
 > Et que les ténèbres, elles, n'attendraient pas.

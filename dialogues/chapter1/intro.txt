@@ -1,0 +1,41 @@
+# Chapitre I — La Fuite
+
+@bg scenes/chapter1_bg.jpg
+
+> Nathan et Anna couraient depuis des heures.
+> Derrière eux, le château de leur père brûlait dans la nuit.
+
+nathan(left):worried Anna... qu'est-ce qu'on va faire ? On ne peut pas laisser papa seul face à eux !
+anna(right):sad Je sais, Nathan. Je sais.
+nathan:angry On devrait faire demi-tour. On se bat !
+anna:determined Non. Papa nous a donné un ordre. Et il avait raison.
+nathan:sad ...Ce n'est pas juste.
+anna:worried Rien de tout ça n'est juste. Mais on n'a pas le droit de mourir ici.
+
+@bg scenes/chapter1_bg.jpg
+
+anna:determined Il faut trouver de l'aide. Des alliés. Une armée.
+nathan:surprised Mais où ? Tous nos généraux défendaient le col...
+anna:proud L'Oncle David.
+nathan:surprised Quoi ?
+anna:determined Papa lui a toujours fait confiance. Plus qu'à n'importe qui.
+nathan:determined Il commande le fort de l'Est... Il a des troupes !
+anna:determined Exactement. On fonce là-bas.
+nathan:proud Et ensuite on revient chercher papa.
+anna:sad On revient le chercher.
+
+@scene scenes/chapter1_bg.jpg
+> Ils reprirent leur course dans la plaine.
+> Plus vite, cette fois.
+> Ils avaient un cap.
+
+@bgpos center 65%
+@scene scenes/chapter1_attack.jpg
+> Mais la plaine n'était plus vide.
+
+anna(right):surprised Nathan ! Derrière nous !
+nathan(left):angry Des monstres... ils nous ont suivis.
+anna:determined Prépare-toi. On ne passe pas sans se battre.
+nathan:determined Je suis prêt.
+anna:proud Brémanie ne tombe pas ce soir.
+
