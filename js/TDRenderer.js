@@ -97,13 +97,13 @@ export class TDRenderer {
         // Load base enemy assets
         for (const name of enemyAssets) {
             try {
-                const texture = await PIXI.Assets.load(`/images/td/${name}.png`);
+                const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
                 this.assets[name] = texture;
             } catch (e) { }
         }
 
         for (const type of towerTypes) {
-            const base = `/images/td/towers/${type}`;
+            const base = `/bremanie/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
                     const tex = await PIXI.Assets.load(`${base}/tower_${type}_${variant}.png`);
@@ -127,7 +127,7 @@ export class TDRenderer {
 
         // Wind tower propeller
         try {
-            const tex = await PIXI.Assets.load('/images/td/towers/wind/wind_propeller.png');
+            const tex = await PIXI.Assets.load('/bremanie/images/td/towers/wind/wind_propeller.png');
             this.assets['wind_propeller'] = tex;
         } catch (e) { }
 
@@ -136,7 +136,7 @@ export class TDRenderer {
             for (const variant of ['left', 'front', 'back_left', 'back_front']) {
                 for (let i = 0; i < 16; i++) {
                     try {
-                        const tex = await PIXI.Assets.load(`/images/td/towers/fire/anim${lvl}_${variant}/${i}.png`);
+                        const tex = await PIXI.Assets.load(`/bremanie/images/td/towers/fire/anim${lvl}_${variant}/${i}.png`);
                         this.assets[`tower_fire_anim${lvl}_${variant}_${i}`] = tex;
                     } catch (e) { }
                 }
@@ -147,7 +147,7 @@ export class TDRenderer {
         const projAssets = ['proj_archer', 'proj_cannon', 'proj_ice', 'proj_sniper', 'proj_wind', 'proj_cemetery', 'proj_fire', 'hands_cemetery'];
         for (const name of [...tileAssets, ...projAssets]) {
             try {
-                const texture = await PIXI.Assets.load(`/images/td/${name}.png`);
+                const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
                 this.assets[name] = texture;
             } catch (e) { }
         }
@@ -156,7 +156,7 @@ export class TDRenderer {
         for (const level of LEVELS) {
             if (!level.theme) continue;
             const themeId = level.theme.id;
-            const basePath = `/images/td/levels/${themeId}`;
+            const basePath = `/bremanie/images/td/levels/${themeId}`;
 
             // Themed tiles
             for (const tileKey of Object.values(level.theme.tiles)) {

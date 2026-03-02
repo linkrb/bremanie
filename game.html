@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Tower Defense - PixiJS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background:
+                linear-gradient(rgba(10,8,20,0.35), rgba(10,8,20,0.35)),
+                url('/bremanie/images/scenes/chapter1_attack.jpg') center center / cover no-repeat;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== TOP BAR — supprimé comme élément de layout ===== */
+        .top-bar {
+            display: none;
+        }
+
+        /* ===== STATS VERTICALES sous le portrait ===== */
+        .stats {
+            position: absolute;
+            top: 82px;
+            left: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(4px);
+            padding: 4px 8px 4px 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(201,168,76,0.25);
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: #fff;
+            width: 72px;
+        }
+
+        .stat-icon { width: 20px; height: 20px; object-fit: contain; border-radius: 4px; }
+        .stat-value { min-width: 30px; text-align: center; }
+
+        /* ===== PORTRAIT NATHAN ===== */
+        .hero-portrait {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            border: 3px solid #c9a84c;
+            box-shadow:
+                0 0 0 1px rgba(201,168,76,0.4),
+                0 4px 16px rgba(0,0,0,0.7),
+                0 0 20px rgba(201,168,76,0.15);
+            overflow: hidden;
+            background: #1a1a2e;
+            z-index: 50;
+        }
+        .hero-portrait img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 10%;
+            display: block;
+            transform: scaleX(-1);
+        }
+
+        .wave-btn {
+            background: linear-gradient(135deg, #FF6B6B, #ee5a5a);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+            transition: transform 0.2s;
+        }
+
+        .wave-btn:active { transform: scale(0.95); }
+        .wave-btn:disabled { opacity: 0.5; }
+
+        /* ===== ACTION BUTTONS (vertical stack top-right) ===== */
+        .action-buttons {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 50;
+        }
+
+        .action-buttons .shop-btn,
+        .action-buttons .speed-btn,
+        .action-buttons .wave-btn {
+            font-size: 0.75rem;
+            padding: 7px 12px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* ===== GAME CANVAS ===== */
+        #game-container {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            background: transparent;
+        }
+
+        #game-container canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Floating damage */
+        .damage-number {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #FF6B6B;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 300;
+        }
+
+        .damage-number.gold {
+            color: #FFD700;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(0.7); }
+        }
+
+        /* ===== BOTTOM TOWER BAR ===== */
+        .tower-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 8px;
+            background: rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+
+        .tower-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 80px;
+            background: rgba(255,255,255,0.95);
+            border: 3px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .tower-btn:active { transform: scale(0.95); }
+        .tower-btn.selected {
+            border-color: #FF6B6B;
+            background: #FFF0F5;
+            box-shadow: 0 0 20px rgba(255,107,107,0.5);
+        }
+        .tower-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .tower-btn .tower-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+            overflow: hidden;
+        }
+
+        .tower-btn .tower-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .tower-btn[data-tower="archer"] .tower-preview { background: linear-gradient(135deg, #98D4BB, #7ac4a8); }
+        .tower-btn[data-tower="cannon"] .tower-preview { background: linear-gradient(135deg, #FF7F7F, #ee6b6b); }
+        .tower-btn[data-tower="ice"] .tower-preview { background: linear-gradient(135deg, #87CEEB, #6bb8d9); }
+        .tower-btn[data-tower="sniper"] .tower-preview { background: linear-gradient(135deg, #E6E6FA, #d4d4f0); }
+        .tower-btn[data-tower="wind"] .tower-preview { background: linear-gradient(135deg, #A8E6CF, #85d4b5); }
+        .tower-btn[data-tower="cemetery"] .tower-preview { background: linear-gradient(135deg, #4ECDC4, #2a9d8f); }
+        .tower-btn[data-tower="fire"] .tower-preview { background: linear-gradient(135deg, #FF6B35, #c94e1a); }
+
+        /* Locked tower state */
+        .tower-btn.locked {
+            position: relative;
+            opacity: 0.7;
+        }
+
+        .tower-btn.locked .tower-preview {
+            filter: brightness(0.6);
+        }
+
+        .lock-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .lock-overlay .lock-icon {
+            font-size: 1.1rem;
+        }
+
+        .lock-overlay .unlock-cost {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #FFD700;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+        }
+
+        .tower-btn.hidden-tower {
+            display: none;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25%       { transform: translateX(-4px) rotate(-2deg); }
+            75%       { transform: translateX(4px) rotate(2deg); }
+        }
+        .tower-btn.shake { animation: shake 0.3s ease; }
+
+        .unlock-notif {
+            position: absolute;
+            bottom: 110px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: linear-gradient(135deg, #4ECDC4, #44a08d);
+            color: white; padding: 10px 24px; border-radius: 20px;
+            font-weight: 800; font-size: 0.95rem;
+            box-shadow: 0 4px 20px rgba(78,205,196,0.5);
+            animation: notifPop 3s ease forwards;
+            pointer-events: none; z-index: 200;
+        }
+        @keyframes notifPop {
+            0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            75%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .tower-btn .tower-cost {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #FFD700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .tower-btn .tower-name {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #666;
+        }
+
+        /* Range indicator */
+        .tower-btn .tower-range {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.6rem;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 8px;
+        }
+
+        /* ===== SELECTION INDICATOR ===== */
+        .selection-info {
+            position: absolute;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .selection-info.visible { opacity: 1; }
+
+        /* ===== WAVE ANNOUNCEMENT ===== */
+        .wave-announce {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease-out;
+            z-index: 100;
+        }
+
+        .wave-announce.visible { transform: translate(-50%, -50%) scale(1); }
+
+        /* ===== GAME OVER OVERLAY ===== */
+        .game-over {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .game-over.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-over h1 {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .game-over .wave-reached {
+            color: #FFD700;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .game-over button {
+            background: linear-gradient(135deg, #4ECDC4, #44a08d);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(78,205,196,0.4);
+        }
+
+        /* ===== TOWER INFO PANEL ===== */
+        .tower-info {
+            position: absolute;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 12px 18px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s, transform 0.25s;
+            z-index: 60;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .tower-xp-bar-container {
+            flex-basis: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .tower-xp-bar {
+            height: 100%;
+            width: 0%;
+            background: #9b59b6;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .tower-info.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tower-info-stats {
+            display: flex;
+            gap: 10px;
+            font-size: 0.78rem;
+        }
+
+        .tower-info-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .tower-info-stat .label {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+        }
+
+        .tower-info-stat .value {
+            font-weight: 700;
+        }
+
+        .tower-info .tower-info-name {
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .sell-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border: none;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: transform 0.15s;
+        }
+
+        .sell-btn:active { transform: scale(0.92); }
+
+        /* ===== SHOP ===== */
+        .shop-btn {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: none;
+            color: #333;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 10px rgba(255,215,0,0.3);
+        }
+
+        .shop-btn:active { transform: scale(0.95); }
+
+        .shop-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 150;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .shop-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .shop-title {
+            color: #FFD700;
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .shop-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 420px;
+        }
+
+        .shop-item {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 14px;
+            padding: 12px 14px;
+            color: white;
+            width: 125px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .shop-item:hover {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(255,255,255,0.4);
+            transform: translateY(-2px);
+        }
+
+        .shop-item:active { transform: scale(0.95); }
+
+        .shop-item.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .shop-item .item-icon { font-size: 1.8rem; }
+        .shop-item .item-name {
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin: 4px 0;
+        }
+        .shop-item .item-desc {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 6px;
+        }
+        .shop-item .item-cost {
+            font-weight: 800;
+            font-size: 0.85rem;
+            color: #FFD700;
+        }
+
+        .shop-close {
+            margin-top: 10px;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .shop-close:active { transform: scale(0.95); }
+
+        /* ===== ACTIVE BUFFS ===== */
+        .buffs {
+            position: absolute;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 40;
+        }
+
+        .buff-badge {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            animation: buffPulse 1.5s ease-in-out infinite;
+        }
+
+        .buff-badge.damage { border: 1px solid #FF6B6B; color: #FF6B6B; }
+        .buff-badge.slow { border: 1px solid #87CEEB; color: #87CEEB; }
+
+        @keyframes buffPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        /* ===== SPEED BUTTON ===== */
+        .speed-btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .speed-btn:active { transform: scale(0.95); }
+        .speed-btn.fast {
+            background: rgba(255,215,0,0.25);
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+        .speed-btn.turbo {
+            background: rgba(255,80,0,0.30);
+            border-color: #FF5000;
+            color: #FF5000;
+        }
+
+        /* ===== PASTILLE COMBAT ===== */
+        .combat-badge {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .combat-badge img {
+            width: 220px;
+            height: 220px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 30px rgba(255,160,0,0.6));
+            transform: scale(0.4);
+            transition: none;
+        }
+        .combat-badge.show {
+            animation: badgeAnim 1.8s ease forwards;
+        }
+        @keyframes badgeAnim {
+            0%   { opacity: 0; }
+            15%  { opacity: 1; }
+            60%  { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .combat-badge.show img {
+            animation: badgeScale 1.8s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes badgeScale {
+            0%   { transform: scale(0.3); }
+            20%  { transform: scale(1.08); }
+            35%  { transform: scale(0.97); }
+            50%  { transform: scale(1.0); }
+            80%  { transform: scale(1.0); }
+            100% { transform: scale(1.15); }
+        }
+
+        /* ===== DEV LEVEL SELECTOR ===== */
+        .dev-btn {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.5);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 60;
+            transition: all 0.2s;
+        }
+
+        .dev-btn:hover {
+            background: rgba(255,255,255,0.25);
+            color: white;
+        }
+
+        .devmode-toggle.active {
+            background: rgba(78,205,196,0.35);
+            border-color: #4ECDC4;
+            color: #4ECDC4;
+        }
+
+        .devmode-badge {
+            position: absolute;
+            top: 56px;
+            left: 8px;
+            background: rgba(78,205,196,0.25);
+            border: 1px solid #4ECDC4;
+            color: #4ECDC4;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.55rem;
+            font-weight: 800;
+            z-index: 60;
+            animation: buffPulse 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .dev-spawn-panel {
+            position: absolute;
+            top: 72px;
+            left: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 60;
+        }
+
+        .dev-spawn-btn {
+            background: rgba(20,20,40,0.85);
+            border: 1px solid rgba(78,205,196,0.4);
+            color: rgba(78,205,196,0.9);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .dev-spawn-btn:hover {
+            background: rgba(78,205,196,0.2);
+            border-color: #4ECDC4;
+            color: #fff;
+        }
+
+        .level-selector {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            z-index: 180;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            backdrop-filter: blur(6px);
+        }
+
+        .level-selector.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .level-selector-title {
+            color: #FFD700;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        /* ===== WORLDMAP ===== */
+        .worldmap-container {
+            position: relative;
+            width: min(88vw, 82vh);
+            height: min(88vw, 82vh);
+        }
+
+        .worldmap-img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 18px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* SVG clickable zones */
+        .worldmap-zones {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .zone-poly {
+            fill: transparent;
+            stroke: transparent;
+            stroke-width: 0;
+            transition: fill 0.25s, filter 0.25s, stroke-width 0.25s;
+            cursor: pointer;
+        }
+
+        .zone-poly.completed {
+            fill: rgba(0, 0, 0, 0.45);
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 1;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .zone-poly:hover, .zone-poly.active {
+            stroke: rgba(255,255,255,0.4);
+            stroke-width: 1.5;
+        }
+
+        .zone-poly[data-zone="prairie"]:hover, .zone-poly[data-zone="prairie"].active {
+            fill: rgba(80, 200, 80, 0.30);
+            filter: drop-shadow(0 0 16px rgba(80, 200, 80, 0.8));
+        }
+
+        .zone-poly[data-zone="volcan"]:hover, .zone-poly[data-zone="volcan"].active {
+            fill: rgba(255, 100, 30, 0.30);
+            filter: drop-shadow(0 0 16px rgba(255, 100, 30, 0.8));
+        }
+
+        .zone-poly[data-zone="glacier"]:hover, .zone-poly[data-zone="glacier"].active {
+            fill: rgba(100, 190, 255, 0.30);
+            filter: drop-shadow(0 0 16px rgba(100, 190, 255, 0.8));
+        }
+
+        .zone-poly[data-zone="cimetiere"]:hover, .zone-poly[data-zone="cimetiere"].active {
+            fill: rgba(180, 80, 220, 0.30);
+            filter: drop-shadow(0 0 16px rgba(180, 80, 220, 0.8));
+        }
+
+        .level-select-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+            border: 3px solid rgba(255,255,255,0.45);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            z-index: 2;
+        }
+
+        .level-select-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: #FFD700;
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 0 22px rgba(255,215,0,0.55);
+        }
+
+        .zone-label {
+            color: white;
+            font-weight: 800;
+            font-size: 0.6rem;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.9);
+            text-align: center;
+            line-height: 1.2;
+            pointer-events: none;
+        }
+
+        /* ===== WORLDMAP ENEMIES ===== */
+        @keyframes mapFloat {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-9px); }
+        }
+
+        @keyframes mapFloatMirror {
+            0%, 100% { transform: translateY(0px) scaleX(-1); }
+            50%       { transform: translateY(-9px) scaleX(-1); }
+        }
+
+        @keyframes mapPatrolLR {
+            0%   { transform: translateX(0px)  translateY(0px)  scaleX(1);  }
+            48%  { transform: translateX(38px) translateY(-5px) scaleX(1);  }
+            50%  { transform: translateX(38px) translateY(-5px) scaleX(-1); }
+            98%  { transform: translateX(0px)  translateY(0px)  scaleX(-1); }
+            100% { transform: translateX(0px)  translateY(0px)  scaleX(1);  }
+        }
+
+        @keyframes mapBirdFly {
+            0%   { transform: translateX(0px)  translateY(0px)   scaleX(-1); }
+            48%  { transform: translateX(65px) translateY(-12px) scaleX(-1); }
+            50%  { transform: translateX(65px) translateY(-12px) scaleX(1);  }
+            98%  { transform: translateX(0px)  translateY(0px)   scaleX(1);  }
+            100% { transform: translateX(0px)  translateY(0px)   scaleX(-1); }
+        }
+
+        .map-enemy {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.55));
+            animation: mapFloat 2.4s ease-in-out infinite;
+        }
+
+        .map-enemy.mirror {
+            animation-name: mapFloatMirror;
+        }
+
+        .map-enemy.patrol {
+            animation-name: mapPatrolLR;
+        }
+
+        .map-enemy.bird {
+            animation-name: mapBirdFly;
+        }
+
+        /* ===== LOADER ===== */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .loader-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(255,255,255,0.15);
+            border-top-color: #FFD700;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-text {
+            color: rgba(255,255,255,0.7);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-top: 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (min-width: 768px) {
+            .tower-btn {
+                width: 85px;
+                height: 90px;
+            }
+
+            .tower-btn .tower-preview {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
+
+            .stat {
+                padding: 10px 16px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .tower-bar { gap: 5px; }
+
+            .tower-btn {
+                width: 58px;
+                height: 68px;
+            }
+
+            .tower-btn .tower-preview {
+                width: 34px;
+                height: 34px;
+                font-size: 1.2rem;
+                margin-bottom: 2px;
+            }
+
+            .tower-btn .tower-name { display: none; }
+
+            .stat {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
+
+            .stat-icon { width: 20px; height: 20px; }
+        }
+
+        @media (max-width: 360px) {
+            .tower-bar { gap: 3px; padding: 6px 4px; }
+            .tower-btn { width: 52px; height: 62px; }
+            .tower-btn .tower-preview { width: 28px; height: 28px; font-size: 1rem; }
+            .tower-btn .tower-cost { font-size: 0.65rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADER -->
+    <div class="loader-overlay" id="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Chargement...</div>
+    </div>
+
+    <!-- PORTRAIT NATHAN (flottant) -->
+    <div class="hero-portrait">
+        <img id="nathan-portrait" src="/bremanie/images/nathan/determined.png" alt="Nathan">
+    </div>
+
+    <!-- STATS VERTICALES (flottantes sous le portrait) -->
+    <div class="stats">
+        <div class="stat">
+            <img class="stat-icon" src="/bremanie/images/td/icon_gold.png" alt="Gold">
+            <span class="stat-value" id="gold">150</span>
+        </div>
+        <div class="stat">
+            <img class="stat-icon" src="/bremanie/images/td/icon_heart.png" alt="Health">
+            <span class="stat-value" id="health">15</span>
+        </div>
+        <div class="stat">
+            <span style="font-size:0.85rem">📍</span>
+            <span class="stat-value" id="level">1</span>
+        </div>
+        <div class="stat">
+            <img class="stat-icon" src="/bremanie/images/td/icon_wave.png" alt="Wave">
+            <span class="stat-value" id="wave">0</span>
+        </div>
+        <div class="stat">
+            <img class="stat-icon" src="/bremanie/images/td/icon_enemy.png" alt="Enemies">
+            <span class="stat-value" id="enemies">0</span>
+        </div>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-container">
+        <div class="action-buttons" id="action-buttons">
+            <button class="shop-btn" id="shop-btn">Shop</button>
+            <button class="speed-btn" id="speed-btn">x1</button>
+            <button class="wave-btn" id="wave-btn">Vague 1 ▶</button>
+        </div>
+        <div class="buffs" id="buffs"></div>
+        <div class="selection-info" id="selection-info">Touchez une case verte pour placer</div>
+
+        <!-- SHOP OVERLAY -->
+        <div class="shop-overlay" id="shop-overlay">
+            <div class="shop-title">Boutique</div>
+            <div class="shop-items">
+                <div class="shop-item" data-item="heart">
+                    <div class="item-icon">❤️</div>
+                    <div class="item-name">+1 Vie</div>
+                    <div class="item-desc">Regagne 1 point de vie</div>
+                    <div class="item-cost">50g</div>
+                </div>
+                <div class="shop-item" data-item="repair">
+                    <div class="item-icon">💖</div>
+                    <div class="item-name">Repair +5</div>
+                    <div class="item-desc">Regagne 5 points de vie</div>
+                    <div class="item-cost">150g</div>
+                </div>
+                <div class="shop-item" data-item="nuke">
+                    <div class="item-icon">💥</div>
+                    <div class="item-name">Nuke</div>
+                    <div class="item-desc">Tue tous les ennemis visibles</div>
+                    <div class="item-cost">250g</div>
+                </div>
+                <div class="shop-item" data-item="damage">
+                    <div class="item-icon">⚔️</div>
+                    <div class="item-name">Rage</div>
+                    <div class="item-desc">Degats x1.5 pendant 1 vague</div>
+                    <div class="item-cost">100g</div>
+                </div>
+                <div class="shop-item" data-item="slow">
+                    <div class="item-icon">🧊</div>
+                    <div class="item-name">Blizzard</div>
+                    <div class="item-desc">Ralentit tout pendant 1 vague</div>
+                    <div class="item-cost">80g</div>
+                </div>
+            </div>
+            <button class="shop-close" id="shop-close">Fermer</button>
+        </div>
+        <div class="tower-info" id="tower-info">
+            <div class="tower-info-name" id="tower-info-name">Archer</div>
+            <div class="tower-info-stats">
+                <div class="tower-info-stat"><span class="label">Deg</span><span class="value" id="ti-dmg">25</span></div>
+                <div class="tower-info-stat"><span class="label">Port</span><span class="value" id="ti-range">3</span></div>
+                <div class="tower-info-stat"><span class="label">Vit</span><span class="value" id="ti-cd">0.7s</span></div>
+                <div class="tower-info-stat"><span class="label">XP</span><span class="value" id="ti-xp">0/100</span></div>
+            </div>
+            <div class="tower-xp-bar-container">
+                <div class="tower-xp-bar" id="ti-xp-bar"></div>
+            </div>
+            <button class="sell-btn" id="sell-btn">Vendre 30💰</button>
+        </div>
+        <div class="wave-announce" id="wave-announce">🌊 Vague 1</div>
+
+        <div class="game-over" id="game-over">
+            <h1 id="game-over-title">💀 Défaite</h1>
+            <div class="wave-reached">Vague atteinte: <span id="final-wave">0</span></div>
+            <button onclick="location.reload()">Rejouer</button>
+        </div>
+
+        <div class="game-over" id="level-transition">
+            <h1 id="level-transition-title">Niveau 2</h1>
+            <div class="wave-reached">Préparez vos défenses !</div>
+            <button id="level-continue-btn">Continuer</button>
+        </div>
+
+        <!-- PASTILLE COMBAT -->
+        <div id="combat-badge" class="combat-badge">
+            <img src="/bremanie/images/combat_badge.png" alt="Combat">
+        </div>
+
+        <!-- DEV BUTTONS -->
+        <button class="dev-btn" id="dev-btn" style="top:230px">LVL</button>
+        <button class="dev-btn devmode-toggle" id="devmode-btn" style="top:254px">DEV</button>
+        <div class="devmode-badge" id="devmode-badge" style="display:none">DEV MODE</div>
+        <div class="dev-spawn-panel" id="dev-spawn-panel" style="display:none">
+            <button class="dev-spawn-btn" data-enemy="basic">🟢 Basic</button>
+            <button class="dev-spawn-btn" data-enemy="fast">⚡ Fast</button>
+            <button class="dev-spawn-btn" data-enemy="tank">🛡️ Tank</button>
+            <button class="dev-spawn-btn" data-enemy="boss">💀 Boss</button>
+            <button class="dev-spawn-btn" data-enemy="flying">🦋 Flying</button>
+        </div>
+        <div class="level-selector" id="level-selector">
+            <div class="level-selector-title">✦ Choisissez votre monde ✦</div>
+            <div class="worldmap-container">
+                <img src="/bremanie/images/td/worldmap.png" class="worldmap-img" alt="Carte du monde" draggable="false">
+                <!-- Ennemis décoratifs animés -->
+                <!-- Prairie : basic patrouille G-D, renard sur le chemin -->
+                <img class="map-enemy patrol" src="/bremanie/images/td/levels/prairie/enemy_basic.png"
+                     style="left:6%;top:72%;animation-delay:0s;animation-duration:3.8s">
+                <img class="map-enemy mirror" src="/bremanie/images/td/levels/prairie/enemy_fast.png"
+                     style="left:15%;top:78%;animation-delay:0.6s;animation-duration:1.8s">
+                <!-- Volcan -->
+                <img class="map-enemy" src="/bremanie/images/td/levels/volcano/enemy_fast.png"
+                     style="left:28%;top:30%;animation-delay:0.3s;animation-duration:1.6s">
+                <!-- Glacier : oiseau vole G-D, yéti dans la neige -->
+                <img class="map-enemy bird" src="/bremanie/images/td/levels/ice/enemy_flying.png"
+                     style="left:66%;top:23%;width:68px;height:68px;animation-delay:0.4s;animation-duration:3.2s">
+                <!-- Cimetière : fantôme à gauche sur les tombes, loup sur le chemin à droite -->
+                <img class="map-enemy mirror" src="/bremanie/images/td/levels/cemetery/enemy_fast.png"
+                     style="left:52%;top:83%;animation-delay:1.4s;animation-duration:1.9s">
+
+                <!-- Zones cliquables SVG sur la carte -->
+                <svg class="worldmap-zones" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <!-- Prairie: bas-gauche -->
+                    <polygon class="zone-poly" data-level="0" data-zone="prairie"
+                        points="0,50 52,46 52,100 0,100"/>
+                    <!-- Volcan: haut-gauche/centre -->
+                    <polygon class="zone-poly" data-level="2" data-zone="volcan"
+                        points="0,0 62,0 62,42 0,48"/>
+                    <!-- Glacier: haut-droite -->
+                    <polygon class="zone-poly" data-level="3" data-zone="glacier"
+                        points="58,0 100,0 100,52 58,44"/>
+                    <!-- Cimetière: bas-droite -->
+                    <polygon class="zone-poly" data-level="1" data-zone="cimetiere"
+                        points="48,42 100,48 100,100 48,100"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOWER BAR -->
+    <div class="tower-bar">
+        <div class="tower-btn selected" data-tower="archer">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/archer/tower_archer_front.png" alt="Archer"></div>
+            <div class="tower-cost">50g</div>
+            <div class="tower-name">Archer</div>
+            <div class="tower-range">⊕3</div>
+        </div>
+        <div class="tower-btn" data-tower="cannon">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/cannon/tower_cannon_front.png" alt="Canon"></div>
+            <div class="tower-cost">100g</div>
+            <div class="tower-name">Canon</div>
+            <div class="tower-range">⊕2.5</div>
+        </div>
+        <div class="tower-btn" data-tower="sniper">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/sniper/tower_sniper_front.png" alt="Sniper"></div>
+            <div class="tower-cost">250g</div>
+            <div class="tower-name">Sniper</div>
+            <div class="tower-range">⊕4.5</div>
+        </div>
+        <div class="tower-btn locked" data-tower="wind">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/wind/tower_wind_front.png" alt="Eolienne"></div>
+            <div class="tower-cost">150g</div>
+            <div class="tower-name">Eolienne</div>
+            <div class="tower-range">⊕2.8</div>
+            <div class="lock-overlay">
+                <span class="lock-icon">🔒</span>
+                <span class="unlock-cost">Prairie</span>
+            </div>
+        </div>
+        <div class="tower-btn locked" data-tower="cemetery">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/cemetery/tower_cemetery_front.png" alt="Fantôme"></div>
+            <div class="tower-cost">150g</div>
+            <div class="tower-name">Fantôme</div>
+            <div class="tower-range">⊕3</div>
+            <div class="lock-overlay">
+                <span class="lock-icon">🔒</span>
+                <span class="unlock-cost">Cimetière</span>
+            </div>
+        </div>
+        <div class="tower-btn locked" data-tower="fire">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/fire/tower_fire_front.png" alt="Feu"></div>
+            <div class="tower-cost">210g</div>
+            <div class="tower-name">Feu</div>
+            <div class="tower-range">⊕2.8</div>
+            <div class="lock-overlay">
+                <span class="lock-icon">🔒</span>
+                <span class="unlock-cost">Volcan</span>
+            </div>
+        </div>
+        <div class="tower-btn locked" data-tower="ice">
+            <div class="tower-preview"><img src="/bremanie/images/td/towers/ice/tower_ice_front.png" alt="Glace"></div>
+            <div class="tower-cost">100g</div>
+            <div class="tower-name">Glace</div>
+            <div class="tower-range">⊕3</div>
+            <div class="lock-overlay">
+                <span class="lock-icon">🔒</span>
+                <span class="unlock-cost">Glacier</span>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { TowerDefenseGame } from '/js/games/td/TowerDefenseGame.js';
+
+        // ── Audio ──────────────────────────────────────────────
+        const combatMusic = new Audio('/bremanie/audio/combat_theme.mp3');
+        combatMusic.loop  = true;
+        combatMusic.volume = 0;
+
+        const combatSting = new Audio('/bremanie/audio/combat_sting.mp3');
+        combatSting.volume = 0.9;
+
+        let musicStarted = false;
+
+        function startCombatMusic() {
+            if (musicStarted) return;
+            musicStarted = true;
+            combatMusic.play().catch(() => {});
+            let v = 0;
+            const fi = setInterval(() => {
+                v = Math.min(v + 0.02, 0.6);
+                combatMusic.volume = v;
+                if (v >= 0.6) clearInterval(fi);
+            }, 80);
+        }
+
+        // ── Pastille ──────────────────────────────────────────
+        const badge = document.getElementById('combat-badge');
+
+        function showCombatBadge() {
+            combatSting.currentTime = 0;
+            combatSting.play().catch(() => {});
+            badge.classList.remove('show');
+            void badge.offsetWidth; // reflow pour relancer l'animation
+            badge.classList.add('show');
+            setTimeout(() => badge.classList.remove('show'), 1900);
+        }
+
+        // ── Jeu ───────────────────────────────────────────────
+        const game = new TowerDefenseGame();
+
+        await game.init(document.getElementById('game-container'));
+
+        // Badge + musique à chaque début de vague
+        game.onWaveStarted = () => {
+            showCombatBadge();
+            startCombatMusic();
+        };
+        window.game = game;
+        document.getElementById('loader').classList.add('hidden');
+        setTimeout(() => document.getElementById('loader').remove(), 600);
+
+        // ── Mode via URL params ────────────────────────────────
+        const params = new URLSearchParams(location.search);
+        if (params.get('scripted'))  game.setScriptedMode();
+        else if (params.get('intro')) game.setTutorialMode();
+        else if (params.get('dev') === 'combat')   game.setScriptedMode();
+        else if (params.get('dev') === 'tutorial') game.setTutorialMode();
+        else if (params.get('dev') === 'normal')   game.setNormalMode();
+    </script>
+</body>
+</html>

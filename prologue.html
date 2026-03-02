@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Prologue — La Brémanie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* ── Fond : image très assombrie ── */
+        .bg {
+            position: absolute;
+            inset: 0;
+            background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+            filter: brightness(0.08) saturate(0.4);
+            animation: bgBreath 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgBreath {
+            from { filter: brightness(0.08) saturate(0.4); }
+            to   { filter: brightness(0.13) saturate(0.5); }
+        }
+
+        /* ── Vignette ── */
+        .vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.85) 100%);
+        }
+
+        /* ── Conteneur central ── */
+        .stage {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            padding: 0 2rem;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        /* ── Ligne ornementale ── */
+        .ornament-line {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+        }
+        .ornament-line.top    { animation-delay: 0.3s; margin-bottom: 2rem; }
+        .ornament-line.bottom { animation-delay: 1.8s; margin-top: 2rem; }
+
+        .ornament-line hr {
+            flex: 1;
+            border: none;
+            height: 1px;
+            background: linear-gradient(to right,
+                transparent, rgba(201,168,76,0.3), rgba(201,168,76,0.8), rgba(201,168,76,0.3), transparent);
+        }
+        .ornament-line.bottom hr {
+            background: linear-gradient(to left,
+                transparent, rgba(201,168,76,0.3), rgba(201,168,76,0.8), rgba(201,168,76,0.3), transparent);
+        }
+
+        .ornament-line .diamond {
+            color: #c9a84c;
+            font-size: 0.6rem;
+            opacity: 0.8;
+            flex-shrink: 0;
+        }
+
+        /* ── Label PROLOGUE petit ── */
+        .label {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(0.6rem, 1.8vw, 0.85rem);
+            font-weight: 600;
+            letter-spacing: 0.55em;
+            text-transform: uppercase;
+            color: rgba(201, 168, 76, 0.7);
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.8s forwards;
+        }
+
+        /* ── Titre principal ── */
+        .title {
+            font-family: 'Cinzel Decorative', serif;
+            font-weight: 900;
+            font-size: clamp(2.8rem, 10vw, 6.5rem);
+            color: #f5e6b8;
+            letter-spacing: 0.06em;
+            line-height: 1;
+            text-align: center;
+            text-shadow:
+                0 0 30px rgba(201,168,76,0.6),
+                0 0 80px rgba(201,168,76,0.25),
+                2px 3px 6px rgba(0,0,0,0.9);
+            opacity: 0;
+            animation: titleReveal 1.4s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+        }
+
+        @keyframes titleReveal {
+            0%   { opacity: 0; transform: translateY(12px) scale(0.97); filter: blur(6px); }
+            100% { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+        }
+
+        /* ── Sous-titre ── */
+        .subtitle {
+            font-family: 'Cinzel', serif;
+            font-weight: 400;
+            font-size: clamp(0.75rem, 2.2vw, 1.1rem);
+            color: #c4a06a;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 1.2rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+            opacity: 0;
+            animation: fadeIn 1.2s ease 1.6s forwards;
+        }
+
+        /* ── Hint tap ── */
+        .tap-hint {
+            position: absolute;
+            bottom: 2.5rem;
+            width: 100%;
+            text-align: center;
+            font-family: 'Cinzel', serif;
+            font-size: 0.6rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: rgba(201,168,76,0.35);
+            opacity: 0;
+            animation: fadeIn 1s ease 3.5s forwards, pulse 2.5s ease 3.5s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%,100% { opacity: 0.35; }
+            50%      { opacity: 0.7;  }
+        }
+
+        /* ── Transition sortie ── */
+        body.leaving {
+            animation: fadeOut 0.8s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to   { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg"></div>
+    <div class="vignette"></div>
+
+    <div class="stage">
+        <div class="ornament-line top">
+            <hr><span class="diamond">◆</span><hr>
+        </div>
+
+        <div class="label">Prologue</div>
+        <h1 class="title">L'Ombre</h1>
+        <p class="subtitle">du Nécromancien</p>
+
+        <div class="ornament-line bottom">
+            <hr><span class="diamond">◆</span><hr>
+        </div>
+    </div>
+
+    <div class="tap-hint">Toucher pour continuer</div>
+
+    <audio id="bgm" src="/bremanie/audio/prologue_theme.mp3" preload="auto"></audio>
+
+    <script>
+        // Musique prologue — fade-in immédiat + boucle avec fondu
+        const bgm       = document.getElementById('bgm');
+        const TARGET    = 0.65;
+        const FADE_OUT  = 6;     // secondes de fondu sortant avant la fin
+        const FADE_STEP = TARGET / (3000 / 50); // fade-in sur ~3s
+        let loopFading  = false;
+        bgm.volume = 0;
+
+        function fadeInBgm() {
+            bgm.volume = 0;
+            bgm.play().catch(() => {});
+            let v = 0;
+            const fi = setInterval(() => {
+                v = Math.min(v + FADE_STEP, TARGET);
+                bgm.volume = v;
+                if (v >= TARGET) clearInterval(fi);
+            }, 50);
+        }
+
+        fadeInBgm();
+
+        setInterval(() => {
+            if (!bgm.duration || bgm.paused) return;
+            const remaining = bgm.duration - bgm.currentTime;
+            if (remaining <= FADE_OUT && !loopFading) loopFading = true;
+            if (loopFading) bgm.volume = Math.max(0, TARGET * (remaining / FADE_OUT));
+        }, 100);
+
+        bgm.addEventListener('ended', () => {
+            loopFading = false;
+            bgm.currentTime = 0;
+            fadeInBgm();
+        });
+    </script>
+
+    <script type="module">
+        import { DialogueEngine } from './js/DialogueEngine.js';
+
+        const engine = new DialogueEngine({
+            basePath:     '/bremanie/images/',
+            dialoguePath: '/bremanie/dialogues/',
+            typeSpeed: 25,
+        });
+
+        let ready = false;
+        setTimeout(() => { ready = true; }, 2000);
+
+        function advance() {
+            if (!ready) return;
+
+            // Désactive le listener pour ne pas interférer avec le dialogue
+            document.removeEventListener('pointerup', advance);
+            document.removeEventListener('keydown', onKey);
+
+            // Fondu du titre
+            document.body.classList.add('leaving');
+
+            setTimeout(() => {
+                // Cache le titre, remet l'opacité pour le dialogue
+                document.querySelector('.stage').style.display    = 'none';
+                document.querySelector('.tap-hint').style.display = 'none';
+                document.querySelector('.bg').style.display       = 'none';
+                document.querySelector('.vignette').style.display = 'none';
+                document.body.style.animation = 'none';
+                document.body.style.opacity   = '1';
+
+                // Chaîne : siege → chapitre 1
+                engine.load('prologue/siege', () => {
+                    window.location.href = '/bremanie/chapter1.html';
+                });
+            }, 800);
+        }
+
+        function onKey(e) {
+            if (['Space', 'Enter', 'ArrowRight'].includes(e.code)) advance();
+        }
+
+        document.addEventListener('pointerup', advance);
+        document.addEventListener('keydown', onKey);
+    </script>
+
+</body>
+</html>

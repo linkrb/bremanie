@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>L'Éveil — La Brémanie</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        import { DialogueEngine } from './js/DialogueEngine.js';
+
+        const engine = new DialogueEngine({
+            basePath:     '/bremanie/images/',
+            dialoguePath: '/bremanie/dialogues/',
+            typeSpeed: 25,
+        });
+
+        engine.load('chapter1/nathan_power', () => {
+            window.location.href = '/bremanie/game.html?intro=chapter1';
+        });
+    </script>
+</body>
+</html>
