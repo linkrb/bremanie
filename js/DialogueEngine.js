@@ -234,6 +234,9 @@ export class DialogueEngine {
         this._currentText = '';
         this.onComplete = null;
         this.onMusic    = null; // callback(trackName) déclenché par @music
+        this.onSfx      = null; // callback(trackName) déclenché par @sfx (one-shot)
+        this.onSfxLoop  = null; // callback(trackName) déclenché par @sfxloop
+        this.onSfxStop  = null; // callback(trackName) déclenché par @sfxstop
 
         // Track what's displayed on each side
         this.sides = {
@@ -381,6 +384,9 @@ export class DialogueEngine {
         let pendingScene = null; // @scene → mode cinématique
         let pendingBgPos = null; // @bgpos → position du fond
         let pendingMusic = null; // @music → déclenche onMusic callback
+        let pendingSfx     = null; // @sfx     → one-shot
+        let pendingSfxLoop = null; // @sfxloop → boucle
+        let pendingSfxStop = null; // @sfxstop → arrêt
 
         for (const raw of lines) {
             const line = raw.trim();
@@ -395,7 +401,10 @@ export class DialogueEngine {
                 if (cmd === 'bg')    pendingBg    = val;
                 if (cmd === 'scene') pendingScene = val;
                 if (cmd === 'bgpos') pendingBgPos = val;
-                if (cmd === 'music') pendingMusic = val;
+                if (cmd === 'music')   pendingMusic   = val;
+                if (cmd === 'sfx')     pendingSfx     = val;
+                if (cmd === 'sfxloop') pendingSfxLoop = val;
+                if (cmd === 'sfxstop') pendingSfxStop = val;
                 continue;
             }
 
@@ -405,7 +414,10 @@ export class DialogueEngine {
                 const entry = { type: 'narration', text };
                 if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; }
                 else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
-                if (pendingMusic) { entry.music = pendingMusic; pendingMusic = null; }
+                if (pendingMusic)   { entry.music   = pendingMusic;   pendingMusic   = null; }
+                if (pendingSfx)     { entry.sfx     = pendingSfx;     pendingSfx     = null; }
+                if (pendingSfxLoop) { entry.sfxloop = pendingSfxLoop; pendingSfxLoop = null; }
+                if (pendingSfxStop) { entry.sfxstop = pendingSfxStop; pendingSfxStop = null; }
                 script.push(entry);
                 continue;
             }
@@ -421,7 +433,10 @@ export class DialogueEngine {
             // Si on sortait d'un @scene, signaler la reprise
             if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; entry.resumeChars = true; }
             else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
-            if (pendingMusic) { entry.music = pendingMusic; pendingMusic = null; }
+            if (pendingMusic)   { entry.music   = pendingMusic;   pendingMusic   = null; }
+            if (pendingSfx)     { entry.sfx     = pendingSfx;     pendingSfx     = null; }
+            if (pendingSfxLoop) { entry.sfxloop = pendingSfxLoop; pendingSfxLoop = null; }
+            if (pendingSfxStop) { entry.sfxstop = pendingSfxStop; pendingSfxStop = null; }
 
             script.push(entry);
         }
@@ -456,6 +471,11 @@ export class DialogueEngine {
     _showLine(line) {
         // ── Musique (@music) ─────────────────────────────────
         if (line.music) this.onMusic?.(line.music);
+
+        // ── Sons (@sfx / @sfxloop / @sfxstop) ───────────────
+        if (line.sfx)     this.onSfx?.(line.sfx);
+        if (line.sfxloop) this.onSfxLoop?.(line.sfxloop);
+        if (line.sfxstop) this.onSfxStop?.(line.sfxstop);
 
         // ── Mode cinématique (@scene) ────────────────────────
         if (line.scene) {

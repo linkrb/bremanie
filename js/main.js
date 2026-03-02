@@ -13,8 +13,13 @@ const game = new TowerDefenseGame();
 
 audio.preload('main_theme',      '/bremanie/audio/main_theme.mp3');
 audio.preload('prologue_siege',  '/bremanie/audio/prologue_siege.mp3');
+audio.preload('wind',            '/bremanie/audio/wind.mp3');
+audio.preload('title_sting',    '/bremanie/audio/title_sting.mp3');
 
 dlg.onMusic = (track) => audio.crossfadeTo(track, 1500);
+dlg.onSfx     = (track) => audio.playSfx(track);
+dlg.onSfxLoop = (track) => audio.playSfxLoop(track);
+dlg.onSfxStop = (track) => audio.stopSfx(track);
 
 // ── Navigation ────────────────────────────────────────────────
 
@@ -35,6 +40,7 @@ function showTitle({ label, title, sub, bg, bgPosition = 'center' }, onTap) {
     bgEl.style.backgroundPosition = bgPosition;
 
     showScreen('screen-title');
+    audio.playSfx('title_sting');
 
     let ready = false;
     setTimeout(() => { ready = true; }, 1500);
@@ -43,6 +49,8 @@ function showTitle({ label, title, sub, bg, bgPosition = 'center' }, onTap) {
         if (!ready) return;
         document.getElementById('screen-title').removeEventListener('pointerup', onInteract);
         document.removeEventListener('keydown', onKey);
+        // Fade out immédiatement — évite le flash si screen-title reste actif sous un dialogue
+        document.getElementById('screen-title').classList.remove('active');
         onTap();
     }
 
@@ -96,27 +104,51 @@ ps.addEventListener('pointerdown', () => {
 });
 
 // ── Bouton "Commencer l'Aventure" ─────────────────────────────
+function fadeToBlack(ms) {
+    return new Promise(resolve => {
+        const el = document.getElementById('fade-black');
+        el.style.transition = `opacity ${ms / 1000}s ease`;
+        el.style.pointerEvents = 'all';
+        el.style.opacity = '1';
+        setTimeout(resolve, ms);
+    });
+}
+
+function fadeFromBlack(ms) {
+    const el = document.getElementById('fade-black');
+    el.style.transition = `opacity ${ms / 1000}s ease`;
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.pointerEvents = 'none'; }, ms);
+}
+
 document.getElementById('btn-start').addEventListener('click', () => {
     audio.stop(2000);
 
-    showTitle({
-        label: 'Prologue',
-        title: "L'Ombre",
-        sub:   'du Nécromancien',
-        bg:    '/images/td/splash_bremanie.jpg',
-    }, () => {
-        showDialogue('prologue/siege', () => {
-            showTitle({
-                label: 'Chapitre I',
-                title: 'La Fuite',
-                sub:   'Les Enfants du Roi',
-                bg:    '/bremanie/images/scenes/chapter1_bg.jpg',
-            }, () => {
-                showDialogue('chapter1/intro', () => {
-                    showGame('scripted');
+    fadeToBlack(2000).then(() => {
+        showTitle({
+            label: 'Prologue',
+            title: "L'Ombre",
+            sub:   'du Nécromancien',
+            bg:    '/images/td/splash_bremanie.jpg',
+        }, () => {
+            showDialogue('prologue/siege', () => {
+                audio.stop(1500);
+                fadeToBlack(1500).then(() => {
+                    showTitle({
+                        label: 'Chapitre I',
+                        title: 'La Fuite',
+                        sub:   'Les Enfants du Roi',
+                        bg:    '/bremanie/images/scenes/chapter1_bg.jpg',
+                    }, () => {
+                        showDialogue('chapter1/intro', () => {
+                            showGame('scripted');
+                        });
+                    });
+                    fadeFromBlack(1000);
                 });
             });
         });
+        fadeFromBlack(1000);
     });
 });
 

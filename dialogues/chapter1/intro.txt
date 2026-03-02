@@ -1,5 +1,6 @@
 # Chapitre I — La Fuite
 
+@sfxloop wind
 @bg scenes/chapter1_bg.jpg
 
 > Nathan et Anna couraient depuis des heures.
@@ -29,6 +30,8 @@ anna:sad On revient le chercher.
 > Plus vite, cette fois.
 > Ils avaient un cap.
 
+@sfxstop wind
+@music prologue_siege
 @bgpos center 65%
 @scene scenes/chapter1_attack.jpg
 > Mais la plaine n'était plus vide.

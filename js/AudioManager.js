@@ -65,6 +65,33 @@ export class AudioManager {
         this._current = null;
     }
 
+    playSfx(name) {
+        const track = this._tracks[name];
+        if (!track) return;
+        const sfx = track.cloneNode();
+        sfx.volume = this._target;
+        sfx.play().catch(() => {});
+    }
+
+    playSfxLoop(name) {
+        if (this._sfxLoops?.[name]) return; // déjà en cours
+        const track = this._tracks[name];
+        if (!track) return;
+        const sfx = track.cloneNode();
+        sfx.loop = true;
+        sfx.volume = this._target;
+        sfx.play().catch(() => {});
+        this._sfxLoops = this._sfxLoops || {};
+        this._sfxLoops[name] = sfx;
+    }
+
+    stopSfx(name, ms = 1000) {
+        const sfx = this._sfxLoops?.[name];
+        if (!sfx) return;
+        delete this._sfxLoops[name];
+        this._fadeOut(sfx, ms, () => sfx.pause());
+    }
+
     // ── Privé ────────────────────────────────────────────────
 
     _fadeIn(track, ms) {

@@ -27,7 +27,7 @@ garde:sad ...À vos ordres, mon Roi. Que les dieux vous gardent.
 
 anna(right):determined Père. On ne part pas sans toi.
 romain(left):angry Vous n'avez pas le choix.
-nathan(right):angry On est les enfants du Roi de Brémanie. On se bat.
+nathan(right):angry On est les enfants du Roi de la Brémanie. On se bat.
 romain:sad Je sais. Et c'est exactement pour ça que vous devez fuir.
 anna:worried Mais toi—
 romain:determined Moi je reste. C'est mon château, c'est ma responsabilité.
