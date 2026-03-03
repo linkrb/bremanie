@@ -1,6 +1,6 @@
 import { AudioManager }    from './AudioManager.js';
 import { DialogueEngine }  from './DialogueEngine.js';
-import { TowerDefenseGame } from '/js/games/td/TowerDefenseGame.js';
+import { TowerDefenseGame } from '/bremanie/js/TowerDefenseGame.js';
 
 // ── Instances globales ────────────────────────────────────────
 const audio = new AudioManager({ targetVolume: 0.7, fadeInMs: 3000, fadeOutSec: 6 });

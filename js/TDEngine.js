@@ -21,7 +21,14 @@ export class TDEngine {
         this.enemyId = 0;
         this.towerId = 0;
         this.gameSpeed = 1;
-        this.unlockedTowers = new Set();
+        // Toutes les tours avec unlockedByWorld sont débloquées par défaut (système à refaire)
+        this.unlockedTowers = new Set(
+            Object.entries(TOWER_TYPES)
+                .filter(([, c]) => c.unlockedByWorld !== undefined)
+                .map(([t]) => t)
+        );
+        this.paused = false;
+        this._gameOver = false;
         this.devMode = false;
         this.buffs = { damage: false, slow: false };
         this.routes = [];
@@ -190,7 +197,29 @@ export class TDEngine {
         return sellValue;
     }
 
+    // Mode scripté : vagues custom, 1 HP, pas d'or
+    setScriptedBattle(waves) {
+        this._scriptedWaves = waves;
+        this.gold = 0;
+        this.health = 1;
+        this.maxHealth = 1;
+    }
+
     startWave() {
+        // Mode scripté : vagues custom
+        if (this._scriptedWaves) {
+            if (this.wave >= this._scriptedWaves.length) return;
+            const waveConfig = this._scriptedWaves[this.wave];
+            this.spawnQueue = [];
+            waveConfig.forEach(group => {
+                for (let i = 0; i < group.count; i++) this.spawnQueue.push(group.type);
+            });
+            this.wave++;
+            this.waveInProgress = true;
+            if (this.onWaveStarted) this.onWaveStarted(this.wave);
+            return;
+        }
+
         if (this.wave >= 10) return;
 
         const waveConfig = GLOBAL_WAVES[this.globalWave] || GLOBAL_WAVES[GLOBAL_WAVES.length - 1];
@@ -260,6 +289,7 @@ export class TDEngine {
     }
 
     update(delta, now) {
+        if (this.paused) return;
         const dt = (delta / 60) * this.gameSpeed;
 
         // Spawn
@@ -282,6 +312,14 @@ export class TDEngine {
             }
 
             if (this.onWaveCompleted) this.onWaveCompleted(this.wave);
+
+            // Mode scripté : victoire quand toutes les vagues sont épuisées
+            if (this._scriptedWaves) {
+                if (this.wave >= this._scriptedWaves.length) {
+                    if (this.onVictory) this.onVictory();
+                }
+                return;
+            }
 
             if (this.wave >= 10) {
                 if (this.level >= LEVELS.length - 1) {
@@ -366,7 +404,9 @@ export class TDEngine {
                 const idx = i;
                 this.enemies.splice(idx, 1);
                 if (this.onEnemyReachedBase) this.onEnemyReachedBase(enemy, idx);
-                if (this.health <= 0) {
+                if (this.health <= 0 && !this._gameOver) {
+                    this._gameOver = true;
+                    this.paused = true;
                     if (this.onGameOver) this.onGameOver();
                 }
                 continue;
@@ -690,6 +730,8 @@ export class TDEngine {
         this.wave = 0;
         if (resetGlobalWave) this.globalWave = 0;
         this.waveInProgress = false;
+        this._gameOver = false;
+        this.paused = false;
         this.enemies = [];
         this.projectiles = [];
         this.spawnQueue = [];

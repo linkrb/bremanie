@@ -1,24 +1,24 @@
 // ============== CONFIGURATION ==============
-export const TILE_WIDTH = 40;
-export const TILE_HEIGHT = 52;
+export const TILE_WIDTH = 52;
+export const TILE_HEIGHT = 60;
 export const GRID_WIDTH = 7;
 export const GRID_HEIGHT = 12;
 
 export const TOWER_TYPES = {
     // === TOURS DE DÉPART ===
-    archer:   { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB },
-    cannon:   { cost: 100, damage: 55, range: 2.5,  cooldown: 1300, speed: 33, color: 0xFF7F7F, splash: 1.2 },
-    sniper:   { cost: 250, damage: 75, range: 4.5,  cooldown: 2500, speed: 60, color: 0xE6E6FA },
+    archer:   { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 2.5 },
+    cannon:   { cost: 100, damage: 55, range: 2.5,  cooldown: 1300, speed: 33, color: 0xFF7F7F, splash: 1.2,                                                                              availableFromLevel: 999 },
+    sniper:   { cost: 250, damage: 75, range: 4.5,  cooldown: 2500, speed: 60, color: 0xE6E6FA,                                                                                           availableFromLevel: 999 },
 
     // === TOURS DÉBLOQUÉES (clairement supérieures aux tours de départ) ===
     // Éolienne — débloquée Prairie : AoE + pushback, DPS 30 + zone → meilleure que Archer
-    wind:     { cost: 150, damage: 28, range: 2.8,  cooldown: 950,  speed: 38, color: 0xA8E6CF, pushback: 0.8, unlockedByWorld: 0 },
+    wind:     { cost: 150, damage: 28, range: 2.8,  cooldown: 950,  speed: 38, color: 0xA8E6CF, pushback: 0.8, unlockedByWorld: 0,                                                       availableFromLevel: 999 },
     // Fantôme — débloquée Cimetière : grasp lourd + DoT fort, multiplicateur de DPS sur cible immobilisée
-    cemetery: { cost: 150, damage: 40, range: 3.0,  cooldown: 2800, speed: 34, color: 0x4ECDC4, grasp: true, graspDuration: 3000, graspDot: 15, unlockedByWorld: 1, displayScale: 1.25 },
+    cemetery: { cost: 150, damage: 40, range: 3.0,  cooldown: 2800, speed: 34, color: 0x4ECDC4, grasp: true, graspDuration: 3000, graspDot: 15, unlockedByWorld: 1, displayScale: 1.25, availableFromLevel: 999 },
     // Feu — débloquée Volcan : gros splash + brûlure, DPS 55 + zone + DoT → meilleure que Canon
-    fire:     { cost: 210, damage: 60, range: 2.8,  cooldown: 1100, speed: 32, color: 0xFF6B35, splash: 1.5, burn: true, burnDuration: 2500, burnDot: 12, unlockedByWorld: 2 },
+    fire:     { cost: 210, damage: 60, range: 2.8,  cooldown: 1100, speed: 32, color: 0xFF6B35, splash: 1.5, burn: true, burnDuration: 2500, burnDot: 12, unlockedByWorld: 2,            availableFromLevel: 999 },
     // Glace — débloquée Glacier : slow puissant 0.3x, range étendue → multiplie DPS de toutes les tours
-    ice:      { cost: 100, damage: 12, range: 3.0,  cooldown: 700,  speed: 36, color: 0x87CEEB, slow: 0.3, unlockedByWorld: 3 },
+    ice:      { cost: 100, damage: 12, range: 3.0,  cooldown: 700,  speed: 36, color: 0x87CEEB, slow: 0.3, unlockedByWorld: 3,                                                           availableFromLevel: 999 },
 };
 
 export const ENEMY_TYPES = {
@@ -37,10 +37,22 @@ export const LEVELS = [
         theme: {
             id: 'prairie',
             tiles: { grass: 'tile_grass', path: 'tile_path' },
-            decorations: ['tree', 'tree_pine'],
-            decoRate: 0.22,
+            decorations: [
+                { name: 'deco_windmill', scale: 1.8, anchorY: 0.72, noWind: true },
+                { name: 'deco_cart',     scale: 1.1, anchorY: 0.5, noWind: true },
+                { name: 'deco_barrels',  scale: 0.8, anchorY: 0.5, noWind: true },
+                { name: 'deco_barrels',  scale: 0.8, anchorY: 0.5, noWind: true },
+                { name: 'deco_sacks',    scale: 0.8, anchorY: 0.5, noWind: true },
+                { name: 'deco_crate',    scale: 0.8, anchorY: 0.5, noWind: true },
+                { name: 'deco_crate',    scale: 0.8, anchorY: 0.5, noWind: true },
+            ],
+            decoRate: 0.14,
+            castleAnchorY: 0.5,
+            castleScale: 2.2,
             enemies: {
-                basic: 'enemy_basic',
+                basic: ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
+                        'enemy_basic_5','enemy_basic_6','enemy_basic_7',
+                        'enemy_basic_9','enemy_basic_10','enemy_basic_12'],
                 fast: 'enemy_fast',
                 tank: 'enemy_tank',
                 flying: 'enemy_flying',
@@ -48,24 +60,32 @@ export const LEVELS = [
             }
         },
         path: [
-            {x:0, y:0},
-            {x:0, y:1}, {x:0, y:2}, {x:0, y:3},
-            {x:1, y:3}, {x:2, y:3}, {x:3, y:3}, {x:4, y:3}, {x:5, y:3}, {x:6, y:3},
-            {x:6, y:4}, {x:6, y:5}, {x:6, y:6},
-            {x:5, y:7}, {x:4, y:8}, {x:3, y:9}, {x:2, y:10}, {x:1, y:11},
-            {x:2, y:11}, {x:3, y:11}, {x:4, y:11}, {x:5, y:11}, {x:6, y:11}
+            // Entrée nord (col 3) → descente
+            {x:3,y:0}, {x:3,y:1}, {x:3,y:2},
+            // Virage droite → col 5
+            {x:4,y:2}, {x:5,y:2},
+            // Long segment col 5 vers le bas
+            {x:5,y:3}, {x:5,y:4}, {x:5,y:5}, {x:5,y:6},
+            // Virage gauche → col 1
+            {x:4,y:6}, {x:3,y:6}, {x:2,y:6}, {x:1,y:6},
+            // Long segment col 1 vers le bas
+            {x:1,y:7}, {x:1,y:8}, {x:1,y:9},
+            // Virage droite → col 3
+            {x:2,y:9}, {x:3,y:9},
+            // Descente col 3 → château
+            {x:3,y:10}, {x:3,y:11}
         ],
         waves: [
             [{ type: 'basic', count: 5 }],
-            [{ type: 'basic', count: 8 }],
-            [{ type: 'basic', count: 5 }, { type: 'fast', count: 4 }],
-            [{ type: 'basic', count: 8 }, { type: 'tank', count: 2 }],
-            [{ type: 'basic', count: 6 }, { type: 'fast', count: 5 }, { type: 'tank', count: 2 }],
-            [{ type: 'fast', count: 12 }, { type: 'flying', count: 6 }, { type: 'tank', count: 3 }],
-            [{ type: 'basic', count: 15 }, { type: 'fast', count: 8 }, { type: 'flying', count: 5 }, { type: 'tank', count: 3 }],
-            [{ type: 'fast', count: 18 }, { type: 'flying', count: 10 }, { type: 'tank', count: 4 }],
-            [{ type: 'tank', count: 8 }, { type: 'fast', count: 15 }, { type: 'flying', count: 6 }],
-            [{ type: 'boss', count: 2 }, { type: 'tank', count: 6 }, { type: 'fast', count: 12 }, { type: 'flying', count: 8 }],
+            [{ type: 'basic', count: 9 }],
+            [{ type: 'basic', count: 13 }],
+            [{ type: 'basic', count: 18 }],
+            [{ type: 'basic', count: 22 }],
+            [{ type: 'basic', count: 28 }],
+            [{ type: 'basic', count: 34 }],
+            [{ type: 'basic', count: 40 }],
+            [{ type: 'basic', count: 50 }],
+            [{ type: 'basic', count: 65 }],
         ]
     },
     {
@@ -93,12 +113,14 @@ export const LEVELS = [
             }
         },
         path: [
-            {x:6, y:0},
-            {x:6, y:1}, {x:6, y:2},
-            {x:5, y:3}, {x:4, y:4}, {x:3, y:5}, {x:2, y:6}, {x:1, y:7}, {x:0, y:8},
-            {x:0, y:9}, {x:0, y:10},
-            {x:1, y:10}, {x:2, y:10}, {x:3, y:10}, {x:4, y:10}, {x:5, y:10}, {x:6, y:10},
-            {x:6, y:11}
+            {x:6,y:0},
+            {x:6,y:1}, {x:6,y:2},
+            {x:5,y:2}, {x:4,y:2}, {x:3,y:2}, {x:2,y:2}, {x:1,y:2}, {x:0,y:2},
+            {x:0,y:3}, {x:0,y:4}, {x:0,y:5},
+            {x:1,y:5}, {x:2,y:5}, {x:3,y:5}, {x:4,y:5}, {x:5,y:5}, {x:6,y:5},
+            {x:6,y:6}, {x:6,y:7}, {x:6,y:8},
+            {x:5,y:8}, {x:4,y:8}, {x:3,y:8}, {x:2,y:8}, {x:1,y:8}, {x:0,y:8},
+            {x:0,y:9}, {x:0,y:10}, {x:0,y:11}
         ],
         waves: [
             [{ type: 'basic', count: 6 }, { type: 'fast', count: 3 }],
@@ -138,12 +160,12 @@ export const LEVELS = [
             }
         },
         path: [
-            {x:3, y:0}, {x:3, y:1}, {x:3, y:2}, {x:3, y:3},
+            {x:3,y:0}, {x:3,y:1}, {x:3,y:2},
             { fork: [
-                [{x:3,y:4},{x:3,y:5},{x:3,y:6},{x:3,y:7},{x:3,y:8},{x:3,y:9},{x:4,y:9},{x:5,y:9},{x:6,y:9}],
-                [{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:6,y:4},{x:6,y:5},{x:6,y:6},{x:6,y:7},{x:6,y:8},{x:6,y:9}]
+                [{x:3,y:3},{x:2,y:3},{x:1,y:3},{x:0,y:3},{x:0,y:4},{x:0,y:5},{x:0,y:6},{x:0,y:7},{x:1,y:7},{x:2,y:7},{x:3,y:7}],
+                [{x:3,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:6,y:4},{x:6,y:5},{x:6,y:6},{x:6,y:7},{x:5,y:7},{x:4,y:7},{x:3,y:7}]
             ]},
-            {x:6, y:10}, {x:6, y:11}
+            {x:3,y:8}, {x:3,y:9}, {x:3,y:10}, {x:3,y:11}
         ],
         waves: [
             [{ type: 'basic', count: 8 }, { type: 'fast', count: 4 }],
@@ -356,17 +378,19 @@ export function getTowerUnlockedByWorld(levelIndex) {
 
 // ============== ISOMETRIC HELPERS ==============
 // Mirrored iso so Y-axis goes down-right (path flows downward)
+// Top-down projection: x→right, y→down
 export function toIso(x, y) {
     return {
-        x: (y - x) * (TILE_WIDTH / 2),
-        y: (x + y) * (TILE_HEIGHT / 2)
+        x: x * TILE_WIDTH + TILE_WIDTH / 2,   // centre horizontal de la cellule
+        y: y * TILE_HEIGHT                     // bord haut de la cellule (sprites ancrent en bas)
     };
 }
 
 export function fromIso(isoX, isoY, offsetX, offsetY, scale = 1) {
     const localX = (isoX - offsetX) / scale;
     const localY = (isoY - offsetY) / scale;
-    const x = (localY / (TILE_HEIGHT / 2) - localX / (TILE_WIDTH / 2)) / 2;
-    const y = (localX / (TILE_WIDTH / 2) + localY / (TILE_HEIGHT / 2)) / 2;
-    return { x: Math.floor(x), y: Math.floor(y) };
+    return {
+        x: Math.floor((localX - TILE_WIDTH / 2) / TILE_WIDTH),
+        y: Math.floor(localY / TILE_HEIGHT)
+    };
 }

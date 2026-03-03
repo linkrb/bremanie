@@ -35,6 +35,7 @@ export class TDRenderer {
             width,
             height,
             backgroundColor: 0x1a1a2e,
+            backgroundAlpha: 0,
             antialias: true,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true
@@ -49,39 +50,93 @@ export class TDRenderer {
         this.entityLayer = new PIXI.Container();
         this.projectileLayer = new PIXI.Container();
         this.effectLayer = new PIXI.Container();
+        this.debugLayer = new PIXI.Container();
 
         this.app.stage.addChild(this.groundLayer);
         this.app.stage.addChild(this.rangeLayer);
         this.app.stage.addChild(this.entityLayer);
         this.app.stage.addChild(this.projectileLayer);
         this.app.stage.addChild(this.effectLayer);
+        this.app.stage.addChild(this.debugLayer);
+
+        this.debugGrid = false; // activé via toggleDebugGrid()
 
         this.calculateOffset();
     }
 
     calculateOffset() {
-        const mapWidth = (GRID_WIDTH + GRID_HEIGHT) * (TILE_WIDTH / 2);
-        const mapHeight = (GRID_WIDTH + GRID_HEIGHT) * (TILE_HEIGHT / 2);
+        const mapWidth  = GRID_WIDTH  * TILE_WIDTH;
+        const mapHeight = GRID_HEIGHT * TILE_HEIGHT;
 
-        // Auto-scale to fit screen (minimal padding on mobile)
-        const padX = this.app.screen.width < 600 ? 0 : 10;
-        const padY = this.app.screen.width < 600 ? 0 : 10;
-        const scaleX = (this.app.screen.width - padX * 2) / mapWidth;
+        // Auto-scale to fit screen
+        const padX = this.app.screen.width < 600 ? 2 : 10;
+        const padY = this.app.screen.width < 600 ? 2 : 10;
+        const scaleX = (this.app.screen.width  - padX * 2) / mapWidth;
         const scaleY = (this.app.screen.height - padY * 2) / mapHeight;
         this.mapScale = Math.min(scaleX, scaleY, 1.5);
 
-        // Center diamond properly (non-square grid offset)
-        const centerIsoX = (GRID_HEIGHT - GRID_WIDTH) * (TILE_WIDTH / 4);
-        const centerIsoY = (GRID_WIDTH + GRID_HEIGHT - 2) * (TILE_HEIGHT / 4);
+        // Centre la carte dans l'écran
+        this.offsetX = (this.app.screen.width  - mapWidth  * this.mapScale) / 2;
+        this.offsetY = (this.app.screen.height - mapHeight * this.mapScale) / 2;
 
-        this.offsetX = this.app.screen.width / 2 - centerIsoX * this.mapScale;
-        this.offsetY = this.app.screen.height / 2 - centerIsoY * this.mapScale;
-
-        [this.groundLayer, this.rangeLayer, this.entityLayer, this.projectileLayer, this.effectLayer].forEach(layer => {
+        [this.groundLayer, this.rangeLayer, this.entityLayer, this.projectileLayer, this.effectLayer, this.debugLayer].forEach(layer => {
             layer.x = this.offsetX;
             layer.y = this.offsetY;
             layer.scale.set(this.mapScale);
         });
+    }
+
+    toggleCleanView() {
+        this._cleanView = !this._cleanView;
+        const hide = this._cleanView;
+        this.entityLayer.visible    = !hide;
+        this.projectileLayer.visible = !hide;
+        this.effectLayer.visible    = !hide;
+        // Décos groundLayer (pas les tuiles)
+        this.groundLayer.children.forEach(child => {
+            if (child._isDecoration) child.visible = !hide;
+        });
+    }
+
+    toggleDebugGrid(pathCells) {
+        this.debugGrid = !this.debugGrid;
+        this.debugLayer.removeChildren();
+        if (!this.debugGrid) return;
+
+        const g = new PIXI.Graphics();
+        // Grille complète
+        for (let x = 0; x <= GRID_WIDTH; x++) {
+            g.moveTo(x * TILE_WIDTH, 0);
+            g.lineTo(x * TILE_WIDTH, GRID_HEIGHT * TILE_HEIGHT);
+        }
+        for (let y = 0; y <= GRID_HEIGHT; y++) {
+            g.moveTo(0, y * TILE_HEIGHT);
+            g.lineTo(GRID_WIDTH * TILE_WIDTH, y * TILE_HEIGHT);
+        }
+        g.stroke({ width: 1, color: 0xff4444, alpha: 0.6 });
+
+        // Numéros de colonnes / lignes
+        for (let x = 0; x < GRID_WIDTH; x++) {
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                const lbl = new PIXI.Text({
+                    text: `${x},${y}`,
+                    style: { fontSize: 9, fill: 0xffffff, stroke: { color: 0x000000, width: 2 } }
+                });
+                lbl.x = x * TILE_WIDTH + 2;
+                lbl.y = y * TILE_HEIGHT + 2;
+                this.debugLayer.addChild(lbl);
+            }
+        }
+
+        // Cellules du chemin en surbrillance
+        if (pathCells) {
+            for (const { x, y } of pathCells) {
+                g.rect(x * TILE_WIDTH + 2, y * TILE_HEIGHT + 2, TILE_WIDTH - 4, TILE_HEIGHT - 4);
+                g.fill({ color: 0x00ff88, alpha: 0.25 });
+            }
+        }
+
+        this.debugLayer.addChild(g);
     }
 
     handleResize(container) {
@@ -177,13 +232,16 @@ export class TDRenderer {
                 } catch (e) { }
             }
 
-            // Themed enemies
-            for (const enemyAsset of Object.values(level.theme.enemies)) {
-                const assetKey = `${enemyAsset}_${themeId}`;
-                try {
-                    const tex = await PIXI.Assets.load(`${basePath}/${enemyAsset}.png`);
-                    this.assets[assetKey] = tex;
-                } catch (e) { }
+            // Themed enemies (supporte string ou array de variants)
+            for (const [type, enemyAsset] of Object.entries(level.theme.enemies)) {
+                const assets = Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset];
+                for (const name of assets) {
+                    const assetKey = `${name}_${themeId}`;
+                    try {
+                        const tex = await PIXI.Assets.load(`${basePath}/${name}.png`);
+                        this.assets[assetKey] = tex;
+                    } catch (e) { }
+                }
             }
 
             // Themed castle
@@ -191,6 +249,14 @@ export class TDRenderer {
                 const tex = await PIXI.Assets.load(`${basePath}/castle.png`);
                 this.assets[`castle_${themeId}`] = tex;
             } catch (e) { }
+
+            // Scene background image (full map sprite)
+            if (level.theme.sceneBg) {
+                try {
+                    const tex = await PIXI.Assets.load(`${basePath}/${level.theme.sceneBg}.png`);
+                    this.assets[`sceneBg_${themeId}`] = tex;
+                } catch (e) { }
+            }
         }
     }
 
@@ -237,8 +303,10 @@ export class TDRenderer {
                 const name = typeof deco === 'string' ? deco : deco.name;
                 const scale = typeof deco === 'object' ? deco.scale : 1.0;
                 const anchorY = typeof deco === 'object' ? deco.anchorY : 0.85;
+                const noWind = typeof deco === 'object' ? !!deco.noWind : false;
+                const isWindmill = name.includes('windmill');
                 const tex = this._getThemedAsset(name) || this.assets[name];
-                if (tex) entries.push({ tex, scale, anchorY });
+                if (tex) entries.push({ tex, scale, anchorY, noWind, _isWindmill: isWindmill });
             }
             if (entries.length > 0) return entries;
         }
@@ -252,6 +320,52 @@ export class TDRenderer {
     drawGround(grid) {
         const theme = this.currentTheme;
         const decoRate = theme ? theme.decoRate : 0.22;
+
+        // Pré-sélection : case moulin garantie adjacente au chemin
+        const windmillDecos = theme ? theme.decorations.filter(d => d.name && d.name.includes('windmill')) : [];
+        const cartDecos     = theme ? theme.decorations.filter(d => d.name && d.name.includes('cart'))     : [];
+        let windmillCell = null;
+        let cartCell     = null;
+
+        const isPath = (cell) => cell && (cell.type === 'path' || cell.type === 'spawn');
+
+        for (let y = 1; y < GRID_HEIGHT - 1; y++) {
+            for (let x = 1; x < GRID_WIDTH - 1; x++) {
+                if (grid[y][x].type !== 'grass') continue;
+                const up    = grid[y-1]?.[x];
+                const down  = grid[y+1]?.[x];
+                const left  = grid[y]?.[x-1];
+                const right = grid[y]?.[x+1];
+                const pathNeighbors = [up, down, left, right].filter(isPath).length;
+
+                // Charrette : angle intérieur = 2 voisins chemin formant un L
+                if (cartCell === null && cartDecos.length > 0 && pathNeighbors >= 2) {
+                    const hasH = isPath(left) || isPath(right);
+                    const hasV = isPath(up)   || isPath(down);
+                    if (hasH && hasV) cartCell = { x, y };
+                }
+                // Moulin : au moins 1 voisin chemin
+                if (windmillCell === null && windmillDecos.length > 0 && pathNeighbors >= 1
+                    && !(cartCell && cartCell.x === x && cartCell.y === y)) {
+                    windmillCell = { x, y };
+                }
+            }
+        }
+
+        // Fond scène unique : si le thème a un sceneBg, on l'affiche à la place des tuiles
+        const sceneBgTex = theme ? this.assets[`sceneBg_${theme.id}`] : null;
+        if (sceneBgTex) {
+            const mapW = GRID_WIDTH  * TILE_WIDTH;
+            const mapH = GRID_HEIGHT * TILE_HEIGHT;
+            const bg = new PIXI.Sprite(sceneBgTex);
+            bg.anchor.set(0, 0);
+            bg.x = 0;
+            bg.y = 0;
+            bg.width  = mapW;
+            bg.height = mapH;
+            bg.eventMode = 'none';
+            this.groundLayer.addChild(bg);
+        }
 
         for (let sum = 0; sum < GRID_WIDTH + GRID_HEIGHT - 1; sum++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
@@ -282,10 +396,9 @@ export class TDRenderer {
 
                     tile = new PIXI.Sprite(texture);
                     tile.anchor.set(0.5, 0.5);
-                    const tileRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
                     const tileScale = (this.currentTheme && this.currentTheme.tileScale) || 1.0;
-                    tile.width = tileRef * 1.35 * tileScale;
-                    tile.height = tileRef * 1.35 * tileScale;
+                    tile.width  = TILE_WIDTH  * 1.02 * tileScale;
+                    tile.height = TILE_HEIGHT * 1.02 * tileScale;
 
                     if (cell.type === 'spawn') {
                         tile.tint = 0xffaaaa;
@@ -306,58 +419,75 @@ export class TDRenderer {
                     }
 
                     tile = new PIXI.Graphics();
-                    // Grow diamond to eliminate sub-pixel gaps from scaling
-                    const g = 4;
-                    tile.poly([
-                        0, -g,
-                        TILE_WIDTH / 2 + g, TILE_HEIGHT / 2,
-                        0, TILE_HEIGHT + g,
-                        -TILE_WIDTH / 2 - g, TILE_HEIGHT / 2
-                    ]);
+                    const g = 1; // léger overlap pour éviter les seams
+                    tile.rect(-TILE_WIDTH / 2 - g, -TILE_HEIGHT / 2 - g, TILE_WIDTH + g * 2, TILE_HEIGHT + g * 2);
                     tile.fill({ color });
                     tile.stroke({ width: 1, color: strokeColor, alpha: 0.15 });
-                    tile.poly([
-                        0, -g,
-                        TILE_WIDTH / 2 + g, TILE_HEIGHT / 2,
-                        0, 4,
-                        -TILE_WIDTH / 2 - g, TILE_HEIGHT / 2
-                    ]);
-                    tile.fill({ color: 0xffffff, alpha: 0.1 });
+                    // Highlight haut de tuile
+                    tile.rect(-TILE_WIDTH / 2, -TILE_HEIGHT / 2, TILE_WIDTH, TILE_HEIGHT * 0.25);
+                    tile.fill({ color: 0xffffff, alpha: 0.08 });
                 }
 
                 tile.x = iso.x;
-                tile.y = iso.y + (useSprites ? TILE_HEIGHT / 2 : 0);
+                tile.y = iso.y + TILE_HEIGHT / 2;
                 tile.gridX = x;
                 tile.gridY = y;
                 tile.eventMode = 'none';
-                tile.alpha = 1;
+                // Tuile invisible si un fond scène remplace la grille
+                tile.alpha = sceneBgTex ? 0 : 1;
                 tile.originalTint = tile.tint || 0xffffff;
 
                 this.groundLayer.addChild(tile);
                 this.tileSprites.push(tile);
 
                 if (cell.type === 'base') {
-                    const castleTex = this._getThemedAsset('castle');
-                    if (castleTex) {
-                        const castle = new PIXI.Sprite(castleTex);
-                        castle.anchor.set(0.5, (theme && theme.castleAnchorY) || 0.75);
-                        const cRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
-                        const cScale = (theme && theme.castleScale) || 1.8;
-                        castle.width = cRef * cScale;
-                        castle.height = cRef * cScale;
-                        castle.x = iso.x;
-                        castle.y = iso.y + TILE_HEIGHT * 0.6;
-                        this.entityLayer.addChild(castle);
-                    } else {
-                        const icon = new PIXI.Text({ text: '🏠', style: { fontSize: 26 } });
-                        icon.anchor.set(0.5);
-                        icon.x = iso.x;
-                        icon.y = iso.y + TILE_HEIGHT / 2;
-                        this.groundLayer.addChild(icon);
+                    // Pas de château sprite si le fond scène intègre déjà la forteresse
+                    if (!sceneBgTex) {
+                        const castleTex = this._getThemedAsset('castle');
+                        if (castleTex) {
+                            const castle = new PIXI.Sprite(castleTex);
+                            castle.anchor.set(0.5, (theme && theme.castleAnchorY) || 0.75);
+                            const cRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                            const cScale = (theme && theme.castleScale) || 1.8;
+                            castle.width = cRef * cScale;
+                            castle.height = cRef * cScale;
+                            castle.x = iso.x;
+                            castle.y = iso.y + TILE_HEIGHT * 0.6;
+                            this.entityLayer.addChild(castle);
+                        } else {
+                            const icon = new PIXI.Text({ text: '🏠', style: { fontSize: 26 } });
+                            icon.anchor.set(0.5);
+                            icon.x = iso.x;
+                            icon.y = iso.y + TILE_HEIGHT / 2;
+                            this.groundLayer.addChild(icon);
+                        }
                     }
                 } else if (cell.type === 'grass') {
                     const rand = Math.random();
-                    const decoEntries = this._getDecorationEntries();
+                    const onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
+                    const isWindmillCell = windmillCell && windmillCell.x === x && windmillCell.y === y;
+
+                    // Case moulin garantie
+                    if (isWindmillCell && windmillDecos.length > 0) {
+                        const windmillTex = this._getThemedAsset(windmillDecos[0].name) || this.assets[windmillDecos[0].name];
+                        if (windmillTex) {
+                            const entry = windmillDecos[0];
+                            const sprite = new PIXI.Sprite(windmillTex);
+                            sprite.anchor.set(0.5, entry.anchorY);
+                            const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                            sprite.width = tRef * entry.scale;
+                            sprite.height = tRef * entry.scale;
+                            sprite.x = iso.x;
+                            sprite.y = iso.y + TILE_HEIGHT / 2;
+                            sprite.eventMode = 'none';
+                            this.entityLayer.addChild(sprite);
+                            cell.hasTree = true;
+                        }
+                    }
+
+                    // Autres décos normales (pas de moulin dans le pool)
+                    const nonWindmillEntries = this._getDecorationEntries().filter(e => !e._isWindmill);
+                    const decoEntries = (sceneBgTex || onBorder || isWindmillCell) ? [] : nonWindmillEntries;
                     if (rand < decoRate && decoEntries.length > 0) {
                         const entry = decoEntries[Math.floor(Math.random() * decoEntries.length)];
                         const tree = new PIXI.Sprite(entry.tex);
@@ -369,12 +499,14 @@ export class TDRenderer {
                         tree.x = iso.x;
                         tree.y = iso.y + TILE_HEIGHT / 2;
                         tree.eventMode = 'none';
-                        tree._windPhase = Math.random() * Math.PI * 2;
-                        tree._windSpeed = 0.8 + Math.random() * 0.4;
-                        tree._baseScaleX = tree.scale.x;
-                        tree._baseSkew = 0;
+                        if (!entry.noWind) {
+                            tree._windPhase = Math.random() * Math.PI * 2;
+                            tree._windSpeed = 0.8 + Math.random() * 0.4;
+                            tree._baseScaleX = tree.scale.x;
+                            tree._baseSkew = 0;
+                            this.treeSprites.push(tree);
+                        }
                         this.entityLayer.addChild(tree);
-                        this.treeSprites.push(tree);
                         // Mark cell so towers can't be placed here
                         cell.hasTree = true;
                     } else if (rand < decoRate + 0.03 && !useSprites) {
@@ -384,6 +516,7 @@ export class TDRenderer {
                         deco.x = iso.x + (Math.random() - 0.5) * 20;
                         deco.y = iso.y + TILE_HEIGHT / 2 + (Math.random() - 0.5) * 8;
                         deco.alpha = 0.7;
+                        deco._isDecoration = true;
                         this.groundLayer.addChild(deco);
                     }
                 } else if (cell.type === 'path' && !useSprites) {
@@ -499,8 +632,17 @@ export class TDRenderer {
         let baseScaleX, baseScaleY;
 
         // Try themed enemy sprite first, then fallback to base
-        const themedKey = this.currentTheme ? this.currentTheme.enemies[type] : null;
-        const enemyTex = (themedKey ? this._getThemedAsset(themedKey) : null) || this.assets[`enemy_${type}`];
+        // Supporte les variants (array) : choisit un skin aléatoire
+        const themedEntry = this.currentTheme ? this.currentTheme.enemies[type] : null;
+        let themedKey = themedEntry;
+        if (Array.isArray(themedEntry)) {
+            const pick = themedEntry[Math.floor(Math.random() * themedEntry.length)];
+            themedKey = pick;
+        }
+        const themeId = this.currentTheme ? this.currentTheme.id : null;
+        const enemyTex = (themedKey && themeId ? this.assets[`${themedKey}_${themeId}`] : null)
+                      || (themedKey ? this._getThemedAsset(themedKey) : null)
+                      || this.assets[`enemy_${type}`];
 
         if (enemyTex) {
             body = new PIXI.Sprite(enemyTex);
