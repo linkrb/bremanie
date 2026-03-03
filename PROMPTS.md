@@ -53,7 +53,7 @@ armure royale bleue ornée d'or, cape rouge, tient une épée élégante.
 
 ### Nathan (fils)
 ```
-Jeune garçon d'environ 12 ans, héros de Brémanie : cheveux bruns en bataille,
+Jeune garçon d'environ 8 ans, héros de Brémanie : cheveux bruns en bataille,
 tunique brune et cuir, épaulières légères, cape bleue, épée courte au côté.
 ```
 
