@@ -1,7 +1,7 @@
 import {
     GRID_WIDTH, GRID_HEIGHT,
     TOWER_TYPES, TOWER_DISPLAY, SHOP_ITEMS, LEVELS,
-    fromIso, getTowerUnlockedByWorld
+    fromIso
 } from './tdConfig.js';
 import { TDRenderer } from './TDRenderer.js';
 import { TDEngine } from './TDEngine.js';
@@ -16,8 +16,7 @@ export class TowerDefenseGame {
         this.selectedPlacedTower = null;
         this.hoveredTile = null;
         this.shopOpen = false;
-        this._continuing = false; // true = on continue la campagne (garde or/santé/unlocks)
-        this.completedLevels = new Set();
+        this._continuing = false;
 
         // Système de dialogues en jeu
         this.dialogueEngine = new DialogueEngine({
@@ -33,6 +32,7 @@ export class TowerDefenseGame {
         this.onTutorialVictory  = null;  // (next) — badge victoire interactif avant dialogue
         this.onTutorialWin      = null;  // () — après dialogue tutorial_win
         this.onWaveStarted      = null;  // (waveNumber) — badge, musique, etc.
+        this.onWaveCompleted    = null;  // (waveNumber)
         this.onTowerPlaced      = null;  // () — son de pose
     }
 
@@ -114,7 +114,6 @@ export class TowerDefenseGame {
         const hide = (sel) => document.querySelector(sel)?.style.setProperty('display', 'none');
         hide('.tower-bar');
         hide('#shop-btn');
-        hide('#sell-btn');
         hide('#speed-btn');
         hide('#wave-btn');
         hide('#dev-panel');
@@ -204,8 +203,9 @@ export class TowerDefenseGame {
             }
         };
 
-        this.engine.onWaveCompleted = () => {
+        this.engine.onWaveCompleted = (waveNumber) => {
             this.updateUI();
+            this.onWaveCompleted?.(waveNumber);
         };
 
         this.engine.onBuffsChanged = () => {
@@ -217,7 +217,6 @@ export class TowerDefenseGame {
         };
 
         this.engine.onLevelComplete = (level) => {
-            this.completedLevels.add(level);
             this.showLevelTransition(level);
         };
 
@@ -381,7 +380,6 @@ export class TowerDefenseGame {
             xpBarEl.style.background = tower.level >= 3 ? '#f1c40f' : '#9b59b6';
         }
 
-        document.getElementById('sell-btn').textContent = `Vendre ${sellValue}💰`;
         document.getElementById('tower-info').classList.add('visible');
 
         this.renderer.showTowerRangePreview(tower);
@@ -416,13 +414,6 @@ export class TowerDefenseGame {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.tower;
 
-                // If tower is locked by world, show shake feedback (no gold unlock)
-                if (this.engine.isTowerLocked(type)) {
-                    btn.classList.add('shake');
-                    setTimeout(() => btn.classList.remove('shake'), 300);
-                    return;
-                }
-
                 this.hideTowerInfo();
                 document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -456,118 +447,13 @@ export class TowerDefenseGame {
         });
     }
 
-    setupSellButton() {
-        document.getElementById('sell-btn').addEventListener('click', () => {
-            this.sellSelectedTower();
-        });
-    }
+    setupSellButton() { /* vente supprimée */ }
 
-    setupShop() {
-        document.getElementById('shop-btn').addEventListener('click', () => {
-            this.shopOpen = !this.shopOpen;
-            document.getElementById('shop-overlay').classList.toggle('visible', this.shopOpen);
-            if (this.shopOpen) this.updateShopItems();
-        });
-
-        document.getElementById('shop-close').addEventListener('click', () => {
-            this.shopOpen = false;
-            document.getElementById('shop-overlay').classList.remove('visible');
-        });
-
-        document.querySelectorAll('.shop-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const type = item.dataset.item;
-                let success = false;
-
-                switch (type) {
-                    case 'heart': success = this.engine.buyHeart(); break;
-                    case 'repair': success = this.engine.buyRepair(); break;
-                    case 'nuke': success = this.engine.buyNuke(); break;
-                    case 'damage': success = this.engine.activateDamageBuff(); break;
-                    case 'slow': success = this.engine.activateSlowBuff(); break;
-                }
-
-                if (success) {
-                    this.updateUI();
-                    this.updateShopItems();
-
-                    item.style.background = 'rgba(78,205,196,0.3)';
-                    setTimeout(() => item.style.background = '', 300);
-                }
-            });
-        });
-    }
+    setupShop() { /* shop supprimé */ }
 
     // ===== DEBUG LEVEL SELECTOR =====
 
-    // ===== WORLD UNLOCK SYSTEM =====
-
-    loadUnlockedTowers() { /* localStorage disabled */ }
-    saveUnlockedTowers() { /* localStorage disabled */ }
-
-    checkWorldUnlock(levelIndex) {
-        const towerType = getTowerUnlockedByWorld(levelIndex);
-        if (!towerType) return;
-        const wasNew = this.engine.unlockTower(towerType);
-        if (wasNew) {
-            this.saveUnlockedTowers();
-            this.updateUI();
-            this.showUnlockNotification(towerType);
-        }
-    }
-
-    showUnlockNotification(type) {
-        const display = TOWER_DISPLAY[type] || {};
-        const name = display.unlockName || display.name || type;
-        const icon = display.icon || '🏆';
-
-        const notif = document.createElement('div');
-        notif.className = 'unlock-notif';
-        notif.textContent = `${icon} ${name} débloquée !`;
-
-        const container = this.container || document.getElementById('game-container');
-        container.appendChild(notif);
-
-        setTimeout(() => notif.remove(), 3100);
-    }
-
-    setupLevelSelector() {
-        const overlay = document.getElementById('level-selector');
-        if (!overlay) return;
-
-        const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        const devBtn = document.getElementById('dev-btn');
-
-        // Dev-btn toggles worldmap on localhost (quick level switch)
-        if (isLocal && devBtn) {
-            devBtn.addEventListener('click', () => {
-                overlay.classList.toggle('visible');
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'l' || e.key === 'L') overlay.classList.toggle('visible');
-            });
-        } else if (devBtn) {
-            devBtn.style.display = 'none';
-        }
-
-        document.querySelectorAll('.level-select-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const levelIndex = parseInt(btn.dataset.level, 10);
-                this.jumpToLevel(levelIndex);
-                overlay.classList.remove('visible');
-            });
-        });
-
-        document.querySelectorAll('.zone-poly').forEach(poly => {
-            poly.addEventListener('click', () => {
-                const levelIndex = parseInt(poly.dataset.level, 10);
-                this.jumpToLevel(levelIndex);
-                overlay.classList.remove('visible');
-            });
-        });
-
-        // La worldmap est affichée par setNormalMode(), pas au démarrage
-    }
+    setupLevelSelector() { /* worldmap supprimée */ }
 
     setupDevMode() {
         const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
@@ -604,10 +490,6 @@ export class TowerDefenseGame {
 
         if (engine.devMode) {
             this._savedGold = engine.gold;
-            // Unlock all world-locked towers
-            for (const [type, config] of Object.entries(TOWER_TYPES)) {
-                if (config.unlockedByWorld !== undefined) engine.unlockedTowers.add(type);
-            }
             if (btn) { btn.textContent = 'DEV ✓'; btn.classList.add('active'); }
             if (badge) badge.style.display = '';
             if (spawnPanel) spawnPanel.style.display = '';
@@ -638,16 +520,11 @@ export class TowerDefenseGame {
         this._continuing = false;
 
         if (continuing) {
-            // Continuation : garde or, santé, tours débloquées — remet juste la vague locale à 0
             this.engine.resetGameState(levelIndex, false);
         } else {
-            // Nouveau jeu : reset complet
             this.engine.resetGameState(levelIndex, true);
             this.engine.gold = 150;
             this.engine.health = 15;
-            this.engine.unlockedTowers.clear();
-            this.completedLevels.clear();
-            this.updateWorldmapZones();
         }
 
         this.renderer.setTheme(this.engine.currentLevelData);
@@ -692,34 +569,9 @@ export class TowerDefenseGame {
         }
 
         document.querySelectorAll('.tower-btn').forEach(btn => {
-            const type = btn.dataset.tower;
-            const config = TOWER_TYPES[type];
-
-            // Hide if level requirement not met
-            if (config.availableFromLevel !== undefined && this.engine.level < config.availableFromLevel) {
-                btn.classList.add('hidden-tower');
-                return;
-            }
-            btn.classList.remove('hidden-tower');
-
-            const lockOverlay = btn.querySelector('.lock-overlay');
-            if (this.engine.isTowerLocked(type)) {
-                // Show locked state (unlockable by completing a world, not by gold)
-                btn.classList.add('locked');
-                btn.classList.remove('disabled');
-                if (lockOverlay) {
-                    lockOverlay.style.display = '';
-                    const costEl = lockOverlay.querySelector('.unlock-cost');
-                    if (costEl) {
-                        const worldNames = ['Prairie', 'Cimetière', 'Volcan', 'Glacier', 'Nuages'];
-                        costEl.textContent = worldNames[config.unlockedByWorld] || '?';
-                    }
-                }
-            } else {
-                btn.classList.remove('locked');
-                if (lockOverlay) lockOverlay.style.display = 'none';
-                btn.classList.toggle('disabled', this.engine.gold < config.cost);
-            }
+            const config = TOWER_TYPES[btn.dataset.tower];
+            if (!config) return;
+            btn.classList.toggle('disabled', this.engine.gold < config.cost);
         });
     }
 
@@ -796,22 +648,7 @@ export class TowerDefenseGame {
     }
 
     showLevelTransition(completedLevel) {
-        // Retour à la worldmap pour choisir le prochain niveau
         this._continuing = true;
-        this.updateWorldmapZones();
-        const selector = document.getElementById('level-selector');
-        if (selector) selector.classList.add('visible');
-    }
-
-    updateWorldmapZones() {
-        document.querySelectorAll('.zone-poly, .level-select-btn').forEach(el => {
-            const levelIndex = parseInt(el.dataset.level, 10);
-            if (this.completedLevels.has(levelIndex)) {
-                el.classList.add('completed');
-            } else {
-                el.classList.remove('completed');
-            }
-        });
     }
 
     // ===== MODES SPA =====
@@ -839,9 +676,29 @@ export class TowerDefenseGame {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
-        document.querySelectorAll('.tower-btn').forEach(btn => btn.style.removeProperty('display'));
-        document.getElementById('shop-btn')?.style.removeProperty('display');
-        document.getElementById('level-selector')?.classList.add('visible');
+    }
+
+    // Chapitre 2 : combat de la Forêt (niveau index 4, archer uniquement)
+    setChapter2Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode(); // reset de base (level 0, UI restaurée)
+
+        // Saute au niveau Forêt (index 4)
+        const forestIndex = LEVELS.findIndex(l => l.name === 'Forêt');
+        if (forestIndex < 0) { console.error('[Brémanie] Niveau Forêt introuvable'); return; }
+        this.engine.resetGameState(forestIndex, true);
+        this.engine.gold = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+        this.updateUI();
     }
 
     _resetForMode() {
@@ -849,7 +706,6 @@ export class TowerDefenseGame {
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');
         show('.tower-bar');
         show('#shop-btn');
-        show('#sell-btn');
         show('#speed-btn');
         show('#wave-btn');
         document.getElementById('game-over')?.classList.remove('visible');
@@ -860,11 +716,6 @@ export class TowerDefenseGame {
         this.engine.gold = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.engine.unlockedTowers.clear();
-        for (const [type, config] of Object.entries(TOWER_TYPES)) {
-            if (config.unlockedByWorld !== undefined) this.engine.unlockedTowers.add(type);
-        }
-        this.completedLevels.clear();
 
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid);

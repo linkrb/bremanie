@@ -1,0 +1,62 @@
+@scene scenes/castle_siege.jpg
+> Pendant ce temps... au château.
+
+@scene scenes/castle_hall_destroyed.jpg
+> À l'intérieur, le chaos règne.
+
+romain(right):worried Arg, je n'ai pas réussi.
+
+romain(right):surprised Qui êtes vous ?!
+
+@scene scenes/necromancer_castle.jpg
+> ...
+
+@hide left
+necromancien(right):neutral ...
+
+romain(left):angry Monstre ! Qu'as-tu fait de mes chevaliers ?!
+
+@hide left
+necromancien(right):neutral ...
+
+romain(left):determined Tu ne t'en tireras pas. Mon peuple se relèvera !
+
+@hide left
+necromancien(right):neutral ...
+
+> Le nécromancien lève lentement son bâton. Un voile sombre envahit la salle.
+
+romain(left):worried Que... que fais-tu ? Réponds-moi !
+
+@hide left
+necromancien(right):neutral ...
+
+> L'orbe de ténèbres pulse. Romain recule, mais ses jambes ne répondent plus.
+
+romain(left):sad Non... non, je...
+
+> La lueur sombre envahit ses yeux. Le roi se redresse, vide de lui-même.
+
+romain(left):sad Anna... Nathan...
+
+@hide left
+@hide right
+@bg scenes/forest.jpg
+
+> Dans une forêt non loin
+
+nathan(left):determined Vite Anna ! Le fort de l'oncle David est presque là.
+
+anna(right):worried Il reste juste la forêt à traverser.
+
+nathan(left):determined On y est presque, allez !
+
+anna(right):surprised Mince... tu as entendu ça ?
+
+nathan(left):worried Entendu quoi ?
+
+anna(right):worried Ce bruit... dans les arbres.
+
+> Un craquement. Puis un autre. Les branches s'agitent sans vent.
+
+nathan(left):surprised Attention !!!

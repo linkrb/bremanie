@@ -128,8 +128,9 @@ function startCombatMusic() {
     audio.crossfadeTo('combat_theme', 2000);
 }
 
-function setCombatMode(on) {
+function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);
+    screenGame.classList.toggle('chapter2-mode', on && chapter === 2);
     combatMusicStarted = false;
 }
 
@@ -151,6 +152,20 @@ function wireGameCallbacks() {
         startCombatMusic();
         game.engine.paused = true;
         setTimeout(() => { game.engine.paused = false; }, 1900);
+    };
+
+    // Dialogues entre vagues (chapitre 2)
+    const chapter2WaveDialogues = {
+        1: 'chapter2/wave1_clear',
+        2: 'chapter2/wave2_clear',
+    };
+    game.onWaveCompleted = (waveNumber) => {
+        const script = chapter2WaveDialogues[waveNumber];
+        if (!script || !screenGame.classList.contains('chapter2-mode')) return;
+        game.engine.paused = true;
+        showDialogue(script, () => {
+            game.engine.paused = false;
+        });
     };
 
     game.onScriptedDefeat = () => {
@@ -234,6 +249,12 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true; // le clic sur "lancer la vague" ne doit pas rejouer le badge
         game.setTutorialMode();
+    } else if (mode === 'chapter2') {
+        setCombatMode(true, 2);
+        startCombatMusic();
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChapter2Mode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -320,7 +341,7 @@ function startChapter2() {
         sub:   'Enchantée',
     }, () => {
         showDialogue('chapter2/intro', () => {
-            // TODO: lancer le combat chapitre 2
+            showGame('chapter2');
         });
     });
 }
@@ -349,6 +370,7 @@ loaderEl.classList.add('hidden');
 // ?dev=combat         → TD mode scripté direct
 // ?dev=tutorial       → TD mode tutorial direct
 // ?dev=normal         → TD worldmap direct
+// ?dev=chapter2       → TD mode forêt direct
 const params  = new URLSearchParams(location.search);
 const chapter = params.get('chapter');
 const scene   = params.get('scene');
@@ -368,3 +390,4 @@ if (scene)                  { showDialogue(scene, () => {}); }
 if (dev === 'combat')       { showGame('scripted'); }
 if (dev === 'tutorial')     { showGame('tutorial'); }
 if (dev === 'normal')       { showGame('normal'); }
+if (dev === 'chapter2')     { showGame('chapter2'); }

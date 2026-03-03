@@ -402,6 +402,7 @@ export class DialogueEngine {
                 if (cmd === 'bg')    pendingBg    = val;
                 if (cmd === 'scene') pendingScene = val;
                 if (cmd === 'bgpos') pendingBgPos = val;
+                if (cmd === 'hide')  { script.push({ type: 'hide', side: val }); continue; }
                 if (cmd === 'music')   pendingMusic   = val;
                 if (cmd === 'sfx')     pendingSfx     = val;
                 if (cmd === 'sfxloop') pendingSfxLoop = val;
@@ -477,6 +478,17 @@ export class DialogueEngine {
         if (line.sfx)     this.onSfx?.(line.sfx);
         if (line.sfxloop) this.onSfxLoop?.(line.sfxloop);
         if (line.sfxstop) this.onSfxStop?.(line.sfxstop);
+
+        // ── @hide left/right ─────────────────────────────────
+        if (line.type === 'hide') {
+            const el = this.els[line.side];
+            el.classList.add('hidden');
+            el.classList.remove('active', 'inactive');
+            this.sides[line.side].visible = false;
+            this.sides[line.side].char    = null;
+            this._advance(); // pas de tap requis
+            return;
+        }
 
         // ── Mode cinématique (@scene) ────────────────────────
         if (line.scene) {

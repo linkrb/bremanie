@@ -5,20 +5,7 @@ export const GRID_WIDTH = 7;
 export const GRID_HEIGHT = 12;
 
 export const TOWER_TYPES = {
-    // === TOURS DE DÉPART ===
-    archer:   { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 2.5 },
-    cannon:   { cost: 100, damage: 55, range: 2.5,  cooldown: 1300, speed: 33, color: 0xFF7F7F, splash: 1.2,                                                                              availableFromLevel: 999 },
-    sniper:   { cost: 250, damage: 75, range: 4.5,  cooldown: 2500, speed: 60, color: 0xE6E6FA,                                                                                           availableFromLevel: 999 },
-
-    // === TOURS DÉBLOQUÉES (clairement supérieures aux tours de départ) ===
-    // Éolienne — débloquée Prairie : AoE + pushback, DPS 30 + zone → meilleure que Archer
-    wind:     { cost: 150, damage: 28, range: 2.8,  cooldown: 950,  speed: 38, color: 0xA8E6CF, pushback: 0.8, unlockedByWorld: 0,                                                       availableFromLevel: 999 },
-    // Fantôme — débloquée Cimetière : grasp lourd + DoT fort, multiplicateur de DPS sur cible immobilisée
-    cemetery: { cost: 150, damage: 40, range: 3.0,  cooldown: 2800, speed: 34, color: 0x4ECDC4, grasp: true, graspDuration: 3000, graspDot: 15, unlockedByWorld: 1, displayScale: 1.25, availableFromLevel: 999 },
-    // Feu — débloquée Volcan : gros splash + brûlure, DPS 55 + zone + DoT → meilleure que Canon
-    fire:     { cost: 210, damage: 60, range: 2.8,  cooldown: 1100, speed: 32, color: 0xFF6B35, splash: 1.5, burn: true, burnDuration: 2500, burnDot: 12, unlockedByWorld: 2,            availableFromLevel: 999 },
-    // Glace — débloquée Glacier : slow puissant 0.3x, range étendue → multiplie DPS de toutes les tours
-    ice:      { cost: 100, damage: 12, range: 3.0,  cooldown: 700,  speed: 36, color: 0x87CEEB, slow: 0.3, unlockedByWorld: 3,                                                           availableFromLevel: 999 },
+    archer: { cost: 50, damage: 20, range: 3, cooldown: 750, speed: 42, color: 0x98D4BB, displayScale: 2.5 },
 };
 
 export const ENEMY_TYPES = {
@@ -178,6 +165,78 @@ export const LEVELS = [
             [{ type: 'fast', count: 22 }, { type: 'flying', count: 14 }, { type: 'tank', count: 7 }],
             [{ type: 'tank', count: 13 }, { type: 'fast', count: 20 }, { type: 'flying', count: 11 }],
             [{ type: 'boss', count: 3 }, { type: 'tank', count: 11 }, { type: 'fast', count: 18 }, { type: 'flying', count: 13 }],
+        ]
+    },
+    {
+        name: 'Forêt',
+        theme: {
+            id: 'forest',
+            castleScale: 2.0,
+            castleAnchorY: 0.7,
+            enemyScale: 1.4,
+            enemyScales: { tank: 1.8, boss: 2.0 },
+            tiles: { grass: 'tile_grass', path: 'tile_path' },
+            grassVariants: [
+                // Herbe simple (poids ×4)
+                'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
+                'tile_grass_02', 'tile_grass_02', 'tile_grass_02',
+                'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
+                'tile_grass_04', 'tile_grass_04',
+                'tile_grass_05', 'tile_grass_05',
+                'tile_grass_06', 'tile_grass_06',
+                // Rocailleux (occasionnel)
+                'tile_rocky_01', 'tile_rocky_02',
+                // Patchs sol / vignes (rare)
+                'tile_patch_01', 'tile_vines_01',
+                // Fleurs (très rare)
+                'tile_flower_01', 'tile_flower_03',
+                // Champignons
+                'tile_fungi_01',
+            ],
+            decorations: [
+                // Arbres feuillus
+                { name: 'tree',        scale: 1.7, anchorY: 0.85, noWind: true },
+                { name: 'tree_oak',    scale: 1.8, anchorY: 0.85, noWind: true },
+                // Conifères
+                { name: 'pine',        scale: 1.5, anchorY: 0.85, noWind: true },
+                { name: 'pine_small',  scale: 1.2, anchorY: 0.85, noWind: true },
+                // Détails au sol
+                { name: 'stump',       scale: 0.7, anchorY: 0.85, noWind: true },
+                { name: 'log_pile',    scale: 0.8, anchorY: 0.85, noWind: true },
+                { name: 'bush',        scale: 1.0, anchorY: 0.85, noWind: true },
+            ],
+            decoRate: 0.22,
+            enemies: {
+                basic: ['enemy_fox', 'enemy_boar'],
+                fast:  'enemy_wolf',
+                tank:  'enemy_bear',
+                flying:'enemy_flying',
+                boss:  'enemy_bear'
+            }
+        },
+        path: [
+            // Entrée nord (col 4)
+            {x:4,y:0}, {x:4,y:1}, {x:4,y:2},
+            // Virage gauche jusqu'au bord
+            {x:3,y:2}, {x:2,y:2}, {x:1,y:2}, {x:0,y:2},
+            // Descente bord gauche
+            {x:0,y:3}, {x:0,y:4}, {x:0,y:5}, {x:0,y:6},
+            // Traverse toute la largeur vers la droite
+            {x:1,y:6}, {x:2,y:6}, {x:3,y:6}, {x:4,y:6}, {x:5,y:6}, {x:6,y:6},
+            // Descente bord droit
+            {x:6,y:7}, {x:6,y:8},
+            // Rentre vers le centre
+            {x:5,y:8}, {x:4,y:8}, {x:3,y:8},
+            // Descente finale → fort
+            {x:3,y:9}, {x:3,y:10}, {x:3,y:11}
+        ],
+        waves: [
+            // Vague 1 : renards et sangliers
+            [{ type: 'basic', count: 8 }],
+            // Vague 2 : + les loups
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 6 }],
+            // Vague 3 : + l'ours (1 seul, gros tank)
+            [{ type: 'basic', count: 10 }, { type: 'fast', count: 8 }, { type: 'tank', count: 1 }],
         ]
     },
     {
@@ -367,14 +426,6 @@ export const SHOP_ITEMS = {
     damage: { cost: 100, name: 'Rage' },
     slow: { cost: 80, name: 'Blizzard' }
 };
-
-// ============== UNLOCK HELPERS ==============
-export function getTowerUnlockedByWorld(levelIndex) {
-    for (const [type, config] of Object.entries(TOWER_TYPES)) {
-        if (config.unlockedByWorld === levelIndex) return type;
-    }
-    return null;
-}
 
 // ============== ISOMETRIC HELPERS ==============
 // Mirrored iso so Y-axis goes down-right (path flows downward)

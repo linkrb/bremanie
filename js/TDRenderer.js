@@ -146,61 +146,27 @@ export class TDRenderer {
     }
 
     async loadAssets() {
-        const enemyAssets = Object.keys(ENEMY_TYPES).map(t => `enemy_${t}`);
-        const towerTypes = Object.keys(TOWER_TYPES);
-
-        // Load base enemy assets
-        for (const name of enemyAssets) {
+        // Archer tower sprites (4 orientations × 3 niveaux)
+        const base = '/bremanie/images/td/towers/archer';
+        for (const variant of ['front', 'side', 'left', 'back']) {
             try {
-                const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
-                this.assets[name] = texture;
+                const tex = await PIXI.Assets.load(`${base}/tower_archer_${variant}.png`);
+                this.assets[`tower_archer_${variant}`] = tex;
             } catch (e) { }
         }
-
-        for (const type of towerTypes) {
-            const base = `/bremanie/images/td/towers/${type}`;
+        for (const lvl of [2, 3]) {
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
-                    const tex = await PIXI.Assets.load(`${base}/tower_${type}_${variant}.png`);
-                    this.assets[`tower_${type}_${variant}`] = tex;
+                    const tex = await PIXI.Assets.load(`${base}/tower_archer_lvl${lvl}_${variant}.png`);
+                    this.assets[`tower_archer_lvl${lvl}_${variant}`] = tex;
                 } catch (e) { }
             }
-            try {
-                const tex = await PIXI.Assets.load(`${base}/tower_${type}.png`);
-                this.assets[`tower_${type}`] = tex;
-            } catch (e) { }
-            // Level 2 & 3 directional sprites
-            for (const lvl of [2, 3]) {
-                for (const variant of ['front', 'side', 'left', 'back']) {
-                    try {
-                        const tex = await PIXI.Assets.load(`${base}/tower_${type}_lvl${lvl}_${variant}.png`);
-                        this.assets[`tower_${type}_lvl${lvl}_${variant}`] = tex;
-                    } catch (e) { }
-                }
-            }
         }
 
-        // Wind tower propeller
-        try {
-            const tex = await PIXI.Assets.load('/bremanie/images/td/towers/wind/wind_propeller.png');
-            this.assets['wind_propeller'] = tex;
-        } catch (e) { }
-
-        // Fire tower animation frames (lvl1 + lvl2 + lvl3, variants × 16 frames)
-        for (const lvl of ['', '_lvl2', '_lvl3']) {
-            for (const variant of ['left', 'front', 'back_left', 'back_front']) {
-                for (let i = 0; i < 16; i++) {
-                    try {
-                        const tex = await PIXI.Assets.load(`/bremanie/images/td/towers/fire/anim${lvl}_${variant}/${i}.png`);
-                        this.assets[`tower_fire_anim${lvl}_${variant}_${i}`] = tex;
-                    } catch (e) { }
-                }
-            }
-        }
-
-        const tileAssets = ['tile_grass', 'tile_path', 'castle', 'coin', 'heart', 'tree', 'tree_pine'];
-        const projAssets = ['proj_archer', 'proj_cannon', 'proj_ice', 'proj_sniper', 'proj_wind', 'proj_cemetery', 'proj_fire', 'hands_cemetery'];
-        for (const name of [...tileAssets, ...projAssets]) {
+        // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
+        for (const name of ['tile_grass', 'tile_path', 'castle', 'tree', 'tree_pine',
+                            'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
+                            'coin', 'heart', 'proj_archer']) {
             try {
                 const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
                 this.assets[name] = texture;
@@ -256,6 +222,19 @@ export class TDRenderer {
                     const tex = await PIXI.Assets.load(`${basePath}/${level.theme.sceneBg}.png`);
                     this.assets[`sceneBg_${themeId}`] = tex;
                 } catch (e) { }
+            }
+
+            // Grass variants (dédoublonnés)
+            if (level.theme.grassVariants) {
+                const unique = [...new Set(level.theme.grassVariants)];
+                for (const variantKey of unique) {
+                    const assetKey = `${variantKey}_${themeId}`;
+                    if (this.assets[assetKey]) continue;
+                    try {
+                        const tex = await PIXI.Assets.load(`${basePath}/grass/${variantKey}.png`);
+                        this.assets[assetKey] = tex;
+                    } catch (e) { }
+                }
             }
         }
     }
@@ -367,6 +346,11 @@ export class TDRenderer {
             this.groundLayer.addChild(bg);
         }
 
+        // Pré-calcul des variants herbe si le thème en a
+        const grassVariantTextures = (theme && theme.grassVariants)
+            ? theme.grassVariants.map(k => this.assets[`${k}_${theme.id}`] || this.assets[k]).filter(Boolean)
+            : null;
+
         for (let sum = 0; sum < GRID_WIDTH + GRID_HEIGHT - 1; sum++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
                 const y = sum - x;
@@ -387,7 +371,13 @@ export class TDRenderer {
                 if (useSprites) {
                     let texture;
                     if (cell.type === 'grass') {
-                        texture = grassTex;
+                        if (grassVariantTextures && grassVariantTextures.length > 0) {
+                            // Sélection déterministe par position (stable entre redraws)
+                            const idx = (x * 7 + y * 13) % grassVariantTextures.length;
+                            texture = grassVariantTextures[idx];
+                        } else {
+                            texture = grassTex;
+                        }
                     } else if (cell.type === 'path' || cell.type === 'spawn' || cell.type === 'base') {
                         texture = pathTex;
                     } else {
