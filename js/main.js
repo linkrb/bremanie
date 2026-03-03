@@ -208,9 +208,16 @@ async function ensureGameInit() {
 }
 
 // ── showGame ──────────────────────────────────────────────────
+// Synchrone côté appelant : si le jeu n'est pas encore init,
+// lance l'init en arrière-plan et se rappelle automatiquement.
 
-async function showGame(mode) {
-    await ensureGameInit();
+function showGame(mode) {
+    if (!game) {
+        ensureGameInit()
+            .then(() => showGame(mode))
+            .catch(err => console.error('[Brémanie] TD init failed:', err));
+        return;
+    }
     showScreen('screen-game');
     if (mode === 'scripted') {
         setCombatMode(true);
@@ -303,6 +310,6 @@ loaderEl.classList.add('hidden');
 
 // ── Dev shortcuts ─────────────────────────────────────────────
 const dev = new URLSearchParams(location.search).get('dev');
-if (dev === 'combat')   await showGame('scripted');
-if (dev === 'tutorial') await showGame('tutorial');
-if (dev === 'normal')   await showGame('normal');
+if (dev === 'combat')   showGame('scripted');
+if (dev === 'tutorial') showGame('tutorial');
+if (dev === 'normal')   showGame('normal');
