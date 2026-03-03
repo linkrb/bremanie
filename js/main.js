@@ -274,33 +274,47 @@ function fadeFromBlack(ms) {
     setTimeout(() => { el.style.pointerEvents = 'none'; }, ms);
 }
 
-document.getElementById('btn-start').addEventListener('click', () => {
-    audio.stop(2000);
+// ── Flow Prologue → Chapitre I ────────────────────────────────
 
-    fadeToBlack(2000).then(() => {
-        showTitle({
-            label: 'Prologue',
-            title: "L'Ombre",
-            sub:   'du Nécromancien',
-            bg:    '/bremanie/images/td/splash_bremanie.jpg',
-        }, () => {
-            showDialogue('prologue/siege', () => {
-                audio.stop(1500);
-                fadeToBlack(1500).then(() => {
-                    showTitle({
-                        label: 'Chapitre I',
-                        title: 'La Fuite',
-                        sub:   'Les Enfants du Roi',
-                        bg:    '/bremanie/images/scenes/chapter1_bg.jpg',
-                    }, () => {
-                        showDialogue('chapter1/intro', () => {
-                            showGame('scripted');
-                        });
-                    });
-                    fadeFromBlack(1000);
-                });
+function startPrologue() {
+    showTitle({
+        label: 'Prologue',
+        title: "L'Ombre",
+        sub:   'du Nécromancien',
+        bg:    '/bremanie/images/td/splash_bremanie.jpg',
+    }, () => {
+        showDialogue('prologue/siege', () => {
+            audio.stop(1500);
+            fadeToBlack(1500).then(() => {
+                startChapter1();
+                fadeFromBlack(1000);
             });
         });
+    });
+}
+
+function startChapter1() {
+    showTitle({
+        label: 'Chapitre I',
+        title: 'La Fuite',
+        sub:   'Les Enfants du Roi',
+        bg:    '/bremanie/images/scenes/chapter1_bg.jpg',
+    }, () => {
+        showDialogue('chapter1/intro', () => {
+            showGame('scripted');
+        });
+    });
+}
+
+// Point d'entrée après la défaite scriptée (nathan_power déjà vu)
+function startChapter1Tutorial() {
+    showGame('tutorial');
+}
+
+document.getElementById('btn-start').addEventListener('click', () => {
+    audio.stop(2000);
+    fadeToBlack(2000).then(() => {
+        startPrologue();
         fadeFromBlack(1000);
     });
 });
@@ -311,8 +325,30 @@ loaderEl.classList.add('hidden');
 // NB : on ne supprime pas le loader du DOM — ensureGameInit() en a besoin
 //      lors du premier chargement du jeu TD (PixiJS + sprites).
 
-// ── Dev shortcuts ─────────────────────────────────────────────
-const dev = new URLSearchParams(location.search).get('dev');
-if (dev === 'combat')   showGame('scripted');
-if (dev === 'tutorial') showGame('tutorial');
-if (dev === 'normal')   showGame('normal');
+// ── Dev / debug URL params ────────────────────────────────────
+// ?chapter=prologue   → titre Prologue (sans press-start ni musique)
+// ?chapter=1          → titre Chapitre I → dialogue intro → combat scripté
+// ?chapter=1b         → dialogue nathan_power → tutorial
+// ?chapter=1c         → tutorial directement
+// ?scene=xxx/yyy      → dialogue précis (ex: prologue/siege)
+// ?dev=combat         → TD mode scripté direct
+// ?dev=tutorial       → TD mode tutorial direct
+// ?dev=normal         → TD worldmap direct
+const params  = new URLSearchParams(location.search);
+const chapter = params.get('chapter');
+const scene   = params.get('scene');
+const dev     = params.get('dev');
+
+if (chapter === 'prologue') { audio.play('main_theme'); startPrologue(); }
+if (chapter === '1')        { audio.play('main_theme'); startChapter1(); }
+if (chapter === '1b')       {
+    audio.crossfadeTo('wind', 0);
+    showDialogue('chapter1/nathan_power', () => {
+        showDialogue('chapter1/towers_appear', () => { showGame('tutorial'); });
+    });
+}
+if (chapter === '1c')       { startChapter1Tutorial(); }
+if (scene)                  { showDialogue(scene, () => {}); }
+if (dev === 'combat')       { showGame('scripted'); }
+if (dev === 'tutorial')     { showGame('tutorial'); }
+if (dev === 'normal')       { showGame('normal'); }
