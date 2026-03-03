@@ -311,6 +311,20 @@ function startChapter1Tutorial() {
     showGame('tutorial');
 }
 
+// ── Flow Chapitre II ───────────────────────────────────────────
+
+function startChapter2() {
+    showTitle({
+        label: 'Chapitre II',
+        title: 'La Forêt',
+        sub:   'Enchantée',
+    }, () => {
+        showDialogue('chapter2/intro', () => {
+            // TODO: lancer le combat chapitre 2
+        });
+    });
+}
+
 document.getElementById('btn-start').addEventListener('click', () => {
     audio.stop(2000);
     fadeToBlack(2000).then(() => {
@@ -330,6 +344,7 @@ loaderEl.classList.add('hidden');
 // ?chapter=1          → titre Chapitre I → dialogue intro → combat scripté
 // ?chapter=1b         → dialogue nathan_power → tutorial
 // ?chapter=1c         → tutorial directement
+// ?chapter=2          → titre Chapitre II → dialogue intro (WIP)
 // ?scene=xxx/yyy      → dialogue précis (ex: prologue/siege)
 // ?dev=combat         → TD mode scripté direct
 // ?dev=tutorial       → TD mode tutorial direct
@@ -348,6 +363,7 @@ if (chapter === '1b')       {
     });
 }
 if (chapter === '1c')       { startChapter1Tutorial(); }
+if (chapter === '2')        { audio.play('main_theme'); startChapter2(); }
 if (scene)                  { showDialogue(scene, () => {}); }
 if (dev === 'combat')       { showGame('scripted'); }
 if (dev === 'tutorial')     { showGame('tutorial'); }
