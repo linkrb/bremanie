@@ -213,6 +213,9 @@ async function ensureGameInit() {
 
 function showGame(mode) {
     if (!game) {
+        // Passe à screen-game en premier : le loader (qui est à l'intérieur)
+        // devient visible grâce à l'opacité du parent.
+        showScreen('screen-game');
         ensureGameInit()
             .then(() => showGame(mode))
             .catch(err => console.error('[Brémanie] TD init failed:', err));
