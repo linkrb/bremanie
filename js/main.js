@@ -9,7 +9,10 @@ const dlg   = new DialogueEngine({
     dialoguePath: '/bremanie/dialogues/',
     typeSpeed: 25,
 });
-const game = new TowerDefenseGame();
+
+// Jeu TD : lazy-init (chargé seulement au premier combat)
+let game            = null;
+let gameInitPromise = null;
 
 audio.preload('main_theme',      '/bremanie/audio/main_theme.mp3');
 audio.preload('prologue_siege',  '/bremanie/audio/prologue_siege.mp3');
@@ -130,7 +133,84 @@ function setCombatMode(on) {
     combatMusicStarted = false;
 }
 
-function showGame(mode) {
+// ── Callbacks du jeu (câblés après init) ─────────────────────
+
+function wireGameCallbacks() {
+    // Son de pose de tour
+    game.onTowerPlaced = () => audio.playSfx('tower_place');
+
+    // Pastille + musique à chaque début de vague (pause moteur pendant le logo)
+    game.onWaveStarted = () => {
+        if (skipEntryWaveBadge) {
+            // Badge déjà affiché à l'entrée de l'écran — on saute badge + pause pour cette vague
+            skipEntryWaveBadge = false;
+            startCombatMusic(); // idempotent (combatMusicStarted guard)
+            return;
+        }
+        showCombatBadge();
+        startCombatMusic();
+        game.engine.paused = true;
+        setTimeout(() => { game.engine.paused = false; }, 1900);
+    };
+
+    game.onScriptedDefeat = () => {
+        audio.crossfadeTo('wind', 2000);
+        showDefeatBadgeInteractive(() => {
+            showDialogue('chapter1/nathan_power', () => {
+                showDialogue('chapter1/towers_appear', () => {
+                    showGame('tutorial');
+                });
+            });
+        });
+    };
+
+    // Badge victoire interactif (avant dialogue tutorial_win)
+    game.onTutorialVictory = (next) => {
+        showVictoryBadgeInteractive(next);
+    };
+
+    game.onTutorialWin = () => {
+        // Après dialogue tutorial_win → fondu + "Fin du Chapitre I"
+        audio.stop(2000);
+        const chapterEnd = document.getElementById('chapter-end');
+        fadeToBlack(2000).then(() => {
+            chapterEnd.style.opacity = '1';
+            setTimeout(() => {
+                chapterEnd.style.opacity = '0';
+                setTimeout(() => {
+                    showGame('normal');
+                    audio.crossfadeTo('main_theme', 2000);
+                    fadeFromBlack(1500);
+                }, 1200);
+            }, 3000);
+        });
+    };
+}
+
+// ── Lazy init du jeu TD ───────────────────────────────────────
+
+async function ensureGameInit() {
+    if (game) return;
+    if (!gameInitPromise) {
+        const loader = document.getElementById('loader');
+        loader?.classList.remove('hidden');
+
+        const g = new TowerDefenseGame();
+        gameInitPromise = g.init(document.getElementById('game-container')).then(() => {
+            game = g;
+            wireGameCallbacks();
+            window.game = game;
+            loader?.classList.add('hidden');
+            setTimeout(() => loader?.remove(), 600);
+        });
+    }
+    await gameInitPromise;
+}
+
+// ── showGame ──────────────────────────────────────────────────
+
+async function showGame(mode) {
+    await ensureGameInit();
     showScreen('screen-game');
     if (mode === 'scripted') {
         setCombatMode(true);
@@ -150,58 +230,6 @@ function showGame(mode) {
         game.setNormalMode();
     }
 }
-
-// Son de pose de tour
-game.onTowerPlaced = () => audio.playSfx('tower_place');
-
-// Pastille + musique à chaque début de vague (pause moteur pendant le logo)
-game.onWaveStarted = () => {
-    if (skipEntryWaveBadge) {
-        // Badge déjà affiché à l'entrée de l'écran — on saute badge + pause pour cette vague
-        skipEntryWaveBadge = false;
-        startCombatMusic(); // idempotent (combatMusicStarted guard)
-        return;
-    }
-    showCombatBadge();
-    startCombatMusic();
-    game.engine.paused = true;
-    setTimeout(() => { game.engine.paused = false; }, 1900);
-};
-
-// ── Callbacks du jeu ─────────────────────────────────────────
-
-game.onScriptedDefeat = () => {
-    audio.crossfadeTo('wind', 2000);
-    showDefeatBadgeInteractive(() => {
-        showDialogue('chapter1/nathan_power', () => {
-            showDialogue('chapter1/towers_appear', () => {
-                showGame('tutorial');
-            });
-        });
-    });
-};
-
-// Badge victoire interactif (avant dialogue tutorial_win)
-game.onTutorialVictory = (next) => {
-    showVictoryBadgeInteractive(next);
-};
-
-game.onTutorialWin = () => {
-    // Après dialogue tutorial_win → fondu + "Fin du Chapitre I"
-    audio.stop(2000);
-    const chapterEnd = document.getElementById('chapter-end');
-    fadeToBlack(2000).then(() => {
-        chapterEnd.style.opacity = '1';
-        setTimeout(() => {
-            chapterEnd.style.opacity = '0';
-            setTimeout(() => {
-                showGame('normal');
-                audio.crossfadeTo('main_theme', 2000);
-                fadeFromBlack(1500);
-            }, 1200);
-        }, 3000);
-    });
-};
 
 // ── Bouton "Rejouer" (mode normal) ───────────────────────────
 document.getElementById('game-over-restart').addEventListener('click', () => {
@@ -267,15 +295,14 @@ document.getElementById('btn-start').addEventListener('click', () => {
     });
 });
 
-// ── Init jeu (une seule fois au démarrage) ────────────────────
-await game.init(document.getElementById('game-container'));
-window.game = game; // accès dev console
-
-document.getElementById('loader').classList.add('hidden');
+// ── Loader : masqué immédiatement, réutilisé par ensureGameInit ──
+const loaderEl = document.getElementById('loader');
+loaderEl.classList.add('hidden');
+// NB : on ne supprime pas le loader du DOM — ensureGameInit() en a besoin
+//      lors du premier chargement du jeu TD (PixiJS + sprites).
 
 // ── Dev shortcuts ─────────────────────────────────────────────
 const dev = new URLSearchParams(location.search).get('dev');
-if (dev === 'combat')   showGame('scripted');
-if (dev === 'tutorial') showGame('tutorial');
-if (dev === 'normal')   showGame('normal');
-setTimeout(() => document.getElementById('loader').remove(), 600);
+if (dev === 'combat')   await showGame('scripted');
+if (dev === 'tutorial') await showGame('tutorial');
+if (dev === 'normal')   await showGame('normal');
