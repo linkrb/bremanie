@@ -1,0 +1,26 @@
+@musicstop
+@sfxloop wind
+
+nathan(left):worried Anna, regarde ! Les loups... ils ne s'arrêtent pas !
+anna(right):determined Reste derrière moi, Nathan ! Prépare toi !
+nathan:sad Pourquoi ils nous chassent ? On ne leur a rien fait !
+nathan:worried Je n'en peux plus... mon bras est si lourd.
+nathan:sad Anna, je crois que mes jambes ne veulent plus bouger.
+anna:surprised Nathan ! Non, pas maintenant ! Ils sont presque là !
+nathan:worried Tout devient flou... mes forces s'en vont.
+anna:angry Maudites bêtes ! Reculez, je vous dis !
+
+@scene scenes/forest-battle.png
+
+> Anna lâche son arc et se précipite vers son frère qui vacille.
+> Elle l'entoure de ses bras, le protégeant de son propre corps.
+> En serrant son frère, une volonté farouche s'empare d'Anna.
+> Un lien invisible se tisse, transmettant son énergie à Nathan.
+
+nathan(left):surprised Anna ? Je sens... un nouveau pouvoir se manifester !
+anna(right):determined Tiens bon, Nathan ! Utilise ma force !
+nathan:determined La lumière... elle sort de moi.
+
+@scene scenes/nathan_anna_power.png
+
+nathan:determined Anna le combat reprends.

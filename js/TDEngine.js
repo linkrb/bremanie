@@ -220,15 +220,17 @@ export class TDEngine {
             return;
         }
 
-        if (this.wave >= 10) return;
+        const levelWaves = this.currentWaves;
+        const waveSrc = levelWaves?.length ? levelWaves : GLOBAL_WAVES;
+        const maxWaves = waveSrc === GLOBAL_WAVES ? 10 : waveSrc.length;
+        if (this.wave >= maxWaves) return;
 
-        const waveConfig = GLOBAL_WAVES[this.globalWave] || GLOBAL_WAVES[GLOBAL_WAVES.length - 1];
+        const waveConfig = waveSrc[waveSrc === GLOBAL_WAVES ? this.globalWave : this.wave]
+                        || GLOBAL_WAVES[GLOBAL_WAVES.length - 1];
         this.spawnQueue = [];
 
         waveConfig.forEach(group => {
-            for (let i = 0; i < group.count; i++) {
-                this.spawnQueue.push(group.type);
-            }
+            for (let i = 0; i < group.count; i++) this.spawnQueue.push(group.type);
         });
 
         // Shuffle
@@ -321,7 +323,9 @@ export class TDEngine {
                 return;
             }
 
-            if (this.wave >= 10) {
+            const lw = this.currentWaves;
+            const maxW = lw?.length || 10;
+            if (this.wave >= maxW) {
                 if (this.level >= LEVELS.length - 1) {
                     if (this.onVictory) this.onVictory();
                 } else {
@@ -731,6 +735,7 @@ export class TDEngine {
         if (resetGlobalWave) this.globalWave = 0;
         this.waveInProgress = false;
         this._gameOver = false;
+        this._scriptedWaves = null;
         this.paused = false;
         this.enemies = [];
         this.projectiles = [];

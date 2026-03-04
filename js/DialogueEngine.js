@@ -2,17 +2,19 @@
 // Mobile-first: tap to advance, touch-friendly sizing
 
 const CHAR_NAMES = {
-    romain: 'Romain',
-    nathan: 'Nathan',
-    anna:   'Anna',
-    garde:  'Garde',
+    romain:  'Romain',
+    nathan:  'Nathan',
+    anna:    'Anna',
+    suzanne: 'Suzanne',
+    garde:   'Garde',
 };
 
 const CHAR_COLORS = {
-    romain: { bg: '#2d4f8a', border: '#7aa3d4' },
-    nathan: { bg: '#6b4a12', border: '#c8952a' },
-    anna:   { bg: '#7a1f1f', border: '#c85050' },
-    garde:  { bg: '#3a4455', border: '#8a9ab0' },
+    romain:  { bg: '#2d4f8a', border: '#7aa3d4' },
+    nathan:  { bg: '#6b4a12', border: '#c8952a' },
+    anna:    { bg: '#7a1f1f', border: '#c85050' },
+    suzanne: { bg: '#2d6e35', border: '#72b87e' },
+    garde:   { bg: '#3a4455', border: '#8a9ab0' },
 };
 
 const CSS = `
@@ -234,10 +236,11 @@ export class DialogueEngine {
         this.typeTimer = null;
         this._currentText = '';
         this.onComplete = null;
-        this.onMusic    = null; // callback(trackName) déclenché par @music
-        this.onSfx      = null; // callback(trackName) déclenché par @sfx (one-shot)
-        this.onSfxLoop  = null; // callback(trackName) déclenché par @sfxloop
-        this.onSfxStop  = null; // callback(trackName) déclenché par @sfxstop
+        this.onMusic     = null; // callback(trackName) déclenché par @music
+        this.onMusicStop = null; // callback() déclenché par @musicstop
+        this.onSfx       = null; // callback(trackName) déclenché par @sfx (one-shot)
+        this.onSfxLoop   = null; // callback(trackName) déclenché par @sfxloop
+        this.onSfxStop   = null; // callback(trackName) déclenché par @sfxstop
 
         // Track what's displayed on each side
         this.sides = {
@@ -320,7 +323,8 @@ export class DialogueEngine {
         const elNext = next === 'a' ? this.els.bgA : this.els.bgB;
         const elCurr = next === 'a' ? this.els.bgB : this.els.bgA;
 
-        elNext.style.backgroundImage    = url ? `url('${url}')` : '';
+        elNext.style.backgroundImage    = (url && url !== 'black') ? `url('${url}')` : '';
+        elNext.style.backgroundColor   = url === 'black' ? '#000' : '';
         elNext.style.backgroundPosition = position || 'center';
         elNext.classList.remove('hidden');  // fade in next
         elCurr.classList.add('hidden');     // fade out current
@@ -385,6 +389,7 @@ export class DialogueEngine {
         let pendingScene = null; // @scene → mode cinématique
         let pendingBgPos = null; // @bgpos → position du fond
         let pendingMusic = null; // @music → déclenche onMusic callback
+        let pendingMusicStop = false; // @musicstop → arrêt musique
         let pendingSfx     = null; // @sfx     → one-shot
         let pendingSfxLoop = null; // @sfxloop → boucle
         let pendingSfxStop = null; // @sfxstop → arrêt
@@ -403,10 +408,11 @@ export class DialogueEngine {
                 if (cmd === 'scene') pendingScene = val;
                 if (cmd === 'bgpos') pendingBgPos = val;
                 if (cmd === 'hide')  { script.push({ type: 'hide', side: val }); continue; }
-                if (cmd === 'music')   pendingMusic   = val;
-                if (cmd === 'sfx')     pendingSfx     = val;
-                if (cmd === 'sfxloop') pendingSfxLoop = val;
-                if (cmd === 'sfxstop') pendingSfxStop = val;
+                if (cmd === 'music')     pendingMusic     = val;
+                if (cmd === 'musicstop') pendingMusicStop = true;
+                if (cmd === 'sfx')       pendingSfx       = val;
+                if (cmd === 'sfxloop')   pendingSfxLoop   = val;
+                if (cmd === 'sfxstop')   pendingSfxStop   = val;
                 continue;
             }
 
@@ -416,10 +422,11 @@ export class DialogueEngine {
                 const entry = { type: 'narration', text };
                 if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; }
                 else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
-                if (pendingMusic)   { entry.music   = pendingMusic;   pendingMusic   = null; }
-                if (pendingSfx)     { entry.sfx     = pendingSfx;     pendingSfx     = null; }
-                if (pendingSfxLoop) { entry.sfxloop = pendingSfxLoop; pendingSfxLoop = null; }
-                if (pendingSfxStop) { entry.sfxstop = pendingSfxStop; pendingSfxStop = null; }
+                if (pendingMusic)     { entry.music     = pendingMusic;     pendingMusic     = null; }
+                if (pendingMusicStop) { entry.musicStop = true;             pendingMusicStop = false; }
+                if (pendingSfx)       { entry.sfx       = pendingSfx;       pendingSfx       = null; }
+                if (pendingSfxLoop)   { entry.sfxloop   = pendingSfxLoop;   pendingSfxLoop   = null; }
+                if (pendingSfxStop)   { entry.sfxstop   = pendingSfxStop;   pendingSfxStop   = null; }
                 script.push(entry);
                 continue;
             }
@@ -471,8 +478,9 @@ export class DialogueEngine {
     }
 
     _showLine(line) {
-        // ── Musique (@music) ─────────────────────────────────
-        if (line.music) this.onMusic?.(line.music);
+        // ── Musique (@music / @musicstop) ────────────────────
+        if (line.music)     this.onMusic?.(line.music);
+        if (line.musicStop) this.onMusicStop?.();
 
         // ── Sons (@sfx / @sfxloop / @sfxstop) ───────────────
         if (line.sfx)     this.onSfx?.(line.sfx);

@@ -4,6 +4,7 @@
 @scene scenes/castle_hall_destroyed.jpg
 > À l'intérieur, le chaos règne.
 
+@music boss_entry
 romain(right):worried Arg, je n'ai pas réussi.
 
 romain(right):surprised Qui êtes vous ?!
@@ -43,6 +44,9 @@ romain(left):sad Anna... Nathan...
 @hide right
 @bg scenes/forest.jpg
 
+
+@musicstop
+@sfxloop wind
 > Dans une forêt non loin
 
 nathan(left):determined Vite Anna ! Le fort de l'oncle David est presque là.

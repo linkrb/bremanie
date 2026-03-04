@@ -5,7 +5,8 @@ export const GRID_WIDTH = 4;
 export const GRID_HEIGHT = 22;
 
 export const TOWER_TYPES = {
-    archer: { cost: 50, damage: 20, range: 3, cooldown: 750, speed: 42, color: 0x98D4BB, displayScale: 2.5 },
+    archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8 },
+    mage:   { cost: 120, damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, availableFromLevel: 5 },
 };
 
 export const ENEMY_TYPES = {
@@ -23,19 +24,16 @@ export const LEVELS = [
         name: 'Prairie',
         theme: {
             id: 'prairie',
-            tiles: { grass: 'tile_grass', path: 'tile_path' },
-            decorations: [
-                { name: 'deco_windmill', scale: 1.8, anchorY: 0.72, noWind: true },
-                { name: 'deco_cart',     scale: 1.1, anchorY: 0.5, noWind: true },
-                { name: 'deco_barrels',  scale: 0.8, anchorY: 0.5, noWind: true },
-                { name: 'deco_barrels',  scale: 0.8, anchorY: 0.5, noWind: true },
-                { name: 'deco_sacks',    scale: 0.8, anchorY: 0.5, noWind: true },
-                { name: 'deco_crate',    scale: 0.8, anchorY: 0.5, noWind: true },
-                { name: 'deco_crate',    scale: 0.8, anchorY: 0.5, noWind: true },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
+            grassVariants: ['tile_grass', 'tile_grass', 'tile_rock', 'tile_rock', 'tile_rock2', 'tile_rock2'],
+            decoTiles: [
+                'deco/deco1', 'deco/deco1', 'deco/deco1',
+                'deco/deco2', 'deco/deco2', 'deco/deco2',
+                'deco/deco3', 'deco/deco3', 'deco/deco3',
             ],
-            decoRate: 0.14,
-            castleAnchorY: 0.5,
-            castleScale: 2.2,
+            decoRate: 0.22,
+            decorations: [],
+            noCastle: true,
             enemies: {
                 basic: ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
                         'enemy_basic_5','enemy_basic_6','enemy_basic_7',
@@ -47,20 +45,16 @@ export const LEVELS = [
             }
         },
         path: [
-            // Entrée nord (col 3) → descente
-            {x:3,y:0}, {x:3,y:1}, {x:3,y:2},
-            // Virage droite → col 5
-            {x:4,y:2}, {x:5,y:2},
-            // Long segment col 5 vers le bas
-            {x:5,y:3}, {x:5,y:4}, {x:5,y:5}, {x:5,y:6},
-            // Virage gauche → col 1
-            {x:4,y:6}, {x:3,y:6}, {x:2,y:6}, {x:1,y:6},
-            // Long segment col 1 vers le bas
-            {x:1,y:7}, {x:1,y:8}, {x:1,y:9},
-            // Virage droite → col 3
-            {x:2,y:9}, {x:3,y:9},
-            // Descente col 3 → château
-            {x:3,y:10}, {x:3,y:11}
+            // Règles staggered : pair→(col,y+1)ou(col-1,y+1) / impair→(col,y+1)ou(col+1,y+1)
+            // Entrée haut-droite — 3 diagonales pures, 1 virage par inversion
+            // Diagonale gauche col 3→0 (y 0→6)
+            {x:3,y:0}, {x:2,y:1}, {x:2,y:2}, {x:1,y:3}, {x:1,y:4}, {x:0,y:5}, {x:0,y:6},
+            // Virage → diagonale droite col 0→3 (y 6→12)
+            {x:0,y:7}, {x:1,y:8}, {x:1,y:9}, {x:2,y:10}, {x:2,y:11}, {x:3,y:12},
+            // Virage → diagonale gauche col 3→0 (y 12→18)
+            {x:2,y:13}, {x:2,y:14}, {x:1,y:15}, {x:1,y:16}, {x:0,y:17}, {x:0,y:18},
+            // Virage → descente finale (y 18→21)
+            {x:0,y:19}, {x:1,y:20}, {x:1,y:21},
         ],
         waves: [
             [{ type: 'basic', count: 5 }],
@@ -84,7 +78,7 @@ export const LEVELS = [
             towerScale: 0.85,
             enemyScale: 0.85,
             enemyScales: { tank: 1.3, boss: 1.4 },
-            tiles: { grass: 'tile_grass', path: 'tile_path' },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decorations: [
                 { name: 'tombstone', scale: 0.6, anchorY: 0.9 },
                 { name: 'dead_tree', scale: 1.2, anchorY: 0.9 },
@@ -131,7 +125,7 @@ export const LEVELS = [
             towerScale: 0.85,
             enemyScale: 0.85,
             enemyScales: { tank: 1.3, boss: 1.4 },
-            tiles: { grass: 'tile_grass', path: 'tile_path' },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decorations: [
                 { name: 'geyser', scale: 0.7, anchorY: 0.9 },
                 { name: 'fire_tree', scale: 0.75, anchorY: 0.9 },
@@ -171,12 +165,12 @@ export const LEVELS = [
         name: 'Forêt',
         theme: {
             id: 'forest',
-            castleScale: 2.0,
-            castleAnchorY: 0.7,
+            noCastle: true,
             enemyScale: 1.4,
-            enemyScales: { tank: 1.8, boss: 2.0 },
+            enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
+            spriteScales: { enemy_fox: 0.7, enemy_boar: 1.0 },
             enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
-            tiles: { grass: 'tile_grass', path: 'tile_path', corner: 'tile_corner', straight: 'tile_path_straight' },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decoTiles: [
                 // Buissons (priorité × 3)
                 'deco/bush_01', 'deco/bush_01', 'deco/bush_01',
@@ -247,12 +241,10 @@ export const LEVELS = [
             {x:1,y:21}, // fort
         ],
         waves: [
-            // Vague 1 : renards et sangliers
             [{ type: 'basic', count: 8 }],
-            // Vague 2 : + les loups
-            [{ type: 'basic', count: 8 }, { type: 'fast', count: 6 }],
-            // Vague 3 : + l'ours (1 seul, gros tank)
-            [{ type: 'basic', count: 10 }, { type: 'fast', count: 8 }, { type: 'tank', count: 1 }],
+            [{ type: 'basic', count: 10 }, { type: 'fast', count: 6 }],
+            [{ type: 'basic', count: 12 }, { type: 'fast', count: 8 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 6 }, { type: 'tank', count: 1 }],
         ]
     },
     {
@@ -265,7 +257,7 @@ export const LEVELS = [
             towerScale: 0.85,
             enemyScale: 1.2,
             enemyScales: { tank: 1.2, boss: 1.0 },
-            tiles: { grass: 'tile_grass', path: 'tile_path' },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decorations: [
                 { name: 'snowy_tree', scale: 1.5, anchorY: 0.75 },
                 { name: 'snowy_tree', scale: 1.3, anchorY: 0.75 },
@@ -300,6 +292,57 @@ export const LEVELS = [
             [{ type: 'fast', count: 24 }, { type: 'flying', count: 15 }, { type: 'tank', count: 7 }],
             [{ type: 'tank', count: 14 }, { type: 'fast', count: 20 }, { type: 'flying', count: 12 }],
             [{ type: 'boss', count: 3 }, { type: 'tank', count: 12 }, { type: 'flying', count: 15 }, { type: 'fast', count: 18 }],
+        ]
+    },
+    // ── Chapitre III : Fort de l'Est (index 5) — archer + mage débloquée ──
+    {
+        name: 'Fort de l\'Est',
+        theme: {
+            id: 'forest',
+            noCastle: true,
+            enemyScale: 1.4,
+            enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
+            spriteScales: { enemy_fox: 0.7, enemy_boar: 1.0 },
+            enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
+            decoTiles: [
+                'deco/bush_01', 'deco/bush_01', 'deco/bush_01',
+                'deco/bush_02', 'deco/bush_02', 'deco/bush_02',
+                'deco/bush_03', 'deco/bush_03',
+                'deco/bush_04', 'deco/bush_04',
+                'deco/bush_05', 'deco/bush_05',
+                'deco/bush_06', 'deco/bush_07',
+                'deco/arbre01', 'deco/arbre02',
+            ],
+            grassVariants: [
+                'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
+                'tile_grass_02', 'tile_grass_02', 'tile_grass_03', 'tile_grass_03',
+                'tile_grass_04', 'tile_grass_05', 'tile_grass_06',
+                'tile_patch_01', 'tile_vines_01', 'tile_flower_01', 'tile_fungi_01',
+            ],
+            decorations: [],
+            decoRate: 0.22,
+            enemies: {
+                basic: ['enemy_fox', 'enemy_boar'],
+                fast:  'enemy_wolf',
+                tank:  'enemy_bear',
+                flying:'enemy_flying',
+                boss:  'enemy_bear'
+            }
+        },
+        path: [
+            {x:0,y:0},  {x:0,y:1},  {x:1,y:2},  {x:1,y:3},  {x:2,y:4},  {x:2,y:5},  {x:3,y:6},
+            {x:2,y:7},  {x:2,y:8},  {x:1,y:9},  {x:1,y:10}, {x:0,y:11}, {x:0,y:12},
+            {x:0,y:13}, {x:1,y:14}, {x:1,y:15}, {x:2,y:16}, {x:2,y:17}, {x:3,y:18},
+            {x:2,y:19}, {x:2,y:20}, {x:1,y:21},
+        ],
+        waves: [
+            [{ type: 'basic', count: 10 }],
+            [{ type: 'basic', count: 14 }, { type: 'fast', count: 8 }],
+            [{ type: 'basic', count: 16 }, { type: 'fast', count: 12 }],
+            [{ type: 'basic', count: 18 }, { type: 'fast', count: 14 }, { type: 'tank', count: 2 }],
+            [{ type: 'basic', count: 20 }, { type: 'fast', count: 16 }, { type: 'tank', count: 3 }],
+            [{ type: 'basic', count: 12 }, { type: 'fast', count: 10 }, { type: 'tank', count: 3 }, { type: 'boss', count: 1 }],
         ]
     }
 ];
@@ -427,6 +470,7 @@ export const GLOBAL_WAVES = [
 
 export const TOWER_DISPLAY = {
     archer:   { icon: '🏹', name: 'Archer',    unlockName: null },
+    mage:     { icon: '🔮', name: 'Mage',      unlockName: null },
     cannon:   { icon: '💣', name: 'Canon',     unlockName: null },
     ice:      { icon: '❄️', name: 'Glace',     unlockName: 'Tour de Glace' },
     sniper:   { icon: '🎯', name: 'Sniper',    unlockName: null },

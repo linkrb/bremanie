@@ -150,25 +150,27 @@ export class TDRenderer {
     }
 
     async loadAssets() {
-        // Archer tower sprites (4 orientations × 3 niveaux)
-        const base = '/bremanie/images/td/towers/archer';
-        for (const variant of ['front', 'side', 'left', 'back']) {
-            try {
-                const tex = await PIXI.Assets.load(`${base}/tower_archer_${variant}.png`);
-                this.assets[`tower_archer_${variant}`] = tex;
-            } catch (e) { }
-        }
-        for (const lvl of [2, 3]) {
+        // Tower sprites (4 orientations × 3 niveaux)
+        for (const type of ['archer', 'mage']) {
+            const base = `/bremanie/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
-                    const tex = await PIXI.Assets.load(`${base}/tower_archer_lvl${lvl}_${variant}.png`);
-                    this.assets[`tower_archer_lvl${lvl}_${variant}`] = tex;
+                    const tex = await PIXI.Assets.load(`${base}/tower_${type}_${variant}.png`);
+                    this.assets[`tower_${type}_${variant}`] = tex;
                 } catch (e) { }
+            }
+            for (const lvl of [2, 3]) {
+                for (const variant of ['front', 'side', 'left', 'back']) {
+                    try {
+                        const tex = await PIXI.Assets.load(`${base}/tower_${type}_lvl${lvl}_${variant}.png`);
+                        this.assets[`tower_${type}_lvl${lvl}_${variant}`] = tex;
+                    } catch (e) { }
+                }
             }
         }
 
         // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
-        for (const name of ['tile_grass', 'tile_path', 'castle', 'tree', 'tree_pine',
+        for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
                             'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
                             'coin', 'heart', 'proj_archer']) {
             try {
@@ -267,6 +269,13 @@ export class TDRenderer {
         this.projectileLayer.removeChildren();
         this.effectLayer.removeChildren();
         this.rangeLayer.removeChildren();
+
+        // Remove fullscreen flash overlays added directly to app.stage
+        const layers = new Set([this.groundLayer, this.rangeLayer, this.entityLayer,
+                                 this.projectileLayer, this.effectLayer, this.debugLayer]);
+        for (const child of [...this.app.stage.children]) {
+            if (!layers.has(child)) this.app.stage.removeChild(child);
+        }
 
         // Reset tracking arrays
         this.tileSprites = [];
@@ -401,10 +410,7 @@ export class TDRenderer {
                 const grassTex = theme
                     ? (this._getThemedAsset(theme.tiles.grass) || this.assets.tile_grass)
                     : this.assets.tile_grass;
-                const pathTex = theme
-                    ? (this._getThemedAsset(theme.tiles.path) || this.assets.tile_path)
-                    : this.assets.tile_path;
-                const useSprites = grassTex && pathTex;
+                const useSprites = !!grassTex;
 
                 if (useSprites) {
                     let texture;
@@ -432,10 +438,10 @@ export class TDRenderer {
                     } else if (cell.type === 'path' || cell.type === 'spawn' || cell.type === 'base') {
                         const cornerType = cornerMap.get(`${x},${y}`);
                         if (cornerType) {
-                            texture = this._getThemedAsset('tile_corner') || pathTex;
+                            texture = this._getThemedAsset('tile_corner') || grassTex;
                             cornerFlip = cornerType === 'L2R' ? -1 : 1;
                         } else {
-                            texture = this._getThemedAsset('tile_path_straight') || pathTex;
+                            texture = this._getThemedAsset('tile_path_straight') || grassTex;
                             const dir = dirMap.get(`${x},${y}`);
                             cornerFlip = dir === 'R' ? -1 : 1;
                         }
@@ -498,8 +504,8 @@ export class TDRenderer {
                 this.tileSprites.push(tile);
 
                 if (cell.type === 'base') {
-                    // Pas de château sprite si le fond scène intègre déjà la forteresse
-                    if (!sceneBgTex) {
+                    // Pas de château sprite si le fond scène intègre déjà la forteresse, ou si désactivé
+                    if (!sceneBgTex && !theme?.noCastle) {
                         const castleTex = this._getThemedAsset('castle');
                         if (castleTex) {
                             const castle = new PIXI.Sprite(castleTex);
@@ -713,8 +719,9 @@ export class TDRenderer {
             const eRef = TILE_WIDTH;
             const eScale = (this.currentTheme && this.currentTheme.enemyScale) || 1.0;
             const eTypeScale = (this.currentTheme && this.currentTheme.enemyScales && this.currentTheme.enemyScales[type]) || 1.0;
-            body.width = eRef * config.size * 0.9 * eScale * eTypeScale;
-            body.height = eRef * config.size * 0.9 * eScale * eTypeScale;
+            const eSpriteScale = (this.currentTheme?.spriteScales?.[themedKey]) || 1.0;
+            body.height = eRef * config.size * 0.9 * eScale * eTypeScale * eSpriteScale;
+            body.scale.x = body.scale.y; // ratio conservé
             baseScaleX = body.scale.x;
             baseScaleY = body.scale.y;
         } else {

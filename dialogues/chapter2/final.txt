@@ -1,0 +1,29 @@
+@music main_theme
+
+
+> À compléter.
+
+anna(right):proud Nathan... On a réussi. Ils s'enfuient !
+nathan(left):surprised Est-ce que... est-ce que c'est vraiment fini ?
+anna:determined Oui. Tu les as repoussés. Nous les avons repoussés.
+nathan:laughing On a survécu, Anna ! On est plus forts qu'eux !
+anna:laughing C'est vrai. Tu as été incroyable.
+
+
+@bg scenes/foret_joie.png
+> L'adrénaline retombe d'un coup, laissant place à un épuisement total.
+> Le lien magique qui les unissait se rompt doucement.
+
+nathan(left):worried Anna... je me sens tout vide d'un coup.
+anna(right):worried Moi aussi. J'ai l'impression que mon cœur pèse une tonne.
+nathan:sad Mes yeux se ferment tout seuls...
+anna:sad On a... on a juste besoin d'une minute...
+
+@hide left
+@hide right
+
+@bg black
+
+> ...
+suzanne(right):mysterious ...
+suzanne(right):neutral ...

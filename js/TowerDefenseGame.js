@@ -33,6 +33,8 @@ export class TowerDefenseGame {
         this.onTutorialWin      = null;  // () — après dialogue tutorial_win
         this.onWaveStarted      = null;  // (waveNumber) — badge, musique, etc.
         this.onWaveCompleted    = null;  // (waveNumber)
+        this.onChapter2Win      = null;  // ()
+        this.onChapter3Win      = null;  // ()
         this.onTowerPlaced      = null;  // () — son de pose
     }
 
@@ -569,9 +571,12 @@ export class TowerDefenseGame {
         }
 
         document.querySelectorAll('.tower-btn').forEach(btn => {
-            const config = TOWER_TYPES[btn.dataset.tower];
+            const type = btn.dataset.tower;
+            const config = TOWER_TYPES[type];
             if (!config) return;
-            btn.classList.toggle('disabled', this.engine.gold < config.cost);
+            const visible = config.availableFromLevel === undefined || this.engine.level >= config.availableFromLevel;
+            btn.style.display = visible ? '' : 'none';
+            if (visible) btn.classList.toggle('disabled', this.engine.gold < config.cost);
         });
     }
 
@@ -628,6 +633,7 @@ export class TowerDefenseGame {
     }
 
     showVictory() {
+        if (this._chapter3Mode) { this.onChapter3Win?.(); return; }
         if (this._tutorialMode) {
             // Badge victoire interactif → clic → dialogue → fin
             const doDialogue = () => {
@@ -648,6 +654,7 @@ export class TowerDefenseGame {
     }
 
     showLevelTransition(completedLevel) {
+        if (this._chapter2Mode) { this.onChapter2Win?.(); return; }
         this._continuing = true;
     }
 
@@ -678,11 +685,53 @@ export class TowerDefenseGame {
         this._resetForMode();
     }
 
-    // Chapitre 2 : combat de la Forêt (niveau index 4, archer uniquement)
+    replay() {
+        if (this._chapter2Mode) { this.setChapter2Mode(); return; }
+        if (this._chapter3Mode) { this.setChapter3Mode(); return; }
+        this.setNormalMode();
+    }
+
+    // Chapitre 3 : Fort de l'Est (niveau index 5, archer + mage)
+    setChapter3Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chapter3Mode = true;
+
+        const idx = LEVELS.findIndex(l => l.name === "Fort de l'Est");
+        if (idx < 0) { console.error('[Brémanie] Niveau Fort de l\'Est introuvable'); return; }
+        this.engine.resetGameState(idx, true);
+        this.engine.gold = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+
+        // Tour mage offerte au départ (cellule {2,2} adjacente au chemin)
+        const fx = 2, fy = 2;
+        if (this.engine.canPlaceTower(fx, fy, 'mage')) {
+            this.engine.gold += TOWER_TYPES['mage'].cost; // crédité puis déduit par placeTower → net = 0
+            const orientation = this.engine.getTowerOrientation(fx, fy);
+            const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite('mage', orientation);
+            const tower = this.engine.placeTower(fx, fy, 'mage', sprite, baseScaleX, baseScaleY);
+            this.renderer.addTowerToStage(tower);
+            this.renderer.drawTowerXpBar(tower);
+        }
+
+        this.updateUI();
+    }
+
+    // Chapitre 2 : combat de la Forêt (niveau index 3, archer uniquement)
     setChapter2Mode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
-        this._resetForMode(); // reset de base (level 0, UI restaurée)
+        this._resetForMode();
+        this._chapter2Mode = true;
 
         // Saute au niveau Forêt (index 4)
         const forestIndex = LEVELS.findIndex(l => l.name === 'Forêt');
@@ -702,6 +751,8 @@ export class TowerDefenseGame {
     }
 
     _resetForMode() {
+        this._chapter2Mode = false;
+        this._chapter3Mode = false;
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');
         show('.tower-bar');
