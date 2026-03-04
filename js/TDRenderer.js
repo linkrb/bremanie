@@ -305,8 +305,10 @@ export class TDRenderer {
                 if (tex) entries.push({ tex, scale, anchorY, noWind, _isWindmill: isWindmill });
             }
             if (entries.length > 0) return entries;
+            // decorations explicitement vide → pas de fallback
+            if (this.currentTheme.decorations.length === 0) return [];
         }
-        // Fallback: use base tree assets
+        // Fallback: use base tree assets (pas de thème)
         const fallback = [];
         if (this.assets.tree) fallback.push({ tex: this.assets.tree, scale: 1.0, anchorY: 0.85 });
         if (this.assets.tree_pine) fallback.push({ tex: this.assets.tree_pine, scale: 1.0, anchorY: 0.85 });
@@ -412,9 +414,8 @@ export class TDRenderer {
                         const _onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
                         const decoTileList = theme?.decoTiles;
                         if (!_onBorder && !sceneBgTex && decoTileList?.length > 0) {
-                            const _seed = ((x * 374761393 + y * 668265263) >>> 0) / 4294967295;
-                            if (_seed < decoRate) {
-                                const entry = decoTileList[(x * 7 + y * 13) % decoTileList.length];
+                            if (Math.random() < decoRate) {
+                                const entry = decoTileList[Math.floor(Math.random() * decoTileList.length)];
                                 const tileName = typeof entry === 'string' ? entry : entry.name;
                                 const decoTex = this.assets[`${tileName}_${theme?.id}`];
                                 if (decoTex) { texture = decoTex; isDecoTile = true; }
@@ -707,7 +708,8 @@ export class TDRenderer {
 
         if (enemyTex) {
             body = new PIXI.Sprite(enemyTex);
-            body.anchor.set(0.5, config.anchorY);
+            const anchorY = this.currentTheme?.enemyAnchors?.[type] ?? config.anchorY;
+            body.anchor.set(0.5, anchorY);
             const eRef = TILE_WIDTH;
             const eScale = (this.currentTheme && this.currentTheme.enemyScale) || 1.0;
             const eTypeScale = (this.currentTheme && this.currentTheme.enemyScales && this.currentTheme.enemyScales[type]) || 1.0;
@@ -765,7 +767,6 @@ export class TDRenderer {
         if (nextWp) {
             const dx = nextWp.x - enemy.x;
             const dy = nextWp.y - enemy.y;
-            // Staggered iso: screen_x croît avec col (x), donc dx détermine le facing
             const screenDx = dx;
             if (Math.abs(screenDx) > 0.01) {
                 enemy._facingLeft = screenDx < 0;

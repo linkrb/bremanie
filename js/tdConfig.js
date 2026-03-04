@@ -9,11 +9,11 @@ export const TOWER_TYPES = {
 };
 
 export const ENEMY_TYPES = {
-    basic: { hp: 120, speed: 2.2, reward: 3, color: 0xFFB5C5, size: 0.9, anchorY: 0.65 },
-    fast: { hp: 70, speed: 3.4, reward: 4, color: 0xFFD93D, size: 1.0, anchorY: 0.65 },
-    tank: { hp: 400, speed: 1.2, reward: 10, color: 0x9B59B6, size: 1.1, anchorY: 0.65 },
-    boss: { hp: 1400, speed: 0.9, reward: 40, color: 0xC0392B, size: 1.5, anchorY: 0.85 },
-    flying: { hp: 90, speed: 2.7, reward: 5, color: 0xBB88FF, size: 0.85, anchorY: 0.5, flying: true }
+    basic: { hp: 120, speed: 2.2, reward: 3, color: 0xFFB5C5, size: 0.75, anchorY: 0.65 },
+    fast: { hp: 70, speed: 3.4, reward: 4, color: 0xFFD93D, size: 0.85, anchorY: 0.65 },
+    tank: { hp: 400, speed: 1.2, reward: 10, color: 0x9B59B6, size: 0.95, anchorY: 0.65 },
+    boss: { hp: 1400, speed: 0.9, reward: 40, color: 0xC0392B, size: 1.3, anchorY: 0.85 },
+    flying: { hp: 90, speed: 2.7, reward: 5, color: 0xBB88FF, size: 0.70, anchorY: 0.5, flying: true }
 };
 
 // ============== LEVELS ==============
@@ -175,6 +175,7 @@ export const LEVELS = [
             castleAnchorY: 0.7,
             enemyScale: 1.4,
             enemyScales: { tank: 1.8, boss: 2.0 },
+            enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
             tiles: { grass: 'tile_grass', path: 'tile_path', corner: 'tile_corner', straight: 'tile_path_straight' },
             decoTiles: [
                 // Buissons (priorité × 3)
@@ -185,20 +186,11 @@ export const LEVELS = [
                 'deco/bush_05', 'deco/bush_05',
                 'deco/bush_06',
                 'deco/bush_07',
-                // Décos basses
-                'deco/stump_fern',
-                'deco/stump',
-                'deco/mushroom',
-                'deco/flowers',
-                'deco/flowers_02',
-                // Arbres (ajoutés quand les tuiles seront prêtes)
-                // 'deco/tree_oak_gnarled',
-                // 'deco/tree_oak',
-                // 'deco/tree_oak_large',
-                // 'deco/tree_pine',
-                // 'deco/tree_pine_tall',
-                // 'deco/tree_maple',
-                // 'deco/tree_maple_large',
+                // Décos basses (fichiers à ajouter dans forest/deco/)
+                // 'deco/stump_fern', 'deco/stump', 'deco/mushroom', 'deco/flowers',
+                // Arbres (rare — 1 entrée chacun)
+                'deco/arbre01',
+                'deco/arbre02',
             ],
             grassVariants: [
                 // Herbe simple (poids ×4)
@@ -215,18 +207,7 @@ export const LEVELS = [
                 // Champignons
                 'tile_fungi_01',
             ],
-            decorations: [
-                // Arbres feuillus
-                { name: 'tree',        scale: 1.7, anchorY: 0.85, noWind: true },
-                { name: 'tree_oak',    scale: 1.8, anchorY: 0.85, noWind: true },
-                // Conifères
-                { name: 'pine',        scale: 1.5, anchorY: 0.85, noWind: true },
-                { name: 'pine_small',  scale: 1.2, anchorY: 0.85, noWind: true },
-                // Détails au sol
-                { name: 'stump',       scale: 0.7, anchorY: 0.85, noWind: true },
-                { name: 'log_pile',    scale: 0.8, anchorY: 0.85, noWind: true },
-                { name: 'bush',        scale: 1.0, anchorY: 0.85, noWind: true },
-            ],
+            decorations: [],
             decoRate: 0.22,
             enemies: {
                 basic: ['enemy_fox', 'enemy_boar'],
