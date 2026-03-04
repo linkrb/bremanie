@@ -6,6 +6,8 @@ anna:determined Oui. Tu les as repoussés. Nous les avons repoussés.
 nathan:laughing On a survécu, Anna ! On est plus forts qu'eux !
 anna:laughing C'est vrai. Tu as été incroyable.
 
+@hide right
+@hide left
 
 @bg scenes/foret_joie.png
 > L'adrénaline retombe d'un coup, laissant place à un épuisement total.
