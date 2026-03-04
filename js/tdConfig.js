@@ -1,8 +1,8 @@
 // ============== CONFIGURATION ==============
-export const TILE_WIDTH = 52;
-export const TILE_HEIGHT = 60;
-export const GRID_WIDTH = 7;
-export const GRID_HEIGHT = 12;
+export const TILE_WIDTH = 256;  // = largeur image tuile
+export const TILE_HEIGHT = 312; // TH_face = TH/2 = 156px (= hauteur image) ; row advance = TH/4 = 78px
+export const GRID_WIDTH = 4;
+export const GRID_HEIGHT = 22;
 
 export const TOWER_TYPES = {
     archer: { cost: 50, damage: 20, range: 3, cooldown: 750, speed: 42, color: 0x98D4BB, displayScale: 2.5 },
@@ -175,7 +175,7 @@ export const LEVELS = [
             castleAnchorY: 0.7,
             enemyScale: 1.4,
             enemyScales: { tank: 1.8, boss: 2.0 },
-            tiles: { grass: 'tile_grass', path: 'tile_path' },
+            tiles: { grass: 'tile_grass', path: 'tile_path', corner: 'tile_corner', straight: 'tile_path_straight' },
             grassVariants: [
                 // Herbe simple (poids ×4)
                 'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
@@ -184,8 +184,6 @@ export const LEVELS = [
                 'tile_grass_04', 'tile_grass_04',
                 'tile_grass_05', 'tile_grass_05',
                 'tile_grass_06', 'tile_grass_06',
-                // Rocailleux (occasionnel)
-                'tile_rocky_01', 'tile_rocky_02',
                 // Patchs sol / vignes (rare)
                 'tile_patch_01', 'tile_vines_01',
                 // Fleurs (très rare)
@@ -215,20 +213,33 @@ export const LEVELS = [
             }
         },
         path: [
-            // Entrée nord (col 4)
-            {x:4,y:0}, {x:4,y:1}, {x:4,y:2},
-            // Virage gauche jusqu'au bord
-            {x:3,y:2}, {x:2,y:2}, {x:1,y:2}, {x:0,y:2},
-            // Descente bord gauche
-            {x:0,y:3}, {x:0,y:4}, {x:0,y:5}, {x:0,y:6},
-            // Traverse toute la largeur vers la droite
-            {x:1,y:6}, {x:2,y:6}, {x:3,y:6}, {x:4,y:6}, {x:5,y:6}, {x:6,y:6},
-            // Descente bord droit
-            {x:6,y:7}, {x:6,y:8},
-            // Rentre vers le centre
-            {x:5,y:8}, {x:4,y:8}, {x:3,y:8},
-            // Descente finale → fort
-            {x:3,y:9}, {x:3,y:10}, {x:3,y:11}
+            // Règles d'adjacence staggered : paire→(col,y+1)ou(col-1,y+1) / impaire→(col,y+1)ou(col+1,y+1)
+            // Diagonale droite col 0 → col 3 (y 0→6)
+            {x:0,y:0},  // pair  → (0,1)
+            {x:0,y:1},  // impair → (1,2)
+            {x:1,y:2},  // pair  → (1,3)
+            {x:1,y:3},  // impair → (2,4)
+            {x:2,y:4},  // pair  → (2,5)
+            {x:2,y:5},  // impair → (3,6)
+            {x:3,y:6},  // bord droit — pair → (2,7)
+            // Diagonale gauche col 3 → col 0 (y 6→12)
+            {x:2,y:7},  // impair → (2,8)
+            {x:2,y:8},  // pair  → (1,9)
+            {x:1,y:9},  // impair → (1,10)
+            {x:1,y:10}, // pair  → (0,11)
+            {x:0,y:11}, // impair → (0,12)
+            {x:0,y:12}, // bord gauche — pair → (0,13)
+            // Diagonale droite col 0 → col 3 (y 12→18)
+            {x:0,y:13}, // impair → (1,14)
+            {x:1,y:14}, // pair  → (1,15)
+            {x:1,y:15}, // impair → (2,16)
+            {x:2,y:16}, // pair  → (2,17)
+            {x:2,y:17}, // impair → (3,18)
+            {x:3,y:18}, // bord droit — pair → (2,19)
+            // Diagonale gauche → fort (y 18→21)
+            {x:2,y:19}, // impair → (2,20)
+            {x:2,y:20}, // pair  → (1,21)
+            {x:1,y:21}, // fort
         ],
         waves: [
             // Vague 1 : renards et sangliers
@@ -427,21 +438,24 @@ export const SHOP_ITEMS = {
     slow: { cost: 80, name: 'Blizzard' }
 };
 
-// ============== ISOMETRIC HELPERS ==============
-// Mirrored iso so Y-axis goes down-right (path flows downward)
-// Top-down projection: x→right, y→down
-export function toIso(x, y) {
+// ============== STAGGERED ISO HELPERS ==============
+// Projection staggered iso avec emboîtement : row advance = TH/4 = TH_face/2
+// Les losanges s'emboîtent parfaitement (la moitié basse d'une rangée recouvre la moitié haute de la suivante).
+// Convention renderer : sprite.x = iso.x, sprite.y = iso.y + TILE_HEIGHT/2 = row * TILE_HEIGHT/4
+export function toIso(col, row) {
     return {
-        x: x * TILE_WIDTH + TILE_WIDTH / 2,   // centre horizontal de la cellule
-        y: y * TILE_HEIGHT                     // bord haut de la cellule (sprites ancrent en bas)
+        x: col * TILE_WIDTH + (row & 1) * (TILE_WIDTH / 2) + TILE_WIDTH / 2,
+        y: row * (TILE_HEIGHT / 4) - TILE_HEIGHT / 2,
+        // → sprite.y = iso.y + TH/2 = row * TH/4  (row advance = TH_face/2 = emboîtement)
     };
 }
 
-export function fromIso(isoX, isoY, offsetX, offsetY, scale = 1) {
-    const localX = (isoX - offsetX) / scale;
-    const localY = (isoY - offsetY) / scale;
-    return {
-        x: Math.floor((localX - TILE_WIDTH / 2) / TILE_WIDTH),
-        y: Math.floor(localY / TILE_HEIGHT)
-    };
+// Inverse : (screenX,screenY) → cellule grille (x=col, y=row)
+// ly = sprite.y dans le layer = row * TH/4
+export function fromIso(screenX, screenY, offsetX, offsetY, scale = 1) {
+    const lx = (screenX - offsetX) / scale;
+    const ly = (screenY - offsetY) / scale;
+    const row = Math.round(ly * 4 / TILE_HEIGHT);
+    const col = Math.round((lx - TILE_WIDTH / 2 - (row & 1) * (TILE_WIDTH / 2)) / TILE_WIDTH);
+    return { x: col, y: row };
 }

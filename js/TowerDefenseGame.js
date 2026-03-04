@@ -56,7 +56,7 @@ export class TowerDefenseGame {
 
         await this.renderer.init(this.container);
         this.renderer.setTheme(this.engine.currentLevelData);
-        this.renderer.drawGround(this.engine.grid);
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
 
         this.wireCallbacks();
         this.setupInteraction();
@@ -529,7 +529,7 @@ export class TowerDefenseGame {
 
         this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
-        this.renderer.drawGround(this.engine.grid);
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
 
         this.selectedPlacedTower = null;
@@ -693,7 +693,7 @@ export class TowerDefenseGame {
         this.engine.maxHealth = 15;
         this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
-        this.renderer.drawGround(this.engine.grid);
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
         this.selectedPlacedTower = null;
         this.hoveredTower = null;
@@ -718,7 +718,7 @@ export class TowerDefenseGame {
         this.engine.maxHealth = 15;
 
         this.renderer.clearStage();
-        this.renderer.drawGround(this.engine.grid);
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
         this.selectedPlacedTower = null;
         this.hoveredTile = null;
@@ -731,7 +731,7 @@ export class TowerDefenseGame {
 
         this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
-        this.renderer.drawGround(this.engine.grid);
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
 
         this.selectedPlacedTower = null;

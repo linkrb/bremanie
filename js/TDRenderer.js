@@ -65,19 +65,23 @@ export class TDRenderer {
     }
 
     calculateOffset() {
-        const mapWidth  = GRID_WIDTH  * TILE_WIDTH;
-        const mapHeight = GRID_HEIGHT * TILE_HEIGHT;
+        // Bounding box staggered iso avec emboîtement (row advance = TH/4 = TH_face/2)
+        // Largeur : GRID_WIDTH tuiles + demi-tuile de décalage (rangées impaires)
+        // Hauteur : GRID_HEIGHT rangées × TH/4 (advance) + TH/2 (marge : demi-losange haut+bas)
+        const mapWidth  = GRID_WIDTH * TILE_WIDTH + TILE_WIDTH / 2;
+        const mapHeight = GRID_HEIGHT * (TILE_HEIGHT / 4) + TILE_HEIGHT / 2;
 
-        // Auto-scale to fit screen
-        const padX = this.app.screen.width < 600 ? 2 : 10;
-        const padY = this.app.screen.width < 600 ? 2 : 10;
-        const scaleX = (this.app.screen.width  - padX * 2) / mapWidth;
-        const scaleY = (this.app.screen.height - padY * 2) / mapHeight;
+        const pad = this.app.screen.width < 600 ? 4 : 10;
+        const scaleX = (this.app.screen.width  - pad * 2) / mapWidth;
+        const scaleY = (this.app.screen.height - pad * 2) / mapHeight;
         this.mapScale = Math.min(scaleX, scaleY, 1.5);
 
-        // Centre la carte dans l'écran
+        // Centrage horizontal simple (pas de décalage isoOriginX)
         this.offsetX = (this.app.screen.width  - mapWidth  * this.mapScale) / 2;
-        this.offsetY = (this.app.screen.height - mapHeight * this.mapScale) / 2;
+
+        // Centrage vertical : la grille va de sprite.y=0 (row 0) à sprite.y=(GH-1)*TH/4 (last row)
+        const gridCenterY = ((GRID_HEIGHT - 1) / 2) * (TILE_HEIGHT / 4);
+        this.offsetY = this.app.screen.height / 2 - gridCenterY * this.mapScale;
 
         [this.groundLayer, this.rangeLayer, this.entityLayer, this.projectileLayer, this.effectLayer, this.debugLayer].forEach(layer => {
             layer.x = this.offsetX;
@@ -296,7 +300,7 @@ export class TDRenderer {
         return fallback;
     }
 
-    drawGround(grid) {
+    drawGround(grid, path) {
         const theme = this.currentTheme;
         const decoRate = theme ? theme.decoRate : 0.22;
 
@@ -346,15 +350,33 @@ export class TDRenderer {
             this.groundLayer.addChild(bg);
         }
 
+        // Pré-calcul des virages : dir visuelle = R ou L selon parité de rangée
+        const _dir = (a, b) => {
+            const screenDx = (b.x - a.x) + ((b.y & 1) - (a.y & 1)) * 0.5;
+            return screenDx > 0 ? 'R' : 'L';
+        };
+        const cornerMap = new Map(); // `x,y` → 'R2L' | 'L2R'
+        const dirMap    = new Map(); // `x,y` → 'R' | 'L'
+        if (path && path.length >= 2) {
+            for (let i = 0; i < path.length; i++) {
+                const p      = path[i];
+                const inDir  = i > 0             ? _dir(path[i - 1], p)   : null;
+                const outDir = i < path.length-1 ? _dir(p, path[i + 1]) : null;
+                dirMap.set(`${p.x},${p.y}`, outDir || inDir);
+                if (inDir && outDir && inDir !== outDir) {
+                    cornerMap.set(`${p.x},${p.y}`, inDir === 'R' ? 'R2L' : 'L2R');
+                }
+            }
+        }
+
         // Pré-calcul des variants herbe si le thème en a
         const grassVariantTextures = (theme && theme.grassVariants)
             ? theme.grassVariants.map(k => this.assets[`${k}_${theme.id}`] || this.assets[k]).filter(Boolean)
             : null;
 
-        for (let sum = 0; sum < GRID_WIDTH + GRID_HEIGHT - 1; sum++) {
+        // Staggered iso : ordre rangée par rangée (haut → bas) = algorithme du peintre correct
+        for (let y = 0; y < GRID_HEIGHT; y++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
-                const y = sum - x;
-                if (y < 0 || y >= GRID_HEIGHT) continue;
 
                 const iso = toIso(x, y);
                 const cell = grid[y][x];
@@ -370,16 +392,24 @@ export class TDRenderer {
 
                 if (useSprites) {
                     let texture;
+                    let cornerFlip = 0; // 0=normal, -1=miroir
                     if (cell.type === 'grass') {
                         if (grassVariantTextures && grassVariantTextures.length > 0) {
-                            // Sélection déterministe par position (stable entre redraws)
                             const idx = (x * 7 + y * 13) % grassVariantTextures.length;
                             texture = grassVariantTextures[idx];
                         } else {
                             texture = grassTex;
                         }
                     } else if (cell.type === 'path' || cell.type === 'spawn' || cell.type === 'base') {
-                        texture = pathTex;
+                        const cornerType = cornerMap.get(`${x},${y}`);
+                        if (cornerType) {
+                            texture = this._getThemedAsset('tile_corner') || pathTex;
+                            cornerFlip = cornerType === 'L2R' ? -1 : 1;
+                        } else {
+                            texture = this._getThemedAsset('tile_path_straight') || pathTex;
+                            const dir = dirMap.get(`${x},${y}`);
+                            cornerFlip = dir === 'R' ? -1 : 1;
+                        }
                     } else {
                         texture = grassTex;
                     }
@@ -387,8 +417,9 @@ export class TDRenderer {
                     tile = new PIXI.Sprite(texture);
                     tile.anchor.set(0.5, 0.5);
                     const tileScale = (this.currentTheme && this.currentTheme.tileScale) || 1.0;
-                    tile.width  = TILE_WIDTH  * 1.02 * tileScale;
-                    tile.height = TILE_HEIGHT * 1.02 * tileScale;
+                    tile.width  = TILE_WIDTH        * 1.00 * tileScale;
+                    tile.height = (TILE_HEIGHT / 2) * 1.00 * tileScale;
+                    if (cornerFlip !== 0) tile.scale.x = cornerFlip * Math.abs(tile.scale.x);
 
                     if (cell.type === 'spawn') {
                         tile.tint = 0xffaaaa;
@@ -409,12 +440,12 @@ export class TDRenderer {
                     }
 
                     tile = new PIXI.Graphics();
-                    const g = 1; // léger overlap pour éviter les seams
-                    tile.rect(-TILE_WIDTH / 2 - g, -TILE_HEIGHT / 2 - g, TILE_WIDTH + g * 2, TILE_HEIGHT + g * 2);
+                    // Face staggered : losange TW × TH/2
+                    const hw = TILE_WIDTH / 2 + 1, hh = TILE_HEIGHT / 4 + 1;
+                    tile.poly([0, -hh, hw, 0, 0, hh, -hw, 0]);
                     tile.fill({ color });
                     tile.stroke({ width: 1, color: strokeColor, alpha: 0.15 });
-                    // Highlight haut de tuile
-                    tile.rect(-TILE_WIDTH / 2, -TILE_HEIGHT / 2, TILE_WIDTH, TILE_HEIGHT * 0.25);
+                    tile.poly([0, -hh, hw * 0.5, -hh * 0.1, 0, hh * 0.2, -hw * 0.5, -hh * 0.1]);
                     tile.fill({ color: 0xffffff, alpha: 0.08 });
                 }
 
@@ -437,7 +468,7 @@ export class TDRenderer {
                         if (castleTex) {
                             const castle = new PIXI.Sprite(castleTex);
                             castle.anchor.set(0.5, (theme && theme.castleAnchorY) || 0.75);
-                            const cRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                            const cRef = TILE_WIDTH;
                             const cScale = (theme && theme.castleScale) || 1.8;
                             castle.width = cRef * cScale;
                             castle.height = cRef * cScale;
@@ -464,7 +495,7 @@ export class TDRenderer {
                             const entry = windmillDecos[0];
                             const sprite = new PIXI.Sprite(windmillTex);
                             sprite.anchor.set(0.5, entry.anchorY);
-                            const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                            const tRef = TILE_WIDTH;
                             sprite.width = tRef * entry.scale;
                             sprite.height = tRef * entry.scale;
                             sprite.x = iso.x;
@@ -482,7 +513,7 @@ export class TDRenderer {
                         const entry = decoEntries[Math.floor(Math.random() * decoEntries.length)];
                         const tree = new PIXI.Sprite(entry.tex);
                         tree.anchor.set(0.5, entry.anchorY);
-                        const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                        const tRef = TILE_WIDTH;
                         const baseSize = tRef * (0.9 + Math.random() * 0.4) * entry.scale;
                         tree.width = baseSize;
                         tree.height = baseSize;
@@ -549,7 +580,7 @@ export class TDRenderer {
         if (fireFrames.length > 0) {
             sprite = new PIXI.AnimatedSprite(fireFrames);
             sprite.anchor.set(0.5, 0.85);
-            const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+            const tRef = TILE_WIDTH;
             const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
             sprite.width = tRef * 1.1 * tScale;
             sprite.height = tRef * 1.1 * tScale;
@@ -561,7 +592,7 @@ export class TDRenderer {
         } else if (texture) {
             sprite = new PIXI.Sprite(texture);
             sprite.anchor.set(0.5, 0.85);
-            const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+            const tRef = TILE_WIDTH;
             const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
             const displayScale = TOWER_TYPES[towerType]?.displayScale || 1.0;
             sprite.width = tRef * 1.1 * tScale * displayScale;
@@ -637,7 +668,7 @@ export class TDRenderer {
         if (enemyTex) {
             body = new PIXI.Sprite(enemyTex);
             body.anchor.set(0.5, config.anchorY);
-            const eRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+            const eRef = TILE_WIDTH;
             const eScale = (this.currentTheme && this.currentTheme.enemyScale) || 1.0;
             const eTypeScale = (this.currentTheme && this.currentTheme.enemyScales && this.currentTheme.enemyScales[type]) || 1.0;
             body.width = eRef * config.size * 0.9 * eScale * eTypeScale;
@@ -694,8 +725,8 @@ export class TDRenderer {
         if (nextWp) {
             const dx = nextWp.x - enemy.x;
             const dy = nextWp.y - enemy.y;
-            // Mirrored iso: screen_x = (y - x) * TW/2, so screenDx ∝ (dy - dx)
-            const screenDx = dy - dx;
+            // Staggered iso: screen_x croît avec col (x), donc dx détermine le facing
+            const screenDx = dx;
             if (Math.abs(screenDx) > 0.01) {
                 enemy._facingLeft = screenDx < 0;
             }
@@ -1170,7 +1201,7 @@ export class TDRenderer {
                 const oldSprite = tower.sprite;
                 const newSprite = new PIXI.AnimatedSprite(frames);
                 newSprite.anchor.set(0.5, 0.85);
-                const tRef = Math.max(TILE_WIDTH, TILE_HEIGHT);
+                const tRef = TILE_WIDTH;
                 const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
                 const lvlScale = tower.level >= 3 ? 1.35 : 1.0;
                 const targetSize = tRef * 1.1 * tScale * lvlScale;
