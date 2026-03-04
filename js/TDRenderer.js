@@ -228,6 +228,19 @@ export class TDRenderer {
                 } catch (e) { }
             }
 
+            // Deco tiles (tuiles avec base iso baked-in)
+            if (level.theme.decoTiles) {
+                const unique = [...new Set(level.theme.decoTiles.map(d => typeof d === 'string' ? d : d.name))];
+                for (const tileName of unique) {
+                    const assetKey = `${tileName}_${themeId}`;
+                    if (this.assets[assetKey]) continue;
+                    try {
+                        const tex = await PIXI.Assets.load(`${basePath}/${tileName}.png`);
+                        this.assets[assetKey] = tex;
+                    } catch(e) {}
+                }
+            }
+
             // Grass variants (dédoublonnés)
             if (level.theme.grassVariants) {
                 const unique = [...new Set(level.theme.grassVariants)];
@@ -382,6 +395,7 @@ export class TDRenderer {
                 const cell = grid[y][x];
 
                 let tile;
+                let isDecoTile = false;
                 const grassTex = theme
                     ? (this._getThemedAsset(theme.tiles.grass) || this.assets.tile_grass)
                     : this.assets.tile_grass;
@@ -394,11 +408,25 @@ export class TDRenderer {
                     let texture;
                     let cornerFlip = 0; // 0=normal, -1=miroir
                     if (cell.type === 'grass') {
-                        if (grassVariantTextures && grassVariantTextures.length > 0) {
-                            const idx = (x * 7 + y * 13) % grassVariantTextures.length;
-                            texture = grassVariantTextures[idx];
-                        } else {
-                            texture = grassTex;
+                        // Deco tiles (base iso baked-in) — remplacent la tuile herbe
+                        const _onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
+                        const decoTileList = theme?.decoTiles;
+                        if (!_onBorder && !sceneBgTex && decoTileList?.length > 0) {
+                            const _seed = ((x * 374761393 + y * 668265263) >>> 0) / 4294967295;
+                            if (_seed < decoRate) {
+                                const entry = decoTileList[(x * 7 + y * 13) % decoTileList.length];
+                                const tileName = typeof entry === 'string' ? entry : entry.name;
+                                const decoTex = this.assets[`${tileName}_${theme?.id}`];
+                                if (decoTex) { texture = decoTex; isDecoTile = true; }
+                            }
+                        }
+                        if (!isDecoTile) {
+                            if (grassVariantTextures && grassVariantTextures.length > 0) {
+                                const idx = (x * 7 + y * 13) % grassVariantTextures.length;
+                                texture = grassVariantTextures[idx];
+                            } else {
+                                texture = grassTex;
+                            }
                         }
                     } else if (cell.type === 'path' || cell.type === 'spawn' || cell.type === 'base') {
                         const cornerType = cornerMap.get(`${x},${y}`);
@@ -415,11 +443,17 @@ export class TDRenderer {
                     }
 
                     tile = new PIXI.Sprite(texture);
-                    tile.anchor.set(0.5, 0.5);
                     const tileScale = (this.currentTheme && this.currentTheme.tileScale) || 1.0;
-                    tile.width  = TILE_WIDTH        * 1.00 * tileScale;
-                    tile.height = (TILE_HEIGHT / 2) * 1.00 * tileScale;
-                    if (cornerFlip !== 0) tile.scale.x = cornerFlip * Math.abs(tile.scale.x);
+                    if (isDecoTile) {
+                        tile.anchor.set(0.5, 1.0);
+                        tile.width  = TILE_WIDTH * tileScale;
+                        tile.scale.y = tile.scale.x; // ratio conservé
+                    } else {
+                        tile.anchor.set(0.5, 0.5);
+                        tile.width  = TILE_WIDTH        * 1.00 * tileScale;
+                        tile.height = (TILE_HEIGHT / 2) * 1.00 * tileScale;
+                        if (cornerFlip !== 0) tile.scale.x = cornerFlip * Math.abs(tile.scale.x);
+                    }
 
                     if (cell.type === 'spawn') {
                         tile.tint = 0xffaaaa;
@@ -450,7 +484,8 @@ export class TDRenderer {
                 }
 
                 tile.x = iso.x;
-                tile.y = iso.y + TILE_HEIGHT / 2;
+                // Deco tile : ancre bas → bas de la face diamant ; normal : centre de la face
+                tile.y = iso.y + TILE_HEIGHT / 2 + (isDecoTile ? TILE_HEIGHT / 4 : 0);
                 tile.gridX = x;
                 tile.gridY = y;
                 tile.eventMode = 'none';
@@ -484,6 +519,10 @@ export class TDRenderer {
                         }
                     }
                 } else if (cell.type === 'grass') {
+                    if (isDecoTile) {
+                        // La tuile deco a sa propre base iso : pas de sprite supplémentaire
+                        cell.hasTree = true;
+                    } else {
                     const rand = Math.random();
                     const onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
                     const isWindmillCell = windmillCell && windmillCell.x === x && windmillCell.y === y;
@@ -540,6 +579,7 @@ export class TDRenderer {
                         deco._isDecoration = true;
                         this.groundLayer.addChild(deco);
                     }
+                    } // end else (not isDecoTile)
                 } else if (cell.type === 'path' && !useSprites) {
                     if (Math.random() < 0.3) {
                         const pebble = new PIXI.Graphics();
@@ -697,7 +737,7 @@ export class TDRenderer {
 
         // HP bar
         const hpBar = new PIXI.Graphics();
-        hpBar.y = -35 * config.size;
+        hpBar.y = -(TILE_WIDTH * 0.62 * config.size);
         container.addChild(hpBar);
 
         return { sprite: container, body, hpBar, baseScaleX, baseScaleY };
@@ -772,13 +812,14 @@ export class TDRenderer {
     updateEnemyHpBar(enemy) {
         const bar = enemy.hpBar;
         bar.clear();
-        const width = 28;
-        const height = 5;
+        const width = TILE_WIDTH * 0.45;
+        const height = Math.max(5, TILE_WIDTH * 0.055);
         const ratio = Math.max(0, enemy.hp / enemy.maxHp);
 
-        bar.roundRect(-width/2 - 1, -1, width + 2, height + 2, 2);
+        const r = Math.max(2, height * 0.4);
+        bar.roundRect(-width/2 - 1, -1, width + 2, height + 2, r);
         bar.fill({ color: 0x222222 });
-        bar.roundRect(-width/2, 0, width * ratio, height, 2);
+        bar.roundRect(-width/2, 0, width * ratio, height, r);
         bar.fill({ color: ratio > 0.5 ? 0x2ecc71 : ratio > 0.25 ? 0xf39c12 : 0xe74c3c });
     }
 
@@ -787,7 +828,8 @@ export class TDRenderer {
         if (this.assets[assetKey]) {
             const sprite = new PIXI.Sprite(this.assets[assetKey]);
             sprite.anchor.set(0.5, 0.5);
-            const size = towerType === 'cannon' ? 28 : towerType === 'fire' ? 30 : 22;
+            const base = TILE_WIDTH * 0.22;
+            const size = towerType === 'cannon' ? base * 1.3 : towerType === 'fire' ? base * 1.4 : base;
             sprite.width = size;
             sprite.height = size;
             return sprite;
@@ -802,7 +844,7 @@ export class TDRenderer {
             fire: 0xFF6B35
         };
         const sprite = new PIXI.Graphics();
-        sprite.circle(0, 0, 5);
+        sprite.circle(0, 0, TILE_WIDTH * 0.05);
         sprite.fill({ color: colors[towerType] || 0xFFFFFF });
         return sprite;
     }
@@ -810,7 +852,7 @@ export class TDRenderer {
     addProjectileToStage(proj, towerX, towerY) {
         const iso = toIso(towerX, towerY);
         proj.sprite.x = iso.x;
-        proj.sprite.y = iso.y - 20;
+        proj.sprite.y = iso.y - TILE_WIDTH * 0.08;
         this.projectileLayer.addChild(proj.sprite);
     }
 

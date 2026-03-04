@@ -176,6 +176,30 @@ export const LEVELS = [
             enemyScale: 1.4,
             enemyScales: { tank: 1.8, boss: 2.0 },
             tiles: { grass: 'tile_grass', path: 'tile_path', corner: 'tile_corner', straight: 'tile_path_straight' },
+            decoTiles: [
+                // Buissons (priorité × 3)
+                'deco/bush_01', 'deco/bush_01', 'deco/bush_01',
+                'deco/bush_02', 'deco/bush_02', 'deco/bush_02',
+                'deco/bush_03', 'deco/bush_03',
+                'deco/bush_04', 'deco/bush_04',
+                'deco/bush_05', 'deco/bush_05',
+                'deco/bush_06',
+                'deco/bush_07',
+                // Décos basses
+                'deco/stump_fern',
+                'deco/stump',
+                'deco/mushroom',
+                'deco/flowers',
+                'deco/flowers_02',
+                // Arbres (ajoutés quand les tuiles seront prêtes)
+                // 'deco/tree_oak_gnarled',
+                // 'deco/tree_oak',
+                // 'deco/tree_oak_large',
+                // 'deco/tree_pine',
+                // 'deco/tree_pine_tall',
+                // 'deco/tree_maple',
+                // 'deco/tree_maple_large',
+            ],
             grassVariants: [
                 // Herbe simple (poids ×4)
                 'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
@@ -443,10 +467,15 @@ export const SHOP_ITEMS = {
 // Les losanges s'emboîtent parfaitement (la moitié basse d'une rangée recouvre la moitié haute de la suivante).
 // Convention renderer : sprite.x = iso.x, sprite.y = iso.y + TILE_HEIGHT/2 = row * TILE_HEIGHT/4
 export function toIso(col, row) {
+    // Stagger interpolé : pour les positions fractionnaires (ennemis en mouvement),
+    // on interpole linéairement entre le décalage de la rangée courante et suivante.
+    // Pour les entiers, comportement identique à (row & 1) * TW/2.
+    const floorRow = Math.floor(row);
+    const frac     = row - floorRow;
+    const stagger  = (floorRow % 2 === 0 ? frac : 1 - frac) * (TILE_WIDTH / 2);
     return {
-        x: col * TILE_WIDTH + (row & 1) * (TILE_WIDTH / 2) + TILE_WIDTH / 2,
+        x: col * TILE_WIDTH + stagger + TILE_WIDTH / 2,
         y: row * (TILE_HEIGHT / 4) - TILE_HEIGHT / 2,
-        // → sprite.y = iso.y + TH/2 = row * TH/4  (row advance = TH_face/2 = emboîtement)
     };
 }
 
