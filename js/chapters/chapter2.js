@@ -1,6 +1,6 @@
 // ── Chapitre II : La Forêt Enchantée ─────────────────────────
 
-export function setup({ audio, showTitle, showDialogue, showGame,
+export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showVictoryBadgeInteractive, onChapterEnd }) {
 
     const waveDialogues = {
@@ -41,6 +41,7 @@ export function setup({ audio, showTitle, showDialogue, showGame,
 
         game.onChapter2Win = () => {
             showVictoryBadgeInteractive(() => {
+                hideGame();
                 showDialogue('chapter2/outro', () => {
                     onChapterEnd(2);
                 });
@@ -49,6 +50,7 @@ export function setup({ audio, showTitle, showDialogue, showGame,
 
         game.onChapter3Win = () => {
             showVictoryBadgeInteractive(() => {
+                hideGame();
                 showDialogue('chapter2/final', () => {
                     onChapterEnd('2b');
                 });

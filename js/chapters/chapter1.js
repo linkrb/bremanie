@@ -1,7 +1,7 @@
 // ── Chapitre I : La Fuite — Les Enfants du Roi ───────────────
 // Inclut le Prologue (qui enchaîne directement sur le chapitre 1)
 
-export function setup({ audio, showTitle, showDialogue, showGame,
+export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showDefeatBadgeInteractive, showVictoryBadgeInteractive,
                         fadeToBlack, fadeFromBlack, onChapterEnd }) {
 
@@ -50,6 +50,7 @@ export function setup({ audio, showTitle, showDialogue, showGame,
         game.onScriptedDefeat = () => {
             audio.crossfadeTo('wind', 2000);
             showDefeatBadgeInteractive(() => {
+                hideGame();
                 showDialogue('chapter1/nathan_power', () => {
                     showDialogue('chapter1/towers_appear', () => {
                         showGame('tutorial');

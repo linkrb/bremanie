@@ -70,6 +70,10 @@ function showDialogue(script, onEnd) {
     dlg.load(script, onEnd);
 }
 
+function hideGame() {
+    screenGame.classList.remove('active');
+}
+
 function fadeToBlack(ms) {
     return new Promise(resolve => {
         const el = document.getElementById('fade-black');
@@ -173,7 +177,7 @@ function onChapterEnd(chapterNumber) {
 }
 
 const ctx = {
-    audio, showTitle, showDialogue, showGame,
+    audio, showTitle, showDialogue, showGame, hideGame,
     showDefeatBadgeInteractive, showVictoryBadgeInteractive,
     fadeToBlack, fadeFromBlack,
     onChapterEnd,
