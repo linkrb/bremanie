@@ -1,8 +1,5 @@
 @music main_theme
 
-
-> À compléter.
-
 anna(right):proud Nathan... On a réussi. Ils s'enfuient !
 nathan(left):surprised Est-ce que... est-ce que c'est vraiment fini ?
 anna:determined Oui. Tu les as repoussés. Nous les avons repoussés.

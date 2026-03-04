@@ -10,6 +10,9 @@ anna:surprised Nathan ! Non, pas maintenant ! Ils sont presque là !
 nathan:worried Tout devient flou... mes forces s'en vont.
 anna:angry Maudites bêtes ! Reculez, je vous dis !
 
+@hide right
+@hide left
+
 @scene scenes/forest-battle.png
 
 > Anna lâche son arc et se précipite vers son frère qui vacille.
@@ -21,6 +24,10 @@ nathan(left):surprised Anna ? Je sens... un nouveau pouvoir se manifester !
 anna(right):determined Tiens bon, Nathan ! Utilise ma force !
 nathan:determined La lumière... elle sort de moi.
 
-@scene scenes/nathan_anna_power.png
+@hide right
+@hide left
 
-nathan:determined Anna le combat reprends.
+@scene scenes/nathan_anna_power.png
+> Des nouvelles tours se dressent
+
+nathan(left):determined Anna le combat reprends.
