@@ -500,7 +500,7 @@ export class DialogueEngine {
 
         // ── Mode cinématique (@scene) ────────────────────────
         if (line.scene) {
-            this._setBg(`${this.basePath}${line.scene}`, line.bgPos || 'center');
+            this._setBg(line.scene === 'black' ? 'black' : `${this.basePath}${line.scene}`, line.bgPos || 'center');
             this.overlay.classList.add('cinematic');
         }
 
@@ -511,7 +511,7 @@ export class DialogueEngine {
 
         // ── Narration (>) ────────────────────────────────────
         if (line.type === 'narration') {
-            if (line.bg) this._setBg(`${this.basePath}${line.bg}`, line.bgPos || 'center');
+            if (line.bg) this._setBg(line.bg === 'black' ? 'black' : `${this.basePath}${line.bg}`, line.bgPos || 'center');
             this.els.namebox.style.display = 'none';
             this.els.text.className = 'dlg-text dlg-narration';
             this.els.arrow.classList.add('hidden');
@@ -528,7 +528,7 @@ export class DialogueEngine {
 
         // Background classique
         if (line.bg) {
-            this._setBg(`${this.basePath}${line.bg}`, line.bgPos || 'center');
+            this._setBg(line.bg === 'black' ? 'black' : `${this.basePath}${line.bg}`, line.bgPos || 'center');
         }
 
         // Determine side
