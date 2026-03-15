@@ -17,6 +17,7 @@ export class TowerDefenseGame {
         this.hoveredTile = null;
         this.shopOpen = false;
         this._continuing = false;
+        this._availableTowers = new Set(['archer']);
 
         // Système de dialogues en jeu
         this.dialogueEngine = new DialogueEngine({
@@ -602,7 +603,7 @@ export class TowerDefenseGame {
             const type = btn.dataset.tower;
             const config = TOWER_TYPES[type];
             if (!config) return;
-            const visible = config.availableFromLevel === undefined || this.engine.level >= config.availableFromLevel;
+            const visible = this._availableTowers.has(type);
             btn.style.display = visible ? '' : 'none';
             if (visible) btn.classList.toggle('disabled', this.engine.gold < config.cost);
         });
@@ -664,7 +665,7 @@ export class TowerDefenseGame {
         if (this._chateauFinalMode) { this.onChateauFinalWin?.(); return; }
         if (this._chateauBossMode)  { this.onChateauBossWin?.();  return; }
         if (this._chateauMode)     { this.onChateauWin?.();     return; }
-        if (this._chapter3Mode) { this.onChapter3Win?.(); return; }
+        if (this._fortMode) { this.onChapter3Win?.(); return; }
         if (this._tutorialMode) {
             // Badge victoire interactif → clic → dialogue → fin
             const doDialogue = () => {
@@ -686,6 +687,7 @@ export class TowerDefenseGame {
 
     showLevelTransition(completedLevel) {
         if (this._chapter2Mode) { this.onChapter2Win?.(); return; }
+        if (this._fortMode)     { this.onChapter3Win?.(); return; }
         this._continuing = true;
     }
 
@@ -718,20 +720,21 @@ export class TowerDefenseGame {
 
     replay() {
         if (this._chapter2Mode) { this.setChapter2Mode(); return; }
-        if (this._chapter3Mode) { this.setChapter3Mode(); return; }
+        if (this._fortMode) { this.setFortMode(); return; }
         if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
         if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
         if (this._chateauMode)     { this.setChateauMode();     return; }
         this.setNormalMode();
     }
 
-    // Chapitre 3 : Fort de l'Est (niveau index 5, archer + mage)
+    // Chapitre 2b : Fort de l'Est (archer + mage)
     // skipDefaultTower=true lors d'une restauration de sauvegarde
-    setChapter3Mode(skipDefaultTower = false) {
+    setFortMode(skipDefaultTower = false) {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
-        this._chapter3Mode = true;
+        this._fortMode        = true;
+        this._availableTowers = new Set(['archer', 'mage']);
 
         const idx = LEVELS.findIndex(l => l.name === "Fort de l'Est");
         if (idx < 0) { console.error("[Brémanie] Niveau Fort de l'Est introuvable"); return; }
@@ -768,7 +771,8 @@ export class TowerDefenseGame {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
-        this._chateauMode = true;
+        this._chateauMode     = true;
+        this._availableTowers = new Set(['archer', 'mage']);
 
         const idx = LEVELS.findIndex(l => l.name === 'Château');
         if (idx < 0) { console.error('[Brémanie] Niveau Château introuvable'); return; }
@@ -804,6 +808,7 @@ export class TowerDefenseGame {
         this._tutorialMode = false;
         this._resetForMode();
         this._chateauBossMode = true;
+        this._availableTowers = new Set(['archer', 'mage', 'light']);
 
         const idx = LEVELS.findIndex(l => l.name === 'Château Boss');
         if (idx < 0) { console.error('[Brémanie] Niveau Château Boss introuvable'); return; }
@@ -836,6 +841,7 @@ export class TowerDefenseGame {
         this._tutorialMode = false;
         this._resetForMode();
         this._chateauFinalMode = true;
+        this._availableTowers  = new Set(['archer', 'mage', 'light']);
 
         const idx = LEVELS.findIndex(l => l.name === 'Château Final');
         this.engine.resetGameState(idx, true);
@@ -889,7 +895,8 @@ export class TowerDefenseGame {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
-        this._chapter2Mode = true;
+        this._chapter2Mode    = true;
+        this._availableTowers = new Set(['archer']);
 
         // Saute au niveau Forêt (index 4)
         const forestIndex = LEVELS.findIndex(l => l.name === 'Forêt');
@@ -910,10 +917,11 @@ export class TowerDefenseGame {
 
     _resetForMode() {
         this._chapter2Mode = false;
-        this._chapter3Mode = false;
+        this._fortMode     = false;
         this._chateauMode      = false;
         this._chateauBossMode  = false;
         this._chateauFinalMode = false;
+        this._availableTowers  = new Set(['archer']);
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');
         show('.tower-bar');
@@ -948,7 +956,7 @@ export class TowerDefenseGame {
         }));
     }
 
-    // Applique un état sauvegardé après setChapter2Mode / setChapter3Mode(true)
+    // Applique un état sauvegardé après setChapter2Mode / setFortMode(true)
     applySaveState({ wave = 0, gold = 150, health = 15, towers = [] }) {
         this.engine.gold       = gold;
         this.engine.health     = health;

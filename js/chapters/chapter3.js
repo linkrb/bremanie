@@ -36,7 +36,9 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     }
 
     function wireCallbacks(game) {
+        const _prevWaveCompleted = game.onWaveCompleted;
         game.onWaveCompleted = (waveNumber) => {
+            _prevWaveCompleted?.(waveNumber);
             if (game._chateauMode) {
                 SaveManager.save({
                     stage:  'chapter3_wave',

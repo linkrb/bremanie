@@ -173,9 +173,10 @@ function showChapterEnd(label, next) {
 }
 
 function onChapterEnd(chapterNumber) {
-    if (chapterNumber === 1) showChapterEnd('Chapitre I',   () => chapter2.startChapter2());
-    if (chapterNumber === 2) showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
-    if (chapterNumber === 3) showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
+    if (chapterNumber === 1)    showChapterEnd('Chapitre I',   () => chapter2.startChapter2());
+    if (chapterNumber === 2)    showGame('chapter2b');
+    if (chapterNumber === '2b') showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
+    if (chapterNumber === 3)    showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
 }
 
 // ── Reprise depuis une sauvegarde ─────────────────────────────
@@ -299,7 +300,7 @@ function showGame(mode) {
         startCombatMusic();
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChapter3Mode();
+        game.setFortMode();
     } else if (mode === 'chateau') {
         setCombatMode(true, 2);
         audio.crossfadeTo('tactics', 2000);

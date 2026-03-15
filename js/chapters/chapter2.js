@@ -15,7 +15,9 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     function _preload() {
         if (_preloaded) return;
         _preloaded = true;
-        audio.preload('boss_entry', '/bremanie/audio/boss_entry.mp3');
+        audio.preload('combat_theme', '/bremanie/audio/combat_theme.mp3');
+        audio.preload('boss_entry',  '/bremanie/audio/boss_entry.mp3');
+        audio.preload('wind',        '/bremanie/audio/wind.mp3');
     }
 
     function startChapter2() {
@@ -33,7 +35,8 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function wireCallbacks(game) {
         game.onWaveCompleted = (waveNumber) => {
-            if (!game._chapter2Mode) return;
+            const script = waveDialogues[waveNumber];
+            if (!script || !game._chapter2Mode) return;
             SaveManager.save({
                 stage:  'chapter2_wave',
                 wave:   waveNumber,
@@ -41,18 +44,24 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                 health: game.engine.health,
                 towers: game.getTowersState(),
             });
-            const script = waveDialogues[waveNumber];
-            if (!script) return;
             game.engine.paused = true;
             showDialogue(script, () => { game.engine.paused = false; });
         };
 
         game.onChapter2Win = () => {
+            showVictoryBadgeInteractive(() => {
+                showDialogue('chapter2/outro', () => {
+                    onChapterEnd(2);
+                });
+            });
+        };
+
+        game.onChapter3Win = () => {
             SaveManager.save({ stage: 'chapter3_start' });
             showVictoryBadgeInteractive(() => {
                 hideGame();
-                showDialogue('chapter2/outro', () => {
-                    onChapterEnd(2);
+                showDialogue('chapter2/final', () => {
+                    onChapterEnd('2b');
                 });
             });
         };
