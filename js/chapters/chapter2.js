@@ -1,5 +1,7 @@
 // ── Chapitre II : La Forêt Enchantée ─────────────────────────
 
+import { SaveManager } from '/bremanie/js/SaveManager.js';
+
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showVictoryBadgeInteractive, onChapterEnd }) {
 
@@ -31,28 +33,26 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function wireCallbacks(game) {
         game.onWaveCompleted = (waveNumber) => {
-            const script = waveDialogues[waveNumber];
-            if (!script || !game._chapter2Mode) return;
-            game.engine.paused = true;
-            showDialogue(script, () => {
-                game.engine.paused = false;
+            if (!game._chapter2Mode) return;
+            SaveManager.save({
+                stage:  'chapter2_wave',
+                wave:   waveNumber,
+                gold:   game.engine.gold,
+                health: game.engine.health,
+                towers: game.getTowersState(),
             });
+            const script = waveDialogues[waveNumber];
+            if (!script) return;
+            game.engine.paused = true;
+            showDialogue(script, () => { game.engine.paused = false; });
         };
 
         game.onChapter2Win = () => {
+            SaveManager.save({ stage: 'chapter3_start' });
             showVictoryBadgeInteractive(() => {
                 hideGame();
                 showDialogue('chapter2/outro', () => {
                     onChapterEnd(2);
-                });
-            });
-        };
-
-        game.onChapter3Win = () => {
-            showVictoryBadgeInteractive(() => {
-                hideGame();
-                showDialogue('chapter2/final', () => {
-                    onChapterEnd('2b');
                 });
             });
         };

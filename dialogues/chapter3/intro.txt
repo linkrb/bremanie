@@ -1,0 +1,132 @@
+@scene scenes/chambre.png
+@music chapter3_theme
+
+nathan(left):worried ...
+nathan(left):surprised ...Où suis-je ? Ce n'est pas ma chambre au château.
+nathan:worried Les loups... Anna ! Où est Anna ?
+nathan:surprised Il y a des têtes de cerfs sur les murs. C'est étrange.
+nathan:neutral Et cette odeur de soupe... on dirait celle de la cuisine.
+
+@music calme
+anna(right):surprised Nathan ! Oh, merci, tu es enfin réveillé !
+nathan(left):determined Anna ! On est où ? Qu'est-ce qui s'est passé ?
+anna:laughing On est arrivés, Nathan. On est chez l'Oncle David.
+nathan:surprised L'Oncle David ? C'est lui qui nous a sortis de là ?
+
+anna:neutral Pas tout à fait. C'est Suzanne, notre cousine, qui nous a trouvés.
+nathan:surprised Suzanne ? La cousine qui adore les animaux ?
+anna:proud Oui. Elle patrouillait à la lisière quand on s'est écroulés.
+anna:laughing Elle t'a porté sur son dos pendant deux lieues !
+
+nathan:surprised Elle m'a porté ? Mais... j'ai dormi combien de temps ?
+anna:worried Deux jours entiers. On a eu tellement peur pour toi.
+nathan:sad La lumière bleue... mes mains brûlaient si fort.
+
+anna(right):determined C'est derrière nous maintenant.
+anna:neutral Peut-être que notre Oncle en saura plus sur ce pouvoir...
+
+> Des pas lourds résonnent sur le parquet de bois ciré.
+@sfx door
+> Un homme imposant entre dans la pièce.
+
+david(right):proud Nathan ! Je savais que tu aurais la peau dure.
+nathan(left):surprised Oncle David ! Pourquoi on est ici ?
+david:neutral Suzanne vous a trouvés inconscients à la lisière Sud.
+david:angry C'est anormal... La forêt est calme depuis des siècles.
+
+anna(right):sad Oncle... Le château de Brémanie est tombé.
+david:surprised Tombé ? Anna, de quoi parles-tu ? Les murs sont de fer !
+nathan(left):worried C'était horrible. Des monstres sont sortis de l'ombre.
+nathan:sad Les gardes criaient... et Père nous a dit de partir.
+
+david(right):worried Si Brémanie a cédé... alors le mal est déjà à nos portes.
+anna(right):neutral Père est resté pour les retenir. Il a dit de venir ici.
+david:sad Seul contre cette brume... Oh, Romain...
+nathan(left):laughing Mais Père est le plus fort ! Il va chasser les intrus !
+
+david:determined Oui, Nathan. Ton père est un grand guerrier.
+david:worried Mais s'il vous a ordonné de fuir, c'est que l'ennemi n'est pas humain.
+anna(right):worried Tu crois qu'ils vont nous suivre jusqu'ici ?
+david:neutral Ne pense pas à ça, ma grande. Reposez-vous encore un peu.
+david:proud Je vais demander à Lucas de monter la garde cette nuit.
+david:neutral Demain, nous discuterons de ce que nous devons faire.
+anna:neutral Merci, Oncle David. On va essayer de se reposer un peu.
+
+@hide left
+@hide right
+@scene scenes/chambre_nuit.png
+@musicstop
+
+> Dans le calme pesant de la demeure, David observe les braises du foyer.
+@sfxloop night
+> Le silence de la nuit est troublé par le craquement du bois.
+
+david(left):worried Ils dorment enfin. Le pauvre Nathan a lutté des heures.
+adeline(right):sad Anna aussi est épuisée, même si elle cache sa peur.
+david:determined Romain ne les aurait jamais envoyés ici sans raison.
+david:worried Brémanie est une forteresse imprenable, Adeline.
+david:angry Qu'elle soit tombée si vite... c'est impensable.
+
+adeline(right):worried Tu as entendu ce que Suzanne a raconté ?
+adeline:surprised Elle a trouvé des structures de pierre à la lisière.
+david(left):surprised Des tours ? Elles n'étaient pas là hier matin.
+adeline:worried Elle dit qu'elles semblaient être sorties du sol.
+adeline:surprised Comme si Nathan les avait invoquées pour se défendre.
+
+david(left):neutral Ces tours... ça a réveillé un vieux souvenir en moi.
+david:neutral Tu te rappelles les chansons que ma mère me chantait ?
+adeline(right):neutral Celles sur les Anciens Bâtisseurs de Brémanie ?
+david:surprised Oui. Elle parlait de rois capables de dresser des murs
+david:worried par la seule force de leur volonté. Je croyais que c'était
+david:neutral de simples légendes pour nous endormir, Yoan et moi.
+
+adeline(right):determined Si Nathan possède ce sang, il n'est plus en sécurité.
+david(left):determined Personne ne sait ce qu'il s'est passé là-bas.
+adeline:surprised Aucun message n'est parvenu depuis la capitale ?
+david:sad Rien. Le silence total. C'est ce qui m'effraie.
+david:worried Si Romain n'a pas pu envoyer de corbeau...
+david:determined Alors l'ennemi qui a pris le trône est terrifiant.
+
+adeline(right):determined Nous devons les protéger. Les préparer ici.
+david(left):neutral Oui. Dès l'aube, nous l'emmènerons dans la plaine.
+david:determined S'il peut vraiment bâtir des remparts, je l'aiderai.
+david:worried En attendant... prions pour que Romain soit encore en vie.
+@sfxstop night
+
+@sfx explosion
+david(left):worried ...Tu as entendu ça, Adeline ?
+adeline(right):surprised Cela vient de la cour extérieure. Une explosion...
+
+@music strategy
+
+@hide right
+lucas(right):worried Père ! Mère ! Le domaine est attaqué !
+david(left):surprised Attaqué ? Lucas, les sentinelles n'ont rien vu ?
+lucas:determined Ils surgissent de la forêt. Ce ne sont pas des hommes !
+david:angry Par les Dieux... Le fléau qui a fait tomber Brémanie est à nos portes.
+david:determined Va barricader la cour et prépare les archers, mon fils !
+
+@hide right
+adeline(right):worried David, les enfants sont à l'étage !
+david(left):determined Va les chercher. Mettez-vous à l'abri dans le donjon.
+adeline:determined Je m'en charge. Ne prenez pas de risques inutiles.
+
+@hide right
+> Adeline se précipite vers l'escalier, mais une petite silhouette apparaît.
+
+nathan(right):determined Je ne me cacherai pas !
+david(left):surprised Nathan ? Que fais-tu levé ? Retourne avec ta tante.
+nathan:angry Ces monstres ont pris mon père. Ils ne prendront pas notre refuge !
+david:worried C'est trop dangereux, tu n'es qu'un enfant.
+nathan:proud J'ai fait apparaître des tours, tu l'as dit toi-même.
+nathan:determined Je peux aider Lucas à construire des barricades de pierre !
+david:determined Très bien, Nathan. Viens avec nous dans la cour.
+david:worried Mais tu restes derrière Lucas et ses hommes, est-ce clair ?
+nathan(right):determined Compris, Oncle David ! On va leur montrer !
+
+@hide left
+@hide right
+@scene scenes/siege_nuit_chateau.png
+
+> Les ténèbres s'abattent sur le domaine de l'Oncle David.
+> Mais un jeune Bâtisseur se dresse sur leur chemin.

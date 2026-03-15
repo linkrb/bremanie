@@ -1,0 +1,7 @@
+@scene scenes/tornado.png
+
+david(left):surprised Par les dieux... Qu'est-ce que c'est que cette horreur ?
+nathan(right):surprised C'est une tornade d'ombres... avec des yeux violets !
+david:worried Ce n'est pas de la chair. Les flèches vont passer au travers.
+david:angry Regarde ces crânes qui tournoient à l'intérieur. C'est de la pure magie.
+david:determined Une telle monstruosité... ça n'augure rien de bon.

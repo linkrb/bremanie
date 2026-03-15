@@ -3,6 +3,8 @@ import { DialogueEngine }  from './DialogueEngine.js';
 import { TowerDefenseGame } from '/bremanie/js/TowerDefenseGame.js';
 import { setup as setupChapter1 } from './chapters/chapter1.js';
 import { setup as setupChapter2 } from './chapters/chapter2.js';
+import { setup as setupChapter3 } from './chapters/chapter3.js';
+import { SaveManager }     from './SaveManager.js';
 
 // ── Instances globales ────────────────────────────────────────
 const audio = new AudioManager({ targetVolume: 0.7, fadeInMs: 3000, fadeOutSec: 6 });
@@ -171,20 +173,58 @@ function showChapterEnd(label, next) {
 }
 
 function onChapterEnd(chapterNumber) {
-    if (chapterNumber === 1)    showChapterEnd('Chapitre I',  () => chapter2.startChapter2());
-    if (chapterNumber === 2)    showGame('chapter2b');
-    if (chapterNumber === '2b') showChapterEnd('Chapitre II', () => { /* chapitre III à venir */ });
+    if (chapterNumber === 1) showChapterEnd('Chapitre I',   () => chapter2.startChapter2());
+    if (chapterNumber === 2) showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
+    if (chapterNumber === 3) showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
+}
+
+// ── Reprise depuis une sauvegarde ─────────────────────────────
+
+async function resumeFromSave(save) {
+    chapter1._preload();
+    chapter2._preload();
+    // S'assurer que le jeu est initialisé avant d'appeler showGame (pour rester synchrone)
+    await ensureGameInit();
+
+    if (save.stage === 'chapter2_start') {
+        // Chapitre 1 terminé — démarrer Ch.2 directement sans titre ni dialogue intro
+        showGame('chapter2');
+        return;
+    }
+
+    if (save.stage === 'chapter2_wave') {
+        showGame('chapter2');
+        game.applySaveState({ wave: save.wave, gold: save.gold, health: save.health, towers: save.towers });
+        return;
+    }
+
+    if (save.stage === 'chapter3_start') {
+        // Chapitre 2 terminé — démarrer Ch.3 directement
+        showGame('chateau');
+        return;
+    }
+
+    if (save.stage === 'chapter3_wave') {
+        // Appel avec skipDefaultTower=true pour ne pas poser la mage par défaut
+        game.setChateauMode(true);
+        showScreen('screen-game');
+        setCombatMode(true, 2);
+        startCombatMusic();
+        skipEntryWaveBadge = true;
+        game.applySaveState({ wave: save.wave, gold: save.gold, health: save.health, towers: save.towers });
+    }
 }
 
 const ctx = {
     audio, showTitle, showDialogue, showGame, hideGame,
     showDefeatBadgeInteractive, showVictoryBadgeInteractive,
     fadeToBlack, fadeFromBlack,
-    onChapterEnd,
+    onChapterEnd, resumeFromSave,
 };
 
 const chapter1 = setupChapter1(ctx);
 const chapter2 = setupChapter2(ctx);
+const chapter3 = setupChapter3(ctx);
 
 // ── Lazy init + callbacks ─────────────────────────────────────
 
@@ -205,6 +245,7 @@ function wireGameCallbacks() {
 
     chapter1.wireCallbacks(game);
     chapter2.wireCallbacks(game);
+    chapter3.wireCallbacks(game);
 }
 
 async function ensureGameInit() {
@@ -259,6 +300,23 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true;
         game.setChapter3Mode();
+    } else if (mode === 'chateau') {
+        setCombatMode(true, 2);
+        audio.crossfadeTo('tactics', 2000);
+        combatMusicStarted = true;
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChateauMode();
+    } else if (mode === 'chateau_boss') {
+        setCombatMode(true, 2);
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChateauBossMode();
+    } else if (mode === 'chateau_final') {
+        setCombatMode(true, 2);
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChateauFinalMode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -292,6 +350,10 @@ document.getElementById('btn-start').addEventListener('click', () => {
 // ── Loader ────────────────────────────────────────────────────
 document.getElementById('loader').classList.add('hidden');
 
+// ── Exposition globale pour le script inline du bouton Reprendre ──
+window._bremanieAudio  = audio;
+window._bremanieResume = resumeFromSave;
+
 // ── Dev / debug URL params ────────────────────────────────────
 // ?chapter=prologue   → titre Prologue
 // ?chapter=1          → titre Chapitre I → dialogue intro → combat scripté
@@ -303,6 +365,7 @@ document.getElementById('loader').classList.add('hidden');
 // ?dev=tutorial       → TD mode tutorial direct
 // ?dev=normal         → TD worldmap direct
 // ?dev=chapter2       → TD mode forêt direct
+// ?dev=victory        → dialogue final chapitre 3 direct
 const params  = new URLSearchParams(location.search);
 const chapter = params.get('chapter');
 const scene   = params.get('scene');
@@ -324,4 +387,9 @@ if (dev === 'combat')       { chapter1._preload(); showGame('scripted'); }
 if (dev === 'tutorial')     { chapter1._preload(); showGame('tutorial'); }
 if (dev === 'normal')       { showGame('normal'); }
 if (dev === 'chapter2')     { chapter1._preload(); chapter2._preload(); showGame('chapter2'); }
-if (dev === 'chapter2b')    { chapter1._preload(); chapter2._preload(); showGame('chapter2b'); }
+if (dev === 'chapter2b')    { chapter1._preload(); chapter2._preload(); chapter3._preload(); showGame('chapter2b'); }
+if (dev === 'chapter3')     { chapter1._preload(); chapter2._preload(); chapter3._preload(); chapter3.startChapter3(); }
+if (dev === 'chateau')      { chapter3._preload(); showGame('chateau'); }
+if (dev === 'chateau_boss')   { chapter3._preload(); showGame('chateau_boss'); }
+if (dev === 'chateau_final')  { chapter3._preload(); showGame('chateau_final'); }
+if (dev === 'victory')        { chapter3._preload(); showDialogue('chapter3/victory', () => { onChapterEnd(3); }); }

@@ -1,0 +1,39 @@
+@bg black
+
+> Le dernier hurlement de la tornade se perd dans le vent.
+> La créature d'ombre se dissipe sous la lumière aveuglante.
+
+@music main_theme
+
+nathan(left):sad C'est... c'est fini ? Mes jambes tremblent toutes seules.
+david(right):worried Oui, mon garçon. La lumière a purgé cette abomination.
+david:determined Le combat fut rude, mais la Brémanie a triomphé ce soir !
+
+nathan(left):sad La tour s'est fissurée... J'ai cru qu'on allait y passer.
+david(right):proud Tu as tenu bon, Nathan. Jusqu'à la dernière seconde.
+nathan(left):laughing Les ingénieurs ont bien visé avec leurs miroirs !
+
+david(right):laughing Et leur jeune maître d'œuvre a été magistral.
+david:worried Mais regarde-toi, tu es pâle. Tu tiens à peine debout.
+nathan(left):determined Je suis épuisé, mais on a protégé le domaine.
+
+> Des bruits de pas précipités résonnent sur les pavés ruinés de la cour.
+
+lucas(left):worried Père ! Père, écoutez-moi vite ! C'est une catastrophe !
+david(right):surprised Lucas ? Que se passe-t-il ? La cour n'est pas sécurisée ?
+lucas(left):sad L'attaque extérieure... c'était une diversion pour nous occuper.
+david(right):angry Une diversion ? Que veux-tu dire ? Et le donjon ?!
+lucas(left):worried Il a été infiltré par l'arrière. La porte a été forcée.
+lucas:sad Anna, Suzanne et Martin... ils ont tous disparu !
+
+@hide left
+@hide right
+
+> La victoire au goût de cendre laissa place à un silence glaçant.
+> L'ombre n'avait pas cherché à détruire, mais à enlever.
+
+
+@scene scenes/seraphelle.png
+
+seraphelle(left)(anonymous):neutral ...
+seraphelle(left)(anonymous):laughing ...

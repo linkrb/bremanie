@@ -24,6 +24,8 @@ export class TDRenderer {
         this.ghostOrientation = null;
         this.treeSprites = [];
         this.currentTheme = null;
+        this._litTiles = null;        // null = pas d'obscurité ; Set "x,y" = cases éclairées
+        this._lightingTweenFn = null; // tween de transition lumière/obscurité
     }
 
     async init(container) {
@@ -151,7 +153,7 @@ export class TDRenderer {
 
     async loadAssets() {
         // Tower sprites (4 orientations × 3 niveaux)
-        for (const type of ['archer', 'mage']) {
+        for (const type of ['archer', 'mage', 'light']) {
             const base = `/bremanie/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
@@ -205,12 +207,16 @@ export class TDRenderer {
             }
 
             // Themed enemies (supporte string ou array de variants)
+            // Si le thème a enemyFolder, les sprites ennemis viennent d'un dossier partagé
+            const enemyBasePath = level.theme.enemyFolder
+                ? `/bremanie/images/td/${level.theme.enemyFolder}`
+                : basePath;
             for (const [type, enemyAsset] of Object.entries(level.theme.enemies)) {
                 const assets = Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset];
                 for (const name of assets) {
                     const assetKey = `${name}_${themeId}`;
                     try {
-                        const tex = await PIXI.Assets.load(`${basePath}/${name}.png`);
+                        const tex = await PIXI.Assets.load(`${enemyBasePath}/${name}.png`);
                         this.assets[assetKey] = tex;
                     } catch (e) { }
                 }
@@ -260,6 +266,13 @@ export class TDRenderer {
 
     setTheme(levelData) {
         this.currentTheme = levelData.theme || null;
+        const bg = this.currentTheme?.bgColor;
+        if (bg !== undefined) {
+            this.app.renderer.background.color = bg;
+            this.app.renderer.background.alpha = 1;
+        } else {
+            this.app.renderer.background.alpha = 0;
+        }
     }
 
     clearStage() {
@@ -284,6 +297,13 @@ export class TDRenderer {
         this.graspEffects = [];
         this.treeSprites = [];
 
+        // Réinitialiser l'éclairage
+        if (this._lightingTweenFn) {
+            this.app.ticker.remove(this._lightingTweenFn);
+            this._lightingTweenFn = null;
+        }
+        this._litTiles = null;
+
         // Clean up ghost tower
         if (this.ghostSprite) {
             this.ghostSprite.destroy({ children: true });
@@ -291,6 +311,53 @@ export class TDRenderer {
             this.ghostType = null;
             this.ghostOrientation = null;
         }
+    }
+
+    // ── Lighting system ──────────────────────────────────────────
+    // litTiles = null  → pas d'obscurité, toutes les tuiles à tint normal
+    // litTiles = Set   → seules ces cases "x,y" sont éclairées ; les autres tintées sombre
+
+    _lerpColor(a, b, t) {
+        const ar = (a >> 16) & 0xff, ag = (a >> 8) & 0xff, ab = a & 0xff;
+        const br = (b >> 16) & 0xff, bg = (b >> 8) & 0xff, bb = b & 0xff;
+        return (Math.round(ar + (br - ar) * t) << 16)
+             | (Math.round(ag + (bg - ag) * t) << 8)
+             |  Math.round(ab + (bb - ab) * t);
+    }
+
+    setTileLighting(litTiles, durationMs = 1200) {
+        this._litTiles = litTiles;
+        const DARK = 0x334477;
+
+        // Collecter les transitions nécessaires (tuiles + décorations)
+        const transitions = [];
+        for (const [key, tile] of Object.entries(this.tileMap)) {
+            const target = (!litTiles || litTiles.has(key)) ? (tile.originalTint ?? 0xffffff) : DARK;
+            if (tile.tint !== target) transitions.push({ sprite: tile, from: tile.tint, to: target });
+        }
+        for (const child of this.groundLayer.children) {
+            if (child._isDecoration) {
+                const target = litTiles ? DARK : 0xffffff;
+                if (child.tint !== target) transitions.push({ sprite: child, from: child.tint, to: target });
+            }
+        }
+        if (!transitions.length) return;
+
+        if (this._lightingTweenFn) this.app.ticker.remove(this._lightingTweenFn);
+
+        const startTime = performance.now();
+        this._lightingTweenFn = () => {
+            const t = Math.min((performance.now() - startTime) / durationMs, 1);
+            const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            for (const { sprite, from, to } of transitions) {
+                sprite.tint = this._lerpColor(from, to, ease);
+            }
+            if (t >= 1) {
+                this.app.ticker.remove(this._lightingTweenFn);
+                this._lightingTweenFn = null;
+            }
+        };
+        this.app.ticker.add(this._lightingTweenFn);
     }
 
     _getThemedAsset(baseName) {
@@ -814,6 +881,14 @@ export class TDRenderer {
     }
 
     updateEnemyTint(enemy, isSlow) {
+        const DARK = 0x334477;
+        if (this._litTiles) {
+            const key = `${Math.floor(enemy.x)},${Math.floor(enemy.y)}`;
+            if (!this._litTiles.has(key)) {
+                enemy.body.tint = DARK;
+                return;
+            }
+        }
         enemy.body.tint = isSlow ? 0x87CEEB : 0xffffff;
     }
 
@@ -1209,7 +1284,12 @@ export class TDRenderer {
     }
 
     clearTileHoverTint(tile) {
-        tile.tint = tile.originalTint || 0xffffff;
+        if (this._litTiles) {
+            const key = `${tile.gridX},${tile.gridY}`;
+            tile.tint = this._litTiles.has(key) ? (tile.originalTint || 0xffffff) : 0x334477;
+        } else {
+            tile.tint = tile.originalTint || 0xffffff;
+        }
     }
 
     highlightTowerSprite(tower) {

@@ -32,6 +32,7 @@ export class TDEngine {
         this.devMode = false;
         this.buffs = { damage: false, slow: false };
         this.routes = [];
+        this.litTiles = null; // null = tout éclairé ; Set de "x,y" = tuiles éclairées (mode obscurité)
         this.initLevel();
 
         // Callbacks - wired by the orchestrator
@@ -44,6 +45,7 @@ export class TDEngine {
         this.onProjectileMissed = null;  // (proj, index)
         this.onProjectileMoved = null;   // (proj)
         this.onWaveStarted = null;       // (waveNumber)
+        this.onTornadoWarning = null;    // () — déclenché ~2s avant qu'une tornade apparaisse
         this.onWaveCompleted = null;     // (waveNumber)
         this.onHealthChanged = null;     // (health)
         this.onGoldChanged = null;       // (gold)
@@ -227,17 +229,22 @@ export class TDEngine {
 
         const waveConfig = waveSrc[waveSrc === GLOBAL_WAVES ? this.globalWave : this.wave]
                         || GLOBAL_WAVES[GLOBAL_WAVES.length - 1];
-        this.spawnQueue = [];
-
+        const start = [], others = [], end = [];
         waveConfig.forEach(group => {
-            for (let i = 0; i < group.count; i++) this.spawnQueue.push(group.type);
+            for (let i = 0; i < group.count; i++) {
+                if (group.position === 'start') start.push(group.type);
+                else if (ENEMY_TYPES[group.type]?.darkness)  end.push(group.type);
+                else others.push(group.type);
+            }
         });
 
-        // Shuffle
-        for (let i = this.spawnQueue.length - 1; i > 0; i--) {
+        // Shuffle les ennemis normaux ; tornades en tête (position:'start') ou en fin
+        for (let i = others.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [this.spawnQueue[i], this.spawnQueue[j]] = [this.spawnQueue[j], this.spawnQueue[i]];
+            [others[i], others[j]] = [others[j], others[i]];
         }
+        this.spawnQueue = [...start, ...others, ...end];
+        this._tornadoWarnLastRemaining = 0;
 
         this.wave++;
         this.globalWave++;
@@ -296,6 +303,17 @@ export class TDEngine {
 
         // Spawn
         const spawnInterval = 600 / this.gameSpeed;
+
+        // Warning tornade : une alerte par tornade, ~2.4s avant son apparition
+        if (this.onTornadoWarning) {
+            const count = this.spawnQueue.filter(t => ENEMY_TYPES[t]?.darkness).length;
+            const firstDarknessIdx = this.spawnQueue.findIndex(t => ENEMY_TYPES[t]?.darkness);
+            if (count > 0 && firstDarknessIdx <= 3 && count !== this._tornadoWarnLastRemaining) {
+                this._tornadoWarnLastRemaining = count;
+                this.onTornadoWarning();
+            }
+        }
+
         if (this.spawnQueue.length > 0 && now - this.lastSpawn > spawnInterval) {
             const type = this.spawnQueue.shift();
             this.lastSpawn = now;
@@ -434,12 +452,17 @@ export class TDEngine {
 
     updateTowers(now) {
         for (const tower of this.towers) {
+            if (TOWER_TYPES[tower.type]?.illuminates) continue; // tours lumière n'attaquent pas
             if (now - tower.lastShot < tower.cooldown / this.gameSpeed) continue;
 
             // AoE pulse towers (wind) - hit all enemies in range, no projectile
             if (tower.aoe) {
                 const targets = [];
                 for (const enemy of this.enemies) {
+                    if (this.litTiles) {
+                        const key = `${Math.floor(enemy.x)},${Math.floor(enemy.y)}`;
+                        if (!this.litTiles.has(key)) continue;
+                    }
                     const dx = enemy.x - tower.x;
                     const dy = enemy.y - tower.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -456,6 +479,10 @@ export class TDEngine {
             let bestProgress = -1;
 
             for (const enemy of this.enemies) {
+                if (this.litTiles) {
+                    const key = `${Math.floor(enemy.x)},${Math.floor(enemy.y)}`;
+                    if (!this.litTiles.has(key)) continue;
+                }
                 const dx = enemy.x - tower.x;
                 const dy = enemy.y - tower.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
@@ -670,18 +697,7 @@ export class TDEngine {
     }
 
     awardXp(tower, amount) {
-        if (!tower || tower.level >= 3) return;
-        tower.xp += amount;
-        if (tower.xp >= tower.xpToLevel) {
-            tower.xp -= tower.xpToLevel;
-            tower.level++;
-            tower.damage = Math.round(tower.damage * 1.15);
-            tower.cooldown = Math.round(tower.cooldown * 0.95);
-            tower.range += 0.2;
-            tower.xpToLevel = Math.round(tower.xpToLevel * 1.4);
-            if (tower.level >= 3) tower.xp = tower.xpToLevel;
-            if (this.onTowerLevelUp) this.onTowerLevelUp(tower);
-        }
+        // Désactivé dans La Brémanie — les tours ne montent pas de niveau
     }
 
     // Shop actions
@@ -742,6 +758,7 @@ export class TDEngine {
         this.spawnQueue = [];
         this.towers = [];
         this.buffs = { damage: false, slow: false };
+        this.litTiles = null;
         this.initLevel();
     }
 

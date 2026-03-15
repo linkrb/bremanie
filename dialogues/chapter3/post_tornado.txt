@@ -1,0 +1,29 @@
+@bg black
+
+> La tornade d'ombre approche, balayant tout sur son passage.
+> La magie de Nathan peine à trouver une forme adéquate.
+
+david(left):worried Un simple mur de pierre ne suffira pas, Nathan !
+david:angry Cette chose n'est faite que de ténèbres. Elle passera au travers.
+nathan(right):worried Mais je ne connais que les tours d'archers et de mages !
+
+david(left):determined Réfléchis, Nathan. Qu'est-ce qui repousse les ténèbres ?
+nathan(right):surprised Le soleil ? Mais il fait nuit noire, Oncle David !
+david(left):neutral Le soleil, ou la lumière pure. Te souviens-tu de la capitale ?
+david:proud Des grands cristaux du phare qui guidaient les navires dans la brume ?
+
+nathan(right):surprised La grande lanterne dorée...
+nathan:determined Elle avait des miroirs géants pour diriger la lumière !
+david(left):determined Exactement. Si ton pouvoir te permet de modeler la pierre...
+david:proud Laisse-le invoquer la lumière pour percer ces ombres.
+
+> Nathan ferme les yeux. La lueur bleutée de ses mains vire à l'or.
+@bg scenes/tour_doree.png
+
+nathan(right):proud Je la vois ! Une tour couronnée d'un cristal solaire !
+david(left):surprised Par tous les dieux... des mécanismes se mettent en place...
+nathan:laughing Des artisans ajustent des miroirs pour concentrer l'énergie !
+david:determined Leurs faisceaux de lumière pure trancheront cette tempête.
+
+david(left):proud Dresse cette Tour de Lumière, Nathan !
+david:determined Illumine notre ciel et renvoie cette chose dans les abysses !

@@ -2,19 +2,34 @@
 // Mobile-first: tap to advance, touch-friendly sizing
 
 const CHAR_NAMES = {
-    romain:  'Romain',
-    nathan:  'Nathan',
-    anna:    'Anna',
-    suzanne: 'Suzanne',
-    garde:   'Garde',
+    romain:       'Romain',
+    nathan:       'Nathan',
+    anna:         'Anna',
+    suzanne:      'Suzanne',
+    garde:        'Garde',
+    david:        'David',
+    adeline:      'Adeline',
+    lucas:        'Lucas',
+    necromancien: 'Le Nécromancien',
+    seraphelle:   'Séraphelle',
+};
+
+// Scale override par personnage (1 = taille par défaut)
+const CHAR_SCALE = {
+    david: 1.2,
 };
 
 const CHAR_COLORS = {
-    romain:  { bg: '#2d4f8a', border: '#7aa3d4' },
-    nathan:  { bg: '#6b4a12', border: '#c8952a' },
-    anna:    { bg: '#7a1f1f', border: '#c85050' },
-    suzanne: { bg: '#2d6e35', border: '#72b87e' },
-    garde:   { bg: '#3a4455', border: '#8a9ab0' },
+    romain:       { bg: '#2d4f8a', border: '#7aa3d4' },
+    nathan:       { bg: '#6b4a12', border: '#c8952a' },
+    anna:         { bg: '#7a1f1f', border: '#c85050' },
+    suzanne:      { bg: '#2d6e35', border: '#72b87e' },
+    garde:        { bg: '#3a4455', border: '#8a9ab0' },
+    david:        { bg: '#2e5a3e', border: '#6aaa7e' },
+    adeline:      { bg: '#5a3060', border: '#b07ac8' },
+    lucas:        { bg: '#4a5a2e', border: '#9ab07a' },
+    necromancien: { bg: '#1a0a2e', border: '#6633aa' },
+    seraphelle:   { bg: '#1a1a2a', border: '#4455aa' },
 };
 
 const CSS = `
@@ -431,13 +446,17 @@ export class DialogueEngine {
                 continue;
             }
 
-            // ── Dialogue : char(side):emotion texte ─────────────
-            const match = line.match(/^(\w+)(?:\((\w+)\))?:(\w+)\s+(.+)$/);
+            // ── Dialogue : char(side)?(anonymous)?:emotion texte ─
+            const match = line.match(/^(\w+)(?:\((\w+)\))?(?:\((\w+)\))?:(\w+)\s+(.+)$/);
             if (!match) continue;
 
-            const [, char, side, emotion, text] = match;
+            const [, char, mod1, mod2, emotion, text] = match;
+            const mods = [mod1, mod2].filter(Boolean);
+            const side      = mods.find(m => m === 'left' || m === 'right');
+            const anonymous = mods.includes('anonymous');
             const entry = { char, emotion, text };
-            if (side) entry.side = side;
+            if (side)      entry.side      = side;
+            if (anonymous) entry.anonymous = true;
 
             // Si on sortait d'un @scene, signaler la reprise
             if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; entry.resumeChars = true; }
@@ -546,6 +565,7 @@ export class DialogueEngine {
         // Swap portrait image
         const imgEl = side === 'left' ? this.els.imgLeft : this.els.imgRight;
         imgEl.src = `${this.basePath}${line.char}/${emotion}.png`;
+        imgEl.style.transform = CHAR_SCALE[line.char] ? `scale(${CHAR_SCALE[line.char]})` : '';
 
         // Active / inactive classes
         const elActive = this.els[side];
@@ -560,7 +580,7 @@ export class DialogueEngine {
         }
 
         // Name box
-        const name   = CHAR_NAMES[line.char] || line.char;
+        const name   = line.anonymous ? '???' : (CHAR_NAMES[line.char] || line.char);
         const colors = CHAR_COLORS[line.char] || { bg: '#333', border: '#888' };
         this.els.namebox.textContent = name;
         this.els.namebox.style.background   = colors.bg;

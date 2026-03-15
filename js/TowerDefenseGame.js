@@ -1,6 +1,6 @@
 import {
     GRID_WIDTH, GRID_HEIGHT,
-    TOWER_TYPES, TOWER_DISPLAY, SHOP_ITEMS, LEVELS,
+    TOWER_TYPES, TOWER_DISPLAY, SHOP_ITEMS, LEVELS, ENEMY_TYPES,
     fromIso
 } from './tdConfig.js';
 import { TDRenderer } from './TDRenderer.js';
@@ -35,6 +35,10 @@ export class TowerDefenseGame {
         this.onWaveCompleted    = null;  // (waveNumber)
         this.onChapter2Win      = null;  // ()
         this.onChapter3Win      = null;  // ()
+        this.onChateauWin       = null;  // ()
+        this.onChateauBossWin   = null;  // ()
+        this.onChateauFinalWin  = null;  // ()
+        this.onTornadoSpawned   = null;  // ()
         this.onTowerPlaced      = null;  // () — son de pose
     }
 
@@ -132,6 +136,15 @@ export class TowerDefenseGame {
             const { sprite, body, hpBar, baseScaleX, baseScaleY } = this.renderer.createEnemySprite(type);
             const enemy = this.engine.spawnEnemy(type, sprite, body, hpBar, baseScaleX, baseScaleY);
             this.renderer.addEnemyToStage(enemy);
+            if (ENEMY_TYPES[type]?.darkness) {
+                this.engine.litTiles = new Set();
+                // Illuminer toutes les tours lumière déjà posées, puis appliquer le tinting
+                for (const t of this.engine.towers) {
+                    if (TOWER_TYPES[t.type]?.illuminates) this._applyTowerLight(t);
+                }
+                this.renderer.setTileLighting(this.engine.litTiles);
+                this.onTornadoSpawned?.();
+            }
         };
 
         this.engine.onEnemyMoved = (enemy, now, isSlow) => {
@@ -144,12 +157,21 @@ export class TowerDefenseGame {
             this.renderer.createDeathEffect(enemy.x, enemy.y);
             this.renderer.showFloatingGold(enemy.x, enemy.y, enemy.reward, this.container);
             this.renderer.removeEnemyFromStage(enemy);
+            // enemy déjà retiré de engine.enemies avant ce callback
+            if (ENEMY_TYPES[enemy.type]?.darkness && !this.engine.enemies.some(e => ENEMY_TYPES[e.type]?.darkness)) {
+                this.engine.litTiles = null;
+                this.renderer.setTileLighting(null);
+            }
             this.updateUI();
         };
 
         this.engine.onEnemyReachedBase = (enemy) => {
             this.renderer.removeEnemyFromStage(enemy);
             this.renderer.createDamageEffect();
+            if (ENEMY_TYPES[enemy.type]?.darkness && !this.engine.enemies.some(e => ENEMY_TYPES[e.type]?.darkness)) {
+                this.engine.litTiles = null;
+                this.renderer.setTileLighting(null);
+            }
             this.updateUI();
         };
 
@@ -341,6 +363,12 @@ export class TowerDefenseGame {
         this.renderer.addTowerToStage(tower);
         this.renderer.drawTowerXpBar(tower);
         this.onTowerPlaced?.();
+
+        // Si obscurité active et tour lumière, illuminer immédiatement
+        if (TOWER_TYPES[tower.type]?.illuminates && this.engine.litTiles) {
+            this._applyTowerLight(tower);
+            this.renderer.setTileLighting(this.engine.litTiles);
+        }
 
         this.renderer.hideRangePreview();
         this.renderer.hideGhostTower();
@@ -633,6 +661,9 @@ export class TowerDefenseGame {
     }
 
     showVictory() {
+        if (this._chateauFinalMode) { this.onChateauFinalWin?.(); return; }
+        if (this._chateauBossMode)  { this.onChateauBossWin?.();  return; }
+        if (this._chateauMode)     { this.onChateauWin?.();     return; }
         if (this._chapter3Mode) { this.onChapter3Win?.(); return; }
         if (this._tutorialMode) {
             // Badge victoire interactif → clic → dialogue → fin
@@ -688,18 +719,22 @@ export class TowerDefenseGame {
     replay() {
         if (this._chapter2Mode) { this.setChapter2Mode(); return; }
         if (this._chapter3Mode) { this.setChapter3Mode(); return; }
+        if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
+        if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
+        if (this._chateauMode)     { this.setChateauMode();     return; }
         this.setNormalMode();
     }
 
     // Chapitre 3 : Fort de l'Est (niveau index 5, archer + mage)
-    setChapter3Mode() {
+    // skipDefaultTower=true lors d'une restauration de sauvegarde
+    setChapter3Mode(skipDefaultTower = false) {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
         this._chapter3Mode = true;
 
         const idx = LEVELS.findIndex(l => l.name === "Fort de l'Est");
-        if (idx < 0) { console.error('[Brémanie] Niveau Fort de l\'Est introuvable'); return; }
+        if (idx < 0) { console.error("[Brémanie] Niveau Fort de l'Est introuvable"); return; }
         this.engine.resetGameState(idx, true);
         this.engine.gold = 150;
         this.engine.health = 15;
@@ -713,8 +748,9 @@ export class TowerDefenseGame {
         this.hideTowerInfo();
 
         // Tour mage offerte au départ (cellule {2,2} adjacente au chemin)
+        // Ignorée si on restaure une sauvegarde (les tours seront posées via applySaveState)
         const fx = 2, fy = 2;
-        if (this.engine.canPlaceTower(fx, fy, 'mage')) {
+        if (!skipDefaultTower && this.engine.canPlaceTower(fx, fy, 'mage')) {
             this.engine.gold += TOWER_TYPES['mage'].cost; // crédité puis déduit par placeTower → net = 0
             const orientation = this.engine.getTowerOrientation(fx, fy);
             const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite('mage', orientation);
@@ -724,6 +760,128 @@ export class TowerDefenseGame {
         }
 
         this.updateUI();
+    }
+
+    // Chapitre 3 : Château (niveau Château, archer + mage)
+    // skipDefaultTower=true lors d'une restauration de sauvegarde
+    setChateauMode(skipDefaultTower = false) {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chateauMode = true;
+
+        const idx = LEVELS.findIndex(l => l.name === 'Château');
+        if (idx < 0) { console.error('[Brémanie] Niveau Château introuvable'); return; }
+        this.engine.resetGameState(idx, true);
+        this.engine.gold = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+
+        // Tour mage offerte au départ
+        const fx = 2, fy = 2;
+        if (!skipDefaultTower && this.engine.canPlaceTower(fx, fy, 'mage')) {
+            this.engine.gold += TOWER_TYPES['mage'].cost;
+            const orientation = this.engine.getTowerOrientation(fx, fy);
+            const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite('mage', orientation);
+            const tower = this.engine.placeTower(fx, fy, 'mage', sprite, baseScaleX, baseScaleY);
+            this.renderer.addTowerToStage(tower);
+            this.renderer.drawTowerXpBar(tower);
+        }
+
+        this.updateUI();
+    }
+
+    // Chapitre 3 : Boss final (1 tornado, même carte que Château, tours préservées via applySaveState)
+    setChateauBossMode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chateauBossMode = true;
+
+        const idx = LEVELS.findIndex(l => l.name === 'Château Boss');
+        if (idx < 0) { console.error('[Brémanie] Niveau Château Boss introuvable'); return; }
+        this.engine.resetGameState(idx, true);
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+
+        // Tour archer offerte en milieu de parcours
+        const fx = 3, fy = 11;
+        if (this.engine.canPlaceTower(fx, fy, 'archer')) {
+            this.engine.gold += TOWER_TYPES['archer'].cost;
+            const orientation = this.engine.getTowerOrientation(fx, fy);
+            const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite('archer', orientation);
+            const tower = this.engine.placeTower(fx, fy, 'archer', sprite, baseScaleX, baseScaleY);
+            this.renderer.addTowerToStage(tower);
+            this.renderer.drawTowerXpBar(tower);
+        }
+
+        this.updateUI();
+    }
+
+    // Chapitre 3 : Combat Final (après dialogue post_tornado, tour lumière offerte, 14 coeurs)
+    setChateauFinalMode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chateauFinalMode = true;
+
+        const idx = LEVELS.findIndex(l => l.name === 'Château Final');
+        this.engine.resetGameState(idx, true);
+        this.engine.health    = 14;
+        this.engine.maxHealth = 14;
+        // litTiles reste null — l'obscurité ne s'active que quand la tornade arrive
+
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+
+        // Tour lumière offerte — éclaire les cases adjacentes au milieu du parcours
+        const fx = 3, fy = 10;
+        if (this.engine.canPlaceTower(fx, fy, 'light')) {
+            const orientation = this.engine.getTowerOrientation(fx, fy);
+            const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite('light', orientation);
+            const prevDevMode = this.engine.devMode;
+            this.engine.devMode = true; // placement gratuit
+            const tower = this.engine.placeTower(fx, fy, 'light', sprite, baseScaleX, baseScaleY);
+            this.engine.devMode = prevDevMode;
+            this.renderer.addTowerToStage(tower);
+            this.renderer.drawTowerXpBar(tower);
+            // Note : l'illumination est activée à l'arrivée de la tornade (wireCallbacks)
+        }
+
+        this.updateUI();
+    }
+
+    // Illumine les cases dans le rayon d'une tour lumière (logique + visuel)
+    _applyTowerLight(tower) {
+        if (!this.engine.litTiles) return;
+        const range = TOWER_TYPES[tower.type]?.range ?? 2.5;
+        const cx = tower.x, cy = tower.y;
+        for (let dx = -Math.ceil(range); dx <= Math.ceil(range); dx++) {
+            for (let dy = -Math.ceil(range); dy <= Math.ceil(range); dy++) {
+                if (Math.sqrt(dx * dx + dy * dy) <= range) {
+                    this.engine.litTiles.add(`${Math.floor(cx) + dx},${Math.floor(cy) + dy}`);
+                }
+            }
+        }
+        // setTileLighting appelé par l'appelant après avoir peuplé toutes les tours
     }
 
     // Chapitre 2 : combat de la Forêt (niveau index 3, archer uniquement)
@@ -753,6 +911,9 @@ export class TowerDefenseGame {
     _resetForMode() {
         this._chapter2Mode = false;
         this._chapter3Mode = false;
+        this._chateauMode      = false;
+        this._chateauBossMode  = false;
+        this._chateauFinalMode = false;
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');
         show('.tower-bar');
@@ -774,6 +935,37 @@ export class TowerDefenseGame {
         this.selectedPlacedTower = null;
         this.hoveredTile = null;
         this.hideTowerInfo();
+        this.updateUI();
+    }
+
+    // ── Sauvegarde / restauration ─────────────────────────────
+
+    // Sérialise les tours placées pour la sauvegarde
+    getTowersState() {
+        return this.engine.towers.map(t => ({
+            x: t.x, y: t.y, type: t.type,
+            level: t.level || 1, xp: t.xp || 0,
+        }));
+    }
+
+    // Applique un état sauvegardé après setChapter2Mode / setChapter3Mode(true)
+    applySaveState({ wave = 0, gold = 150, health = 15, towers = [] }) {
+        this.engine.gold       = gold;
+        this.engine.health     = health;
+        this.engine.wave       = wave;
+        this.engine.globalWave = wave;
+
+        for (const t of towers) {
+            if (!this.engine.canPlaceTower(t.x, t.y, t.type)) continue;
+            const orientation = this.engine.getTowerOrientation(t.x, t.y);
+            const { sprite, baseScaleX, baseScaleY } = this.renderer.createTowerSprite(t.type, orientation);
+            const tower = this.engine.placeTower(t.x, t.y, t.type, sprite, baseScaleX, baseScaleY);
+            if (tower) {
+                tower.xp = t.xp || 0;
+                this.renderer.addTowerToStage(tower);
+                this.renderer.drawTowerXpBar(tower);
+            }
+        }
         this.updateUI();
     }
 

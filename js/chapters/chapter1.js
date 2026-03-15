@@ -1,6 +1,8 @@
 // ── Chapitre I : La Fuite — Les Enfants du Roi ───────────────
 // Inclut le Prologue (qui enchaîne directement sur le chapitre 1)
 
+import { SaveManager } from '/bremanie/js/SaveManager.js';
+
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showDefeatBadgeInteractive, showVictoryBadgeInteractive,
                         fadeToBlack, fadeFromBlack, onChapterEnd }) {
@@ -64,6 +66,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         };
 
         game.onTutorialWin = () => {
+            SaveManager.save({ stage: 'chapter2_start' });
             onChapterEnd(1);
         };
     }
