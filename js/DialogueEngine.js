@@ -289,8 +289,9 @@ export class DialogueEngine {
         this.onMusic     = null; // callback(trackName) déclenché par @music
         this.onMusicStop = null; // callback() déclenché par @musicstop
         this.onSfx       = null; // callback(trackName) déclenché par @sfx (one-shot)
-        this.onSfxLoop   = null; // callback(trackName) déclenché par @sfxloop
-        this.onSfxStop   = null; // callback(trackName) déclenché par @sfxstop
+        this.onSfxLoop         = null; // callback(trackName) déclenché par @sfxloop
+        this.onSfxStop         = null; // callback(trackName) déclenché par @sfxstop
+        this.onSfxLoopStopAll  = null; // callback() — appelé au démarrage de chaque dialogue
 
         // Track what's displayed on each side
         this.sides = {
@@ -392,6 +393,9 @@ export class DialogueEngine {
             left:  { char: null, emotion: null, visible: false },
             right: { char: null, emotion: null, visible: false },
         };
+
+        // Couper tous les sfxloop actifs au démarrage d'un nouveau dialogue
+        this.onSfxLoopStopAll?.();
 
         this.overlay.style.display = 'block';
 

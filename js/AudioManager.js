@@ -79,6 +79,10 @@ export class AudioManager {
         this._sfxLoops[name] = sfx;
     }
 
+    stopAllSfxLoops(ms = 1000) {
+        for (const name of Object.keys(this._sfxLoops)) this.stopSfx(name, ms);
+    }
+
     stopSfx(name, ms = 1000) {
         const sfx = this._sfxLoops[name];
         if (!sfx) return;

@@ -27,8 +27,9 @@ audio.preload('tower_place',  '/bremanie/audio/tower_place.mp3');
 dlg.onMusic     = (track) => audio.crossfadeTo(track, 1500);
 dlg.onMusicStop = ()      => audio.stop(1500);
 dlg.onSfx       = (track) => audio.playSfx(track);
-dlg.onSfxLoop   = (track) => audio.playSfxLoop(track);
-dlg.onSfxStop   = (track) => audio.stopSfx(track);
+dlg.onSfxLoop        = (track) => audio.playSfxLoop(track);
+dlg.onSfxStop        = (track) => audio.stopSfx(track);
+dlg.onSfxLoopStopAll = ()      => audio.stopAllSfxLoops();
 
 // ── Navigation ────────────────────────────────────────────────
 
