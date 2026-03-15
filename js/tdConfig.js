@@ -6,7 +6,7 @@ export const GRID_HEIGHT = 22;
 
 export const TOWER_TYPES = {
     archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8 },
-    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, availableFromLevel: 5 },
+    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0 },
     light:  { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0, color: 0xFFD700, displayScale: 1.8, illuminates: true },
 };
 

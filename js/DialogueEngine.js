@@ -226,6 +226,41 @@ const CSS = `
     opacity: 0; /* supprime le dégradé intermédiaire */
 }
 
+/* ── Scene pause : cache la boîte de dialogue ── */
+.dlg-box {
+    transition: opacity 0.3s ease;
+}
+#dlg-overlay.scene-pause .dlg-box {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Indicateur "tap to continue" pendant scene-pause */
+.dlg-scene-hint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.85);
+    pointer-events: none;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.4s ease;
+    animation: dlgSceneHint 0.8s ease-in-out infinite alternate;
+}
+#dlg-overlay.scene-pause .dlg-scene-hint {
+    opacity: 1;
+    transition: opacity 0.5s ease 1s;
+}
+
+@keyframes dlgSceneHint {
+    from { transform: translateX(-50%) translateY(0);   opacity: 1; }
+    to   { transform: translateX(-50%) translateY(5px); opacity: 0.45; }
+}
+
 /* Texte de narration : centré, italique, plus grand, sans namebox */
 .dlg-narration {
     font-style: italic;
@@ -297,6 +332,7 @@ export class DialogueEngine {
                 <div class="dlg-arrow"   id="dlg-arrow">▼</div>
                 <div class="dlg-tap-hint">Toucher pour continuer</div>
             </div>
+            <div class="dlg-scene-hint">▼ Toucher pour continuer</div>
         `;
         document.body.appendChild(overlay);
         this.overlay = overlay;
@@ -397,17 +433,16 @@ export class DialogueEngine {
     //   @bg scenes/anna_bow.png    ← change le fond (une seule fois)
     //   romain(left):worried Texte...
     //   anna:laughing Texte...
-    static parse(text) {
-        const lines  = text.split('\n');
+    static parse(rawText) {
+        const lines  = rawText.split('\n');
         const script = [];
         let pendingBg    = null;
-        let pendingScene = null; // @scene → mode cinématique
-        let pendingBgPos = null; // @bgpos → position du fond
-        let pendingMusic = null; // @music → déclenche onMusic callback
-        let pendingMusicStop = false; // @musicstop → arrêt musique
-        let pendingSfx     = null; // @sfx     → one-shot
-        let pendingSfxLoop = null; // @sfxloop → boucle
-        let pendingSfxStop = null; // @sfxstop → arrêt
+        let pendingBgPos = null;
+        let pendingMusic = null;
+        let pendingMusicStop = false;
+        let pendingSfx     = null;
+        let pendingSfxLoop = null;
+        let pendingSfxStop = null;
 
         for (const raw of lines) {
             const line = raw.trim();
@@ -419,24 +454,38 @@ export class DialogueEngine {
             if (line.startsWith('@')) {
                 const [cmd, ...args] = line.slice(1).split(/\s+/);
                 const val = args.join(' ');
-                if (cmd === 'bg')    pendingBg    = val;
-                if (cmd === 'scene') pendingScene = val;
-                if (cmd === 'bgpos') pendingBgPos = val;
+                if (cmd === 'bg')    { pendingBg    = val; continue; }
+                if (cmd === 'bgpos') {
+                    const last = script[script.length - 1];
+                    if (last?.type === 'scene_pause') last.bgPos = val;
+                    else pendingBgPos = val;
+                    continue;
+                }
+                if (cmd === 'scene') {
+                    // @scene crée une pause autonome : image plein écran, tap pour continuer
+                    script.push({ type: 'scene_pause', scene: val, bgPos: pendingBgPos || 'center' });
+                    pendingBgPos = null;
+                    continue;
+                }
                 if (cmd === 'hide')  { script.push({ type: 'hide', side: val }); continue; }
-                if (cmd === 'music')     pendingMusic     = val;
-                if (cmd === 'musicstop') pendingMusicStop = true;
-                if (cmd === 'sfx')       pendingSfx       = val;
-                if (cmd === 'sfxloop')   pendingSfxLoop   = val;
-                if (cmd === 'sfxstop')   pendingSfxStop   = val;
+
+                // Directives audio : si la dernière entrée est une scene_pause, on lui attache
+                // (ex. @scene X\n@music Y → la musique démarre quand la scène apparaît)
+                const last = script[script.length - 1];
+                const attachToScene = last?.type === 'scene_pause';
+                if (cmd === 'music')     { if (attachToScene) last.music     = val;  else pendingMusic     = val;  continue; }
+                if (cmd === 'musicstop') { if (attachToScene) last.musicStop = true; else pendingMusicStop = true; continue; }
+                if (cmd === 'sfx')       { if (attachToScene) last.sfx       = val;  else pendingSfx       = val;  continue; }
+                if (cmd === 'sfxloop')   { if (attachToScene) last.sfxloop   = val;  else pendingSfxLoop   = val;  continue; }
+                if (cmd === 'sfxstop')   { if (attachToScene) last.sfxstop   = val;  else pendingSfxStop   = val;  continue; }
                 continue;
             }
 
             // ── Narration : > Texte de narration ────────────────
             if (line.startsWith('>')) {
-                const text = line.slice(1).trim();
-                const entry = { type: 'narration', text };
-                if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; }
-                else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
+                const narText = line.slice(1).trim();
+                const entry = { type: 'narration', text: narText };
+                if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
                 if (pendingMusic)     { entry.music     = pendingMusic;     pendingMusic     = null; }
                 if (pendingMusicStop) { entry.musicStop = true;             pendingMusicStop = false; }
                 if (pendingSfx)       { entry.sfx       = pendingSfx;       pendingSfx       = null; }
@@ -450,22 +499,19 @@ export class DialogueEngine {
             const match = line.match(/^(\w+)(?:\((\w+)\))?(?:\((\w+)\))?:(\w+)\s+(.+)$/);
             if (!match) continue;
 
-            const [, char, mod1, mod2, emotion, text] = match;
+            const [, char, mod1, mod2, emotion, dlgText] = match;
             const mods = [mod1, mod2].filter(Boolean);
             const side      = mods.find(m => m === 'left' || m === 'right');
             const anonymous = mods.includes('anonymous');
-            const entry = { char, emotion, text };
+            const entry = { char, emotion, text: dlgText };
             if (side)      entry.side      = side;
             if (anonymous) entry.anonymous = true;
-
-            // Si on sortait d'un @scene, signaler la reprise
-            if (pendingScene) { entry.scene = pendingScene; entry.bgPos = pendingBgPos; pendingScene = null; pendingBgPos = null; entry.resumeChars = true; }
-            else if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
-            if (pendingMusic)   { entry.music   = pendingMusic;   pendingMusic   = null; }
-            if (pendingSfx)     { entry.sfx     = pendingSfx;     pendingSfx     = null; }
-            if (pendingSfxLoop) { entry.sfxloop = pendingSfxLoop; pendingSfxLoop = null; }
-            if (pendingSfxStop) { entry.sfxstop = pendingSfxStop; pendingSfxStop = null; }
-
+            if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
+            if (pendingMusic)     { entry.music     = pendingMusic;     pendingMusic     = null; }
+            if (pendingMusicStop) { entry.musicStop = true;             pendingMusicStop = false; }
+            if (pendingSfx)       { entry.sfx       = pendingSfx;       pendingSfx       = null; }
+            if (pendingSfxLoop)   { entry.sfxloop   = pendingSfxLoop;   pendingSfxLoop   = null; }
+            if (pendingSfxStop)   { entry.sfxstop   = pendingSfxStop;   pendingSfxStop   = null; }
             script.push(entry);
         }
 
@@ -517,16 +563,17 @@ export class DialogueEngine {
             return;
         }
 
-        // ── Mode cinématique (@scene) ────────────────────────
-        if (line.scene) {
+        // ── Scene pause (@scene) ─────────────────────────────
+        // Image plein écran sans boîte de dialogue — tap pour continuer
+        if (line.type === 'scene_pause') {
             this._setBg(line.scene === 'black' ? 'black' : `${this.basePath}${line.scene}`, line.bgPos || 'center');
-            this.overlay.classList.add('cinematic');
+            this.overlay.classList.add('cinematic', 'scene-pause');
+            this.typing = false;
+            return;
         }
 
-        // Reprise après @scene (premier dialogue après)
-        if (line.resumeChars) {
-            this.overlay.classList.remove('cinematic');
-        }
+        // Pour tout autre type : sortir du mode scene-pause et cinématique
+        this.overlay.classList.remove('scene-pause', 'cinematic');
 
         // ── Narration (>) ────────────────────────────────────
         if (line.type === 'narration') {
@@ -541,9 +588,6 @@ export class DialogueEngine {
         // Reprise du mode normal (namebox visible)
         this.els.namebox.style.display = '';
         this.els.text.className = 'dlg-text';
-
-        // Toujours sortir du mode cinématique dès qu'un dialogue commence
-        this.overlay.classList.remove('cinematic');
 
         // Background classique
         if (line.bg) {

@@ -184,12 +184,12 @@ function onChapterEnd(chapterNumber) {
 async function resumeFromSave(save) {
     chapter1._preload();
     chapter2._preload();
+    chapter3._preload();
     // S'assurer que le jeu est initialisé avant d'appeler showGame (pour rester synchrone)
     await ensureGameInit();
 
     if (save.stage === 'chapter2_start') {
-        // Chapitre 1 terminé — démarrer Ch.2 directement sans titre ni dialogue intro
-        showGame('chapter2');
+        chapter2.startChapter2();
         return;
     }
 
@@ -200,8 +200,13 @@ async function resumeFromSave(save) {
     }
 
     if (save.stage === 'chapter3_start') {
-        // Chapitre 2 terminé — démarrer Ch.3 directement
-        showGame('chateau');
+        chapter3.startChapter3();
+        return;
+    }
+
+    if (save.stage === 'complete') {
+        // Chapitre 3 terminé — afficher l'écran de fin en attendant le chapitre 4
+        showChapterEnd('Chapitre III', () => { /* Chapitre IV à venir */ });
         return;
     }
 
@@ -366,7 +371,10 @@ window._bremanieResume = resumeFromSave;
 // ?dev=tutorial       → TD mode tutorial direct
 // ?dev=normal         → TD worldmap direct
 // ?dev=chapter2       → TD mode forêt direct
-// ?dev=victory        → dialogue final chapitre 3 direct
+// ?dev=end_ch1        → écran fin Chapitre I → début ch2
+// ?dev=end_ch2        → dialogue final ch2 → écran fin Chapitre II → début ch3
+// ?dev=end_ch3        → dialogue victoire ch3 → écran fin Chapitre III
+// ?dev=victory        → alias end_ch3 (rétro-compat)
 const params  = new URLSearchParams(location.search);
 const chapter = params.get('chapter');
 const scene   = params.get('scene');
@@ -393,4 +401,6 @@ if (dev === 'chapter3')     { chapter1._preload(); chapter2._preload(); chapter3
 if (dev === 'chateau')      { chapter3._preload(); showGame('chateau'); }
 if (dev === 'chateau_boss')   { chapter3._preload(); showGame('chateau_boss'); }
 if (dev === 'chateau_final')  { chapter3._preload(); showGame('chateau_final'); }
-if (dev === 'victory')        { chapter3._preload(); showDialogue('chapter3/victory', () => { onChapterEnd(3); }); }
+if (dev === 'end_ch1')        { chapter1._preload(); chapter2._preload(); onChapterEnd(1); }
+if (dev === 'end_ch2')        { chapter2._preload(); chapter3._preload(); showDialogue('chapter2/final', () => { onChapterEnd('2b'); }); }
+if (dev === 'end_ch3' || dev === 'victory') { chapter3._preload(); showDialogue('chapter3/victory', () => { onChapterEnd(3); }); }

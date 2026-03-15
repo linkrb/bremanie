@@ -686,8 +686,10 @@ export class TowerDefenseGame {
     }
 
     showLevelTransition(completedLevel) {
-        if (this._chapter2Mode) { this.onChapter2Win?.(); return; }
-        if (this._fortMode)     { this.onChapter3Win?.(); return; }
+        if (this._chapter2Mode)    { this.onChapter2Win?.();     return; }
+        if (this._fortMode)        { this.onChapter3Win?.();     return; }
+        if (this._chateauMode)     { this.onChateauWin?.();      return; }
+        if (this._chateauFinalMode){ this.onChateauFinalWin?.(); return; }
         this._continuing = true;
     }
 
@@ -753,6 +755,9 @@ export class TowerDefenseGame {
         // Tour mage offerte au départ (cellule {2,2} adjacente au chemin)
         // Ignorée si on restaure une sauvegarde (les tours seront posées via applySaveState)
         const fx = 2, fy = 2;
+        // drawGround peut avoir posé un deco aléatoire ici (hasTree) — on le force à false
+        // pour garantir le placement. Le sprite deco reste visible mais caché sous la tour.
+        this.engine.grid[fy][fx].hasTree = false;
         if (!skipDefaultTower && this.engine.canPlaceTower(fx, fy, 'mage')) {
             this.engine.gold += TOWER_TYPES['mage'].cost; // crédité puis déduit par placeTower → net = 0
             const orientation = this.engine.getTowerOrientation(fx, fy);
@@ -790,6 +795,7 @@ export class TowerDefenseGame {
 
         // Tour mage offerte au départ
         const fx = 2, fy = 2;
+        this.engine.grid[fy][fx].hasTree = false;
         if (!skipDefaultTower && this.engine.canPlaceTower(fx, fy, 'mage')) {
             this.engine.gold += TOWER_TYPES['mage'].cost;
             const orientation = this.engine.getTowerOrientation(fx, fy);
@@ -808,7 +814,7 @@ export class TowerDefenseGame {
         this._tutorialMode = false;
         this._resetForMode();
         this._chateauBossMode = true;
-        this._availableTowers = new Set(['archer', 'mage', 'light']);
+        this._availableTowers = new Set(['archer', 'mage']);
 
         const idx = LEVELS.findIndex(l => l.name === 'Château Boss');
         if (idx < 0) { console.error('[Brémanie] Niveau Château Boss introuvable'); return; }
