@@ -821,6 +821,8 @@ export class TowerDefenseGame {
         const idx = LEVELS.findIndex(l => l.name === 'Château Boss');
         if (idx < 0) { console.error('[Brémanie] Niveau Château Boss introuvable'); return; }
         this.engine.resetGameState(idx, true);
+        this.engine.health    = 15;
+        this.engine.maxHealth = 15;
         this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
