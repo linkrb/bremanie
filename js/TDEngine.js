@@ -438,10 +438,24 @@ export class TDEngine {
             const dy = target.y - enemy.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
 
-            if (dist < 0.08) {
+            const move = speed * dt * 0.35;
+            if (dist <= move) {
+                // Snap au waypoint et repartir immédiatement avec le budget restant
+                enemy.x = target.x;
+                enemy.y = target.y;
                 enemy.pathIndex++;
+                const nextTarget = enemy.route[enemy.pathIndex + 1];
+                if (nextTarget) {
+                    const remaining = move - dist;
+                    const nx = nextTarget.x - enemy.x;
+                    const ny = nextTarget.y - enemy.y;
+                    const nd = Math.sqrt(nx * nx + ny * ny);
+                    if (nd > 0.01) {
+                        enemy.x += (nx / nd) * Math.min(remaining, nd);
+                        enemy.y += (ny / nd) * Math.min(remaining, nd);
+                    }
+                }
             } else {
-                const move = speed * dt * 0.35;
                 enemy.x += (dx / dist) * move;
                 enemy.y += (dy / dist) * move;
             }

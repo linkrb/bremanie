@@ -1,7 +1,7 @@
 import {
     GRID_WIDTH, GRID_HEIGHT,
     TOWER_TYPES, TOWER_DISPLAY, SHOP_ITEMS, LEVELS, ENEMY_TYPES,
-    fromIso
+    fromIso, toIso
 } from './tdConfig.js';
 import { TDRenderer } from './TDRenderer.js';
 import { TDEngine } from './TDEngine.js';
@@ -136,6 +136,8 @@ export class TowerDefenseGame {
         this.engine.onEnemySpawned = (type) => {
             const { sprite, body, hpBar, baseScaleX, baseScaleY } = this.renderer.createEnemySprite(type);
             const enemy = this.engine.spawnEnemy(type, sprite, body, hpBar, baseScaleX, baseScaleY);
+            // Pré-calcul des positions screen de chaque waypoint pour interpolation lisse
+            enemy._screenRoute = enemy.route.map(p => toIso(p.x, p.y));
             this.renderer.addEnemyToStage(enemy);
             if (ENEMY_TYPES[type]?.darkness) {
                 this.engine.litTiles = new Set();

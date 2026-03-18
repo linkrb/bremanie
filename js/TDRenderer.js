@@ -206,7 +206,7 @@ export class TDRenderer {
                 } catch (e) { }
             }
 
-            // Themed enemies (supporte string ou array de variants)
+            // Themed enemies — static + spritesheet animé (_walk_right.png) si disponible
             // Si le thème a enemyFolder, les sprites ennemis viennent d'un dossier partagé
             const enemyBasePath = level.theme.enemyFolder
                 ? `/bremanie/images/td/${level.theme.enemyFolder}`
@@ -215,10 +215,23 @@ export class TDRenderer {
                 const assets = Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset];
                 for (const name of assets) {
                     const assetKey = `${name}_${themeId}`;
+                    // Texture statique
                     try {
                         const tex = await PIXI.Assets.load(`${enemyBasePath}/${name}.png`);
                         this.assets[assetKey] = tex;
                     } catch (e) { }
+                    // Spritesheet animé (convention : {name}_walk_right.png)
+                    const animKey = `${assetKey}_anim_frames`;
+                    if (!this.assets[animKey]) {
+                        try {
+                            const sheet = await PIXI.Assets.load(`${enemyBasePath}/${name}_walk_right.png`);
+                            const frameCount = Math.round(sheet.width / sheet.height);
+                            const fw = Math.floor(sheet.width / frameCount);
+                            this.assets[animKey] = Array.from({ length: frameCount }, (_, i) =>
+                                new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                            );
+                        } catch (e) { }
+                    }
                 }
             }
 
@@ -779,7 +792,26 @@ export class TDRenderer {
                       || (themedKey ? this._getThemedAsset(themedKey) : null)
                       || this.assets[`enemy_${type}`];
 
-        if (enemyTex) {
+        // Spritesheet animé générique : {themedKey}_{themeId}_anim_frames
+        const animFrames = (themedKey && themeId)
+            ? this.assets[`${themedKey}_${themeId}_anim_frames`]
+            : null;
+
+        if (animFrames) {
+            body = new PIXI.AnimatedSprite(animFrames);
+            const anchorY = this.currentTheme?.enemyAnchors?.[type] ?? config.anchorY;
+            body.anchor.set(0.5, anchorY);
+            const eRef = TILE_WIDTH;
+            const eScale = (this.currentTheme?.enemyScale) || 1.0;
+            const eTypeScale = (this.currentTheme?.enemyScales?.[type]) || 1.0;
+            const eSpriteScale = (this.currentTheme?.spriteScales?.[themedKey]) || 1.0;
+            body.height = eRef * config.size * 0.9 * eScale * eTypeScale * eSpriteScale;
+            body.scale.x = body.scale.y;
+            baseScaleX = body.scale.x;
+            baseScaleY = body.scale.y;
+            body.animationSpeed = 0.15;
+            body.play();
+        } else if (enemyTex) {
             body = new PIXI.Sprite(enemyTex);
             const anchorY = this.currentTheme?.enemyAnchors?.[type] ?? config.anchorY;
             body.anchor.set(0.5, anchorY);
@@ -834,21 +866,37 @@ export class TDRenderer {
     }
 
     updateEnemyPosition(enemy) {
-        const iso = toIso(enemy.x, enemy.y);
+        const cur    = enemy.route?.[enemy.pathIndex];
+        const nxt    = enemy.route?.[enemy.pathIndex + 1];
+        const scrCur = enemy._screenRoute?.[enemy.pathIndex];
+        const scrNxt = enemy._screenRoute?.[enemy.pathIndex + 1];
 
-        // Determine facing from direction toward next waypoint
-        const nextWp = enemy.route && enemy.route[enemy.pathIndex + 1];
-        if (nextWp) {
-            const dx = nextWp.x - enemy.x;
-            const dy = nextWp.y - enemy.y;
-            const screenDx = dx;
-            if (Math.abs(screenDx) > 0.01) {
-                enemy._facingLeft = screenDx < 0;
-            }
+        let screenX, screenY;
+
+        if (cur && nxt && scrCur && scrNxt) {
+            // Interpolation linéaire en espace screen entre les deux waypoints courants.
+            // Évite le zigzag du stagger lors de segments à même colonne.
+            const sdx     = nxt.x - cur.x;
+            const sdy     = nxt.y - cur.y;
+            const segLen2 = sdx * sdx + sdy * sdy;
+            const ex      = enemy.x - cur.x;
+            const ey      = enemy.y - cur.y;
+            const t       = segLen2 > 0 ? Math.min(1, Math.max(0, (ex * sdx + ey * sdy) / segLen2)) : 0;
+
+            screenX = scrCur.x + (scrNxt.x - scrCur.x) * t;
+            screenY = scrCur.y + (scrNxt.y - scrCur.y) * t;
+
+            // Direction depuis l'espace screen (plus précis que le dx grid)
+            const faceDx = scrNxt.x - scrCur.x;
+            if (Math.abs(faceDx) > 0.01) enemy._facingLeft = faceDx < 0;
+        } else {
+            const iso = toIso(enemy.x, enemy.y);
+            screenX = iso.x;
+            screenY = iso.y;
         }
 
-        enemy.sprite.x = iso.x;
-        enemy.sprite.y = iso.y + TILE_HEIGHT / 2;
+        enemy.sprite.x = screenX;
+        enemy.sprite.y = screenY + TILE_HEIGHT / 2;
     }
 
     updateEnemyAnimation(enemy, now) {
@@ -863,6 +911,9 @@ export class TDRenderer {
             const wingFlap = 1 + Math.sin(now * 0.025 + enemy.id) * 0.12;
             enemy.body.scale.set(bsx * wingFlap * flipX, bsy / wingFlap);
             enemy.body.rotation = Math.sin(now * 0.004 + enemy.id) * 0.15;
+        } else if (enemy.body instanceof PIXI.AnimatedSprite) {
+            // Spritesheet animé : l'animation est gérée par les frames, juste le flip directionnel
+            enemy.body.scale.set(bsx * flipX, bsy);
         } else if (enemy.type === 'boss') {
             // Boss: slow heavy walk, minimal bounce
             const bounce = Math.sin(now * 0.006 + enemy.id) * 0.3 + 0.3;
