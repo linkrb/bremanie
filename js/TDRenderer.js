@@ -171,6 +171,21 @@ export class TDRenderer {
             }
         }
 
+        // Idle spritesheets pour tours animées (convention : tower_{type}_{variant}_idle.png, 8 frames)
+        for (const type of ['archer', 'mage', 'light']) {
+            const base = `/bremanie/images/td/towers/${type}`;
+            for (const variant of ['front', 'side', 'left', 'back']) {
+                try {
+                    const sheet = await PIXI.Assets.load(`${base}/tower_${type}_${variant}_idle.png`);
+                    const frameCount = Math.round(sheet.width / sheet.height);
+                    const fw = Math.floor(sheet.width / frameCount);
+                    this.assets[`tower_${type}_${variant}_idle_frames`] = Array.from({ length: frameCount }, (_, i) =>
+                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                    );
+                } catch (e) { }
+            }
+        }
+
         // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
         for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
                             'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
@@ -704,9 +719,17 @@ export class TDRenderer {
             ? this._getFireFrames('', orientation)
             : [];
 
+        // Idle spritesheet (archer/mage/light) — fallback side puis left si l'orientation n'a pas de sheet
+        const idleFrames = this.assets[`tower_${towerType}_${orientation}_idle_frames`]
+            || this.assets[`tower_${towerType}_side_idle_frames`]
+            || this.assets[`tower_${towerType}_left_idle_frames`]
+            || [];
+
+        const towerAnchorY = TOWER_TYPES[towerType]?.anchorY ?? 0.85;
+
         if (fireFrames.length > 0) {
             sprite = new PIXI.AnimatedSprite(fireFrames);
-            sprite.anchor.set(0.5, 0.85);
+            sprite.anchor.set(0.5, towerAnchorY);
             const tRef = TILE_WIDTH;
             const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
             sprite.width = tRef * 1.1 * tScale;
@@ -716,9 +739,22 @@ export class TDRenderer {
             sprite.scale.x *= -1;
             baseScaleX = sprite.scale.x;
             baseScaleY = sprite.scale.y;
+        } else if (idleFrames.length > 0) {
+            sprite = new PIXI.AnimatedSprite(idleFrames);
+            sprite.anchor.set(0.5, towerAnchorY);
+            const tRef = TILE_WIDTH;
+            const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
+            const displayScale = TOWER_TYPES[towerType]?.displayScale || 1.0;
+            sprite.width = tRef * 1.1 * tScale * displayScale;
+            sprite.height = tRef * 1.1 * tScale * displayScale;
+            sprite.animationSpeed = 0.13; // ~8fps à 60fps
+            sprite.play();
+            sprite.scale.x *= -1;
+            baseScaleX = sprite.scale.x;
+            baseScaleY = sprite.scale.y;
         } else if (texture) {
             sprite = new PIXI.Sprite(texture);
-            sprite.anchor.set(0.5, 0.85);
+            sprite.anchor.set(0.5, towerAnchorY);
             const tRef = TILE_WIDTH;
             const tScale = (this.currentTheme && this.currentTheme.towerScale) || 1.0;
             const displayScale = TOWER_TYPES[towerType]?.displayScale || 1.0;

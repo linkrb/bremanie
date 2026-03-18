@@ -5,9 +5,9 @@ export const GRID_WIDTH = 4;
 export const GRID_HEIGHT = 22;
 
 export const TOWER_TYPES = {
-    archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8 },
-    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0 },
-    light:  { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0, color: 0xFFD700, displayScale: 1.8, illuminates: true },
+    archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8, anchorY: 0.85 },
+    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, anchorY: 1.0 },
+    light:  { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0, color: 0xFFD700, displayScale: 1.8, illuminates: true, anchorY: 0.85 },
 };
 
 export const ENEMY_TYPES = {
@@ -38,10 +38,10 @@ export const LEVELS = [
             decorations: [],
             noCastle: true,
             enemyFolder: 'enemies/skeleton',
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, boss: 0.85, flying: 0.85 },
             enemies: {
-                basic: ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
-                        'enemy_basic_5','enemy_basic_6','enemy_basic_7',
-                        'enemy_basic_9','enemy_basic_10','enemy_basic_12'],
+                basic: ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                        'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
                 fast: 'enemy_fast',
                 tank: 'enemy_tank',
                 flying: 'enemy_flying',
@@ -359,12 +359,11 @@ export const LEVELS = [
             castleAnchorY: 0.75,
             enemyFolder: 'enemies/skeleton',
             enemies: {
-                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
-                          'enemy_basic_5','enemy_basic_6','enemy_basic_7',
-                          'enemy_basic_9','enemy_basic_10','enemy_basic_12'],
+                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                          'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
                 fast:    'enemy_basic_3',
-                tank:    'enemy_basic_9',
-                boss:    'enemy_basic_12',
+                tank:    'enemy_basic_5',
+                boss:    'enemy_basic_6',
                 tornado:      'enemy_tornado',
                 tornado_boss: 'enemy_tornado',
             },
@@ -409,12 +408,11 @@ export const LEVELS = [
             bgColor: 0x000000,
             enemyFolder: 'enemies/skeleton',
             enemies: {
-                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
-                          'enemy_basic_5','enemy_basic_6','enemy_basic_7',
-                          'enemy_basic_9','enemy_basic_10','enemy_basic_12'],
+                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                          'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
                 fast:    'enemy_basic_3',
-                tank:    'enemy_basic_9',
-                boss:    'enemy_basic_12',
+                tank:    'enemy_basic_5',
+                boss:    'enemy_basic_6',
                 tornado:      'enemy_tornado',
                 tornado_boss: 'enemy_tornado',
             },
@@ -451,12 +449,11 @@ export const LEVELS = [
             bgColor: 0x000000,
             enemyFolder: 'enemies/skeleton',
             enemies: {
-                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3','enemy_basic_4',
-                          'enemy_basic_5','enemy_basic_6','enemy_basic_7',
-                          'enemy_basic_9','enemy_basic_10','enemy_basic_12'],
+                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                          'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
                 fast:    'enemy_basic_3',
-                tank:    'enemy_basic_9',
-                boss:    'enemy_basic_12',
+                tank:    'enemy_basic_5',
+                boss:    'enemy_basic_6',
                 tornado:      'enemy_tornado',
                 tornado_boss: 'enemy_tornado',
             },
