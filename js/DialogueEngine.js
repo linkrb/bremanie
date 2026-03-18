@@ -270,6 +270,41 @@ const CSS = `
     line-height: 1.9;
     letter-spacing: 0.04em;
 }
+
+/* ── Bouton skip (hold 1s) ── */
+.dlg-skip-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    padding: 6px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.95);
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(201, 168, 76, 0.6);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 10;
+    touch-action: none;
+}
+.dlg-skip-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(201, 168, 76, 0.2);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: none;
+}
+.dlg-skip-btn.holding::after {
+    transform: scaleX(1);
+    transition: transform 1s linear;
+}
 `;
 
 export class DialogueEngine {
@@ -334,6 +369,7 @@ export class DialogueEngine {
                 <div class="dlg-tap-hint">Toucher pour continuer</div>
             </div>
             <div class="dlg-scene-hint">▼ Toucher pour continuer</div>
+            <button class="dlg-skip-btn">Passer</button>
         `;
         document.body.appendChild(overlay);
         this.overlay = overlay;
@@ -353,6 +389,24 @@ export class DialogueEngine {
     }
 
     _bindEvents() {
+        // Skip button (hold 1s)
+        const skipBtn = this.overlay.querySelector('.dlg-skip-btn');
+        let skipTimer = null;
+        const cancelSkip = (e) => {
+            e.stopPropagation();
+            clearTimeout(skipTimer);
+            skipTimer = null;
+            skipBtn.classList.remove('holding');
+        };
+        skipBtn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            skipBtn.classList.add('holding');
+            skipTimer = setTimeout(() => { this._end(); }, 1000);
+        });
+        skipBtn.addEventListener('pointerup',     cancelSkip);
+        skipBtn.addEventListener('pointercancel', cancelSkip);
+        skipBtn.addEventListener('pointerleave',  cancelSkip);
+
         // Touch / click
         this.overlay.addEventListener('pointerup', (e) => {
             e.preventDefault();
