@@ -172,7 +172,7 @@ export const LEVELS = [
             noCastle: true,
             enemyScale: 1.4,
             enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
-            spriteScales: { enemy_fox: 0.7, enemy_boar: 1.0 },
+            spriteScales: { enemy_fox: 1.2, enemy_boar: 1.4 },
             enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
             tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decoTiles: [
@@ -306,7 +306,7 @@ export const LEVELS = [
             noCastle: true,
             enemyScale: 1.4,
             enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
-            spriteScales: { enemy_fox: 0.7, enemy_boar: 1.0 },
+            spriteScales: { enemy_fox: 1.2, enemy_boar: 1.4 },
             enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
             tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
             decoTiles: [
@@ -358,6 +358,7 @@ export const LEVELS = [
             castleScale: 1.8,
             castleAnchorY: 0.75,
             enemyFolder: 'enemies/skeleton',
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, boss: 0.85 },
             enemies: {
                 basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
                           'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
@@ -389,15 +390,15 @@ export const LEVELS = [
         ],
         waves: [
             // Vague 1 : éclaireurs squelettes
-            [{ type: 'basic', count: 8 }],
+            [{ type: 'basic', count: 6 }],
             // Vague 2 : squelettes + archers rapides
-            [{ type: 'basic', count: 12 }, { type: 'fast', count: 6 }],
+            [{ type: 'basic', count: 10 }, { type: 'fast', count: 5 }],
             // Vague 3 : gardes armés (tank) entrent en jeu
-            [{ type: 'basic', count: 14 }, { type: 'fast', count: 8 }, { type: 'tank', count: 3 }],
+            [{ type: 'basic', count: 11 }, { type: 'fast', count: 6 }, { type: 'tank', count: 2 }],
             // Vague 4 : assaut massif
-            [{ type: 'basic', count: 16 }, { type: 'fast', count: 12 }, { type: 'tank', count: 5 }],
+            [{ type: 'basic', count: 13 }, { type: 'fast', count: 9 }, { type: 'tank', count: 4 }],
             // Vague 5 : boss squelette + gardes lourds
-            [{ type: 'boss', count: 1 }, { type: 'tank', count: 6 }, { type: 'basic', count: 10 }, { type: 'fast', count: 8 }],
+            [{ type: 'boss', count: 1 }, { type: 'tank', count: 5 }, { type: 'basic', count: 8 }, { type: 'fast', count: 6 }],
         ]
     },
     // ── Chapitre III : Château Final (après dialogue post_tornado) ──
@@ -407,6 +408,7 @@ export const LEVELS = [
             id: 'castle',
             bgColor: 0x000000,
             enemyFolder: 'enemies/skeleton',
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, boss: 0.85 },
             enemies: {
                 basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
                           'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
@@ -433,12 +435,12 @@ export const LEVELS = [
             {x:0,y:19}, {x:1,y:20}, {x:1,y:21},
         ],
         waves: [
+            [{ type: 'tornado', count: 1 }, { type: 'basic', count: 5 }, { type: 'fast', count: 2 }, { type: 'tank', count: 1 }],
             [{ type: 'tornado', count: 1 }, { type: 'basic', count: 6 }, { type: 'fast', count: 3 }, { type: 'tank', count: 1 }],
             [{ type: 'tornado', count: 1 }, { type: 'basic', count: 8 }, { type: 'fast', count: 4 }, { type: 'tank', count: 2 }],
-            [{ type: 'tornado', count: 1 }, { type: 'basic', count: 10 }, { type: 'fast', count: 5 }, { type: 'tank', count: 2 }],
-            [{ type: 'tornado', count: 1, position: 'start' }, { type: 'basic', count: 12 }, { type: 'fast', count: 6 }, { type: 'tank', count: 3 }, { type: 'tornado', count: 1 }],
-            [{ type: 'tornado', count: 2, position: 'start' }, { type: 'basic', count: 15 }, { type: 'fast', count: 8 }, { type: 'tank', count: 4 }, { type: 'tornado', count: 1 }],
-            [{ type: 'tornado', count: 1, position: 'start' }, { type: 'basic', count: 20 }, { type: 'fast', count: 12 }, { type: 'tank', count: 6 }, { type: 'tornado_boss', count: 1 }],
+            [{ type: 'tornado', count: 1, position: 'start' }, { type: 'basic', count: 10 }, { type: 'fast', count: 5 }, { type: 'tank', count: 2 }, { type: 'tornado', count: 1 }],
+            [{ type: 'tornado', count: 2, position: 'start' }, { type: 'basic', count: 12 }, { type: 'fast', count: 6 }, { type: 'tank', count: 3 }, { type: 'tornado', count: 1 }],
+            [{ type: 'tornado', count: 1, position: 'start' }, { type: 'basic', count: 15 }, { type: 'fast', count: 9 }, { type: 'tank', count: 4 }, { type: 'tornado_boss', count: 1 }],
         ]
     },
     // ── Chapitre III : Château Boss (1 tornado, même carte que Château) ──
@@ -448,6 +450,7 @@ export const LEVELS = [
             id: 'castle',  // partage les assets du niveau Château
             bgColor: 0x000000,
             enemyFolder: 'enemies/skeleton',
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, boss: 0.85 },
             enemies: {
                 basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
                           'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
