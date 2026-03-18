@@ -174,10 +174,19 @@ function showChapterEnd(label, next) {
 }
 
 function onChapterEnd(chapterNumber) {
-    if (chapterNumber === 1)    showChapterEnd('Chapitre I',   () => chapter2.startChapter2());
+    if (chapterNumber === 1) {
+        SaveManager.save({ stage: 'chapter2_start' });
+        showChapterEnd('Chapitre I',   () => chapter2.startChapter2());
+    }
     if (chapterNumber === 2)    showGame('chapter2b');
-    if (chapterNumber === '2b') showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
-    if (chapterNumber === 3)    showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
+    if (chapterNumber === '2b') {
+        SaveManager.save({ stage: 'chapter3_start' });
+        showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
+    }
+    if (chapterNumber === 3) {
+        SaveManager.save({ stage: 'complete' });
+        showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
+    }
 }
 
 // ── Reprise depuis une sauvegarde ─────────────────────────────
@@ -194,12 +203,6 @@ async function resumeFromSave(save) {
         return;
     }
 
-    if (save.stage === 'chapter2_wave') {
-        showGame('chapter2');
-        game.applySaveState({ wave: save.wave, gold: save.gold, health: save.health, towers: save.towers });
-        return;
-    }
-
     if (save.stage === 'chapter3_start') {
         chapter3.startChapter3();
         return;
@@ -211,15 +214,6 @@ async function resumeFromSave(save) {
         return;
     }
 
-    if (save.stage === 'chapter3_wave') {
-        // Appel avec skipDefaultTower=true pour ne pas poser la mage par défaut
-        game.setChateauMode(true);
-        showScreen('screen-game');
-        setCombatMode(true, 2);
-        startCombatMusic();
-        skipEntryWaveBadge = true;
-        game.applySaveState({ wave: save.wave, gold: save.gold, health: save.health, towers: save.towers });
-    }
 }
 
 const ctx = {

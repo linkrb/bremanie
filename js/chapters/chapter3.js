@@ -40,13 +40,6 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         game.onWaveCompleted = (waveNumber) => {
             _prevWaveCompleted?.(waveNumber);
             if (game._chateauMode) {
-                SaveManager.save({
-                    stage:  'chapter3_wave',
-                    wave:   waveNumber,
-                    gold:   game.engine.gold,
-                    health: game.engine.health,
-                    towers: game.getTowersState(),
-                });
                 const script = waveDialogues[waveNumber];
                 if (script) {
                     game.engine.paused = true;
@@ -63,7 +56,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
             hideGame();
             showDialogue('chapter3/post_combat', () => {
                 showGame('chateau_boss');
-                game.applySaveState({ wave: 0, gold: savedGold, health: savedHealth, towers: savedTowers });
+                game.applySaveState({ wave: 0, gold: savedGold, health: 15, towers: savedTowers });
             });
         };
 
@@ -79,7 +72,6 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         };
 
         game.onChateauFinalWin = () => {
-            SaveManager.save({ stage: 'complete' });
             hideGame();
             showDialogue('chapter3/victory', () => {
                 onChapterEnd(3);

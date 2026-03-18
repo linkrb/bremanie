@@ -37,13 +37,6 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         game.onWaveCompleted = (waveNumber) => {
             const script = waveDialogues[waveNumber];
             if (!script || !game._chapter2Mode) return;
-            SaveManager.save({
-                stage:  'chapter2_wave',
-                wave:   waveNumber,
-                gold:   game.engine.gold,
-                health: game.engine.health,
-                towers: game.getTowersState(),
-            });
             game.engine.paused = true;
             showDialogue(script, () => { game.engine.paused = false; });
         };
@@ -57,7 +50,6 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         };
 
         game.onChapter3Win = () => {
-            SaveManager.save({ stage: 'chapter3_start' });
             showVictoryBadgeInteractive(() => {
                 hideGame();
                 showDialogue('chapter2/final', () => {

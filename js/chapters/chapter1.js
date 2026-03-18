@@ -66,7 +66,6 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         };
 
         game.onTutorialWin = () => {
-            SaveManager.save({ stage: 'chapter2_start' });
             onChapterEnd(1);
         };
     }
