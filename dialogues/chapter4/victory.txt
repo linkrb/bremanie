@@ -28,7 +28,7 @@ seraphelle:determined Relevez-vous, tas d'os inutiles ! Traquez-les ! Qu'aucun d
 > Les trois jeunes s'élancent à corps perdu dans les fourrés mortels, le souffle court, le cœur battant à tout rompre.
 > Derrière eux, la voix enragée de la sorcière résonne, promettant une traque impitoyable jusqu'à l'aube.
 
-@scene scenes/castle_siege.jpg
+@scene scenes/castle_hall_destroyed.jpg
 
 > Pendant ce temps, bien loin des bois corrompus...
 > Au cœur de la capitale, dans l'enceinte réputée imprenable du château de la Brémanie, un terrible drame se jouait en silence.
@@ -37,5 +37,4 @@ seraphelle:determined Relevez-vous, tas d'os inutiles ! Traquez-les ! Qu'aucun d
 
 necromancien(right):focused Lève-toi.
 
-@bgsize 60%
 @scene scenes/romain_necro.png

@@ -5,7 +5,7 @@ import {
 } from './tdConfig.js';
 import { TDRenderer } from './TDRenderer.js';
 import { TDEngine } from './TDEngine.js';
-import { DialogueEngine } from '/js/DialogueEngine.js';
+import { DialogueEngine } from '/bremanie/js/DialogueEngine.js';
 
 export class TowerDefenseGame {
     constructor() {
@@ -21,8 +21,8 @@ export class TowerDefenseGame {
 
         // Système de dialogues en jeu
         this.dialogueEngine = new DialogueEngine({
-            basePath:     '/images/',
-            dialoguePath: '/dialogues/',
+            basePath:     '/bremanie/images/',
+            dialoguePath: '/bremanie/dialogues/',
             typeSpeed: 25,
         });
         // Triggers : clé = "level_wave" (ex: "0_1" = level 0 vague 1), valeur = nom du script
@@ -740,7 +740,7 @@ export class TowerDefenseGame {
         const allEnemies = [...this.engine.enemies].sort((a, b) => a.pathIndex - b.pathIndex);
         const targets = [];
         if (allEnemies.length > 0) {
-            const count = Math.min(6, allEnemies.length);
+            const count = Math.min(10, allEnemies.length);
             if (allEnemies.length <= count) {
                 targets.push(...allEnemies);
             } else {
@@ -781,7 +781,7 @@ export class TowerDefenseGame {
                         () => {
                             // Impact : dégâts sur cet ennemi
                             if (!this.engine.enemies.includes(enemy)) return;
-                            enemy.hp -= 150;
+                            enemy.hp -= 300;
                             if (this.engine.onEnemyDamaged) this.engine.onEnemyDamaged(enemy, 80);
                             if (enemy.hp <= 0) {
                                 this.engine.gold += enemy.reward;

@@ -168,7 +168,7 @@ export const LEVELS = [
             [{ type: 'basic', count: 6 }],
             [{ type: 'fast', count: 4 }, { type: 'basic', count: 4 }],
             [{ type: 'tank2', count: 3 }, { type: 'basic', count: 10 }, { type: 'fast', count: 3 }],
-            [{ type: 'tank2', count: 6 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }],
+            [{ type: 'tank2', count: 4 }, { type: 'basic', count: 7 }, { type: 'fast', count: 3 }],
             [{ type: 'tank2', count: 6 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }, { type: 'flying', count: 1 }],
             [{ type: 'tank2', count: 3 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }, { type: 'flying', count: 3 }],
             [{ type: 'tank2', count: 8 }, { type: 'basic', count: 3 }, { type: 'fast', count: 4 }, { type: 'flying', count: 5 }],
