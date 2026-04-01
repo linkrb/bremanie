@@ -1,0 +1,140 @@
+/* ── Écran Sélection de Chapitre ─────────────────────────────── */
+
+#screen-chapter-select {
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+}
+
+.cs-bg {
+    position: absolute;
+    inset: 0;
+    background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+    filter: brightness(0.35) blur(3px);
+    transform: scale(1.04); /* compense le clip du blur */
+}
+
+.cs-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+    padding: 2rem 1.2rem 1.5rem;
+    width: 100%;
+    max-width: 520px;
+    max-height: 100dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cs-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cs-ornament {
+    color: #c9a84c;
+    font-size: 1rem;
+    letter-spacing: 0.5em;
+    opacity: 0.75;
+}
+
+.cs-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.2rem, 3.5vw, 1.9rem);
+    color: #f5e6b8;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-shadow:
+        0 0 18px rgba(201, 168, 76, 0.8),
+        2px 2px 4px rgba(0,0,0,0.9);
+}
+
+/* ── Grille des cartes ──────────────────────────────────────── */
+
+.cs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.cs-card {
+    position: relative;
+    background: linear-gradient(145deg, rgba(201,168,76,0.10), rgba(0,0,0,0.55));
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 8px;
+    padding: 1.1rem 0.9rem 0.9rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease,
+                background 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.cs-card:not(.locked):active {
+    transform: scale(0.97);
+}
+
+/* hover uniquement sur device pointer-fine (desktop) */
+@media (hover: hover) {
+    .cs-card:not(.locked):hover {
+        background: linear-gradient(145deg, rgba(201,168,76,0.22), rgba(0,0,0,0.5));
+        border-color: rgba(201,168,76,0.75);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 22px rgba(201,168,76,0.25);
+    }
+}
+
+
+
+.cs-card-num {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+    color: #c9a84c;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.cs-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.72rem, 1.8vw, 0.9rem);
+    color: #f5e6b8;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.cs-card-sub {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.58rem, 1.3vw, 0.68rem);
+    color: rgba(212, 180, 131, 0.65);
+    letter-spacing: 0.04em;
+    margin-top: 0.1rem;
+}
+
+
+/* ── Bouton retour ──────────────────────────────────────────── */
+
+.cs-back {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: rgba(212, 180, 131, 0.55);
+    background: none;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.18em;
+    padding: 0.4rem 1rem;
+    transition: color 0.2s;
+    text-transform: uppercase;
+}
+
+.cs-back:hover {
+    color: rgba(245, 230, 184, 0.9);
+}

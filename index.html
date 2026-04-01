@@ -8,12 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
-    <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/splash.css">
-    <link rel="stylesheet" href="/css/title.css">
-    <link rel="stylesheet" href="/css/game.css">
-    <link rel="stylesheet" href="/css/towers.css">
-    <link rel="stylesheet" href="/css/hero-ability.css">
+    <link rel="stylesheet" href="/bremanie/css/base.css">
+    <link rel="stylesheet" href="/bremanie/css/splash.css">
+    <link rel="stylesheet" href="/bremanie/css/title.css">
+    <link rel="stylesheet" href="/bremanie/css/game.css">
+    <link rel="stylesheet" href="/bremanie/css/towers.css">
+    <link rel="stylesheet" href="/bremanie/css/hero-ability.css">
+    <link rel="stylesheet" href="/bremanie/css/chapter-select.css">
 </head>
 <body>
 
@@ -44,6 +45,20 @@
         <div class="splash-footer">Un royaume. Une famille. Un destin.</div>
     </div>
 
+    <!-- ══ ÉCRAN 1b : SÉLECTION DE CHAPITRE ════════════════════ -->
+    <div id="screen-chapter-select" class="screen">
+        <div class="cs-bg"></div>
+        <div class="vignette-splash"></div>
+        <div class="cs-content">
+            <div class="cs-heading">
+                <div class="cs-ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+                <h2 class="cs-title">Sélection du Chapitre</h2>
+            </div>
+            <div class="cs-grid" id="cs-grid"></div>
+            <button class="cs-back" id="cs-back">← Retour</button>
+        </div>
+    </div>
+
     <!-- ══ ÉCRAN 2 : TITLE CARD ══════════════════════════════ -->
     <div id="screen-title" class="screen">
         <div id="title-bg"></div>
@@ -63,25 +78,25 @@
 
         <!-- Portrait héros (visible en mode combat, src changée via JS) -->
         <div class="hero-portrait">
-            <img id="hero-portrait-img" src="/images/nathan/neutral.png" alt="">
+            <img id="hero-portrait-img" src="/bremanie/images/nathan/neutral.png" alt="">
         </div>
 
         <!-- Stats verticales flottantes (visibles en mode combat) -->
         <div class="stats">
             <div class="stat">
-                <img class="stat-icon" src="/images/td/icon_gold.png" alt="Gold">
+                <img class="stat-icon" src="/bremanie/images/td/icon_gold.png" alt="Gold">
                 <span class="stat-value" id="gold">150</span>
             </div>
             <div class="stat">
-                <img class="stat-icon" src="/images/td/icon_heart.png" alt="Health">
+                <img class="stat-icon" src="/bremanie/images/td/icon_heart.png" alt="Health">
                 <span class="stat-value" id="health">15</span>
             </div>
             <div class="stat">
-                <img class="stat-icon" src="/images/td/icon_wave.png" alt="Wave">
+                <img class="stat-icon" src="/bremanie/images/td/icon_wave.png" alt="Wave">
                 <span class="stat-value" id="wave">0</span>
             </div>
             <div class="stat">
-                <img class="stat-icon" src="/images/td/icon_enemy.png" alt="Enemies">
+                <img class="stat-icon" src="/bremanie/images/td/icon_enemy.png" alt="Enemies">
                 <span class="stat-value" id="enemies">0</span>
             </div>
         </div>
@@ -111,12 +126,12 @@
 
             <!-- Pastille Combat (remplace le wave-announce) -->
             <div id="combat-badge" class="combat-badge">
-                <img src="/images/combat_badge.png" alt="Combat">
+                <img src="/bremanie/images/combat_badge.png" alt="Combat">
             </div>
 
             <!-- Pouvoir héros Suzanne -->
             <div id="hero-ability-overlay">
-                <img src="/images/suzanne_attack.png" alt="Suzanne">
+                <img src="/bremanie/images/suzanne_attack.png" alt="Suzanne">
                 <div class="hero-ability-title">✦ Pouvoir de Suzanne ✦</div>
             </div>
 
@@ -147,19 +162,19 @@
 
         <div class="tower-bar">
             <div class="tower-btn selected" data-tower="archer">
-                <div class="tower-preview"><img src="/images/td/towers/archer/tower_archer_front.png" alt="Archer"></div>
+                <div class="tower-preview"><img src="/bremanie/images/td/towers/archer/tower_archer_front.png" alt="Archer"></div>
                 <div class="tower-cost">50g</div><div class="tower-name">Archer</div><div class="tower-range">⊕3</div>
             </div>
             <div class="tower-btn" data-tower="mage">
-                <div class="tower-preview"><img src="/images/td/towers/mage/tower_mage_front.png" alt="Mage"></div>
+                <div class="tower-preview"><img src="/bremanie/images/td/towers/mage/tower_mage_front.png" alt="Mage"></div>
                 <div class="tower-cost">75g</div><div class="tower-name">Mage</div><div class="tower-range">⊕2.5</div>
             </div>
             <div class="tower-btn" data-tower="light">
-                <div class="tower-preview"><img src="/images/td/towers/light/tower_light_front.png" alt="Lumière"></div>
+                <div class="tower-preview"><img src="/bremanie/images/td/towers/light/tower_light_front.png" alt="Lumière"></div>
                 <div class="tower-cost">40g</div><div class="tower-name">Lumière</div><div class="tower-range">⊕2.5</div>
             </div>
             <div class="tower-btn" data-tower="fauconnier">
-                <div class="tower-preview"><img src="/images/td/towers/fauconnier/tower_fauconnier_front.png" alt="Fauconnier"></div>
+                <div class="tower-preview"><img src="/bremanie/images/td/towers/fauconnier/tower_fauconnier_front.png" alt="Fauconnier"></div>
                 <div class="tower-cost">40g</div><div class="tower-name">Fauconnier</div><div class="tower-range">⊕3.5</div>
             </div>
         </div>
@@ -181,28 +196,16 @@
         }
     </script>
 
-    <script type="module" src="/js/main.js"></script>
+    <script type="module" src="/bremanie/js/main.js"></script>
     <script type="module">
-        import { SaveManager } from '/js/SaveManager.js';
+        import { SaveManager } from '/bremanie/js/SaveManager.js';
         const save = SaveManager.load();
         if (save) {
             const btn = document.getElementById('btn-resume');
             btn.style.display = 'inline-block';
             document.getElementById('resume-desc').textContent = SaveManager.describe(save);
-            btn.addEventListener('click', async () => {
-                document.getElementById('loader').classList.remove('hidden');
-                const audio = window._bremanieAudio;
-                if (audio) audio.stop(1500);
-                const fade = document.getElementById('fade-black');
-                fade.style.transition = 'opacity 1.5s ease';
-                fade.style.pointerEvents = 'all';
-                fade.style.opacity = '1';
-                setTimeout(() => {
-                    window._bremanieResume?.(save);
-                    fade.style.transition = 'opacity 1s ease';
-                    fade.style.opacity = '0';
-                    setTimeout(() => { fade.style.pointerEvents = 'none'; }, 1000);
-                }, 1500);
+            btn.addEventListener('click', () => {
+                window._bremanieChapterSelect?.();
             });
         }
     </script>
@@ -221,12 +224,12 @@
 
     <!-- Badge de victoire -->
     <div id="victory-badge" class="result-badge">
-        <img src="/images/victory_badge.png" alt="Victoire">
+        <img src="/bremanie/images/victory_badge.png" alt="Victoire">
     </div>
 
     <!-- Badge de défaite -->
     <div id="defeat-badge" class="result-badge">
-        <img src="/images/defeat_badge.png" alt="Défaite">
+        <img src="/bremanie/images/defeat_badge.png" alt="Défaite">
     </div>
 
     <!-- Overlay fin de chapitre -->

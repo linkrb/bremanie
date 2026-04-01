@@ -1,6 +1,6 @@
 import { AudioManager }    from './AudioManager.js';
 import { DialogueEngine }  from './DialogueEngine.js';
-import { TowerDefenseGame } from '/js/TowerDefenseGame.js';
+import { TowerDefenseGame } from '/bremanie/js/TowerDefenseGame.js';
 import { setup as setupChapter1 } from './chapters/chapter1.js';
 import { setup as setupChapter2 } from './chapters/chapter2.js';
 import { setup as setupChapter3 } from './chapters/chapter3.js';
@@ -10,8 +10,8 @@ import { SaveManager }     from './SaveManager.js';
 // ── Instances globales ────────────────────────────────────────
 const audio = new AudioManager({ targetVolume: 0.7, fadeInMs: 3000, fadeOutSec: 6 });
 const dlg   = new DialogueEngine({
-    basePath:     '/images/',
-    dialoguePath: '/dialogues/',
+    basePath:     '/bremanie/images/',
+    dialoguePath: '/bremanie/dialogues/',
     typeSpeed: 25,
 });
 
@@ -19,10 +19,10 @@ let game            = null;
 let gameInitPromise = null;
 
 // Sons UI globaux — chargés dès le départ (nécessaires dès le premier écran)
-audio.preload('main_theme',   '/audio/main_theme.mp3');
-audio.preload('title_sting',  '/audio/title_sting.mp3');
-audio.preload('combat_sting', '/audio/combat_sting.mp3');
-audio.preload('tower_place',  '/audio/tower_place.mp3');
+audio.preload('main_theme',   '/bremanie/audio/main_theme.mp3');
+audio.preload('title_sting',  '/bremanie/audio/title_sting.mp3');
+audio.preload('combat_sting', '/bremanie/audio/combat_sting.mp3');
+audio.preload('tower_place',  '/bremanie/audio/tower_place.mp3');
 // Les pistes par chapitre sont preloadées dans chaque chapter*.js au démarrage du chapitre
 
 dlg.onMusic     = (track) => audio.crossfadeTo(track, 1500);
@@ -157,9 +157,9 @@ function startCombatMusic() {
 
 const heroPortraitImg = document.getElementById('hero-portrait-img');
 const heroPortraits = {
-    4: '/images/anna/neutral.png',
+    4: '/bremanie/images/anna/neutral.png',
 };
-const heroPortraitDefault = '/images/nathan/neutral.png';
+const heroPortraitDefault = '/bremanie/images/nathan/neutral.png';
 
 function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);
@@ -370,21 +370,59 @@ ps.addEventListener('pointerdown', () => {
     setTimeout(() => ps.remove(), 1500);
 });
 
+// ── Sélection de chapitre ─────────────────────────────────────
+
+const ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X',
+               'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+
+// Chapitres implémentés — ajouter une entrée par nouveau chapitre
+const CHAPTERS = [
+    { num: 1, title: 'Le Réveil',             sub: "L'ombre du Nécromancien", start: () => chapter1.startPrologue()   },
+    { num: 2, title: 'La Forêt Enchantée',    sub: 'Les périls de la forêt',  start: () => chapter2.startChapter2()  },
+    { num: 3, title: "L'Assaut du Château",   sub: 'Le château assiégé',      start: () => chapter3.startChapter3()  },
+    { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
+];
+
+function showChapterSelect() {
+    const maxUnlocked = SaveManager.maxUnlocked(SaveManager.load());
+    const available   = CHAPTERS.filter(c => c.num <= maxUnlocked);
+
+    const grid = document.getElementById('cs-grid');
+    grid.innerHTML = '';
+    available.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = 'cs-card';
+        card.dataset.chapter = ch.num;
+        card.innerHTML = `
+            <div class="cs-card-num">${ROMAN[ch.num - 1] ?? ch.num}</div>
+            <div class="cs-card-title">${ch.title}</div>
+            <div class="cs-card-sub">${ch.sub}</div>`;
+        card.addEventListener('click', () => {
+            audio.stop(1500);
+            fadeToBlack(1500).then(() => { ch.start(); fadeFromBlack(1000); });
+        });
+        grid.appendChild(card);
+    });
+
+    showScreen('screen-chapter-select');
+}
+
+document.getElementById('cs-back').addEventListener('click', () => {
+    showScreen('screen-splash');
+});
+
 // ── Bouton "Commencer l'Aventure" ─────────────────────────────
 document.getElementById('btn-start').addEventListener('click', () => {
-    audio.stop(2000);
-    fadeToBlack(2000).then(() => {
-        chapter1.startPrologue();
-        fadeFromBlack(1000);
-    });
+    showChapterSelect();
 });
 
 // ── Loader ────────────────────────────────────────────────────
 document.getElementById('loader').classList.add('hidden');
 
 // ── Exposition globale pour le script inline du bouton Reprendre ──
-window._bremanieAudio  = audio;
-window._bremanieResume = resumeFromSave;
+window._bremanieAudio          = audio;
+window._bremanieResume         = resumeFromSave;
+window._bremanieChapterSelect  = showChapterSelect;
 
 // ── Dev / debug URL params ────────────────────────────────────
 // ?chapter=prologue   → titre Prologue
