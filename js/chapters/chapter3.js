@@ -1,6 +1,6 @@
 // ── Chapitre III : Le Fort de l'Est ──────────────────────────
 
-import { SaveManager } from '/bremanie/js/SaveManager.js';
+import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showVictoryBadgeInteractive, onChapterEnd }) {
@@ -12,13 +12,13 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     function _preload() {
         if (_preloaded) return;
         _preloaded = true;
-        audio.preload('chapter3_theme', '/bremanie/audio/calme.mp3');
-        audio.preload('night',          '/bremanie/audio/night_sound.mp3');
-        audio.preload('door',          '/bremanie/audio/door.mp3');
-        audio.preload('tactics',       '/bremanie/audio/tactics.mp3');
-        audio.preload('explosion',          '/bremanie/audio/explosion.mp3');
-        audio.preload('strategy',          '/bremanie/audio/strategy.mp3');
-        audio.preload('tornado_spawn',     '/bremanie/audio/tornado_spawn.mp3');
+        audio.preload('chapter3_theme', '/audio/calme.mp3');
+        audio.preload('night',          '/audio/night_sound.mp3');
+        audio.preload('door',          '/audio/door.mp3');
+        audio.preload('tactics',       '/audio/tactics.mp3');
+        audio.preload('explosion',          '/audio/explosion.mp3');
+        audio.preload('strategy',          '/audio/strategy.mp3');
+        audio.preload('tornado_spawn',     '/audio/tornado_spawn.mp3');
     }
 
     function startChapter3() {

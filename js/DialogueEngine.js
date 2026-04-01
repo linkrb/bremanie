@@ -351,9 +351,9 @@ const CSS = `
 
 export class DialogueEngine {
     constructor(options = {}) {
-        this.basePath     = options.basePath     || '/bremanie/images/';
-        this.dialoguePath = options.dialoguePath || '/bremanie/dialogues/';
-        this.videoPath    = options.videoPath     || '/bremanie/videos/';
+        this.basePath     = options.basePath     || '/images/';
+        this.dialoguePath = options.dialoguePath || '/dialogues/';
+        this.videoPath    = options.videoPath     || '/videos/';
         this.typeSpeed    = options.typeSpeed     ?? 28; // ms per char
 
         this.overlay  = null;

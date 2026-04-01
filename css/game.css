@@ -9,17 +9,17 @@
 #screen-game.combat-mode {
     background:
         linear-gradient(rgba(10,8,20,0.35), rgba(10,8,20,0.35)),
-        url('/bremanie/images/scenes/chapter1_attack.jpg') center center / cover no-repeat;
+        url('/images/scenes/chapter1_attack.jpg') center center / cover no-repeat;
 }
 #screen-game.combat-mode.chapter2-mode {
     background:
         linear-gradient(rgba(5,15,5,0.35), rgba(5,15,5,0.35)),
-        url('/bremanie/images/scenes/forest.jpg') center center / cover no-repeat;
+        url('/images/scenes/forest.jpg') center center / cover no-repeat;
 }
 #screen-game.combat-mode.chapter4-mode {
     background:
         linear-gradient(rgba(2,5,18,0.45), rgba(2,5,18,0.45)),
-        url('/bremanie/images/scenes/dark-forest.png') center center / cover no-repeat;
+        url('/images/scenes/dark-forest.png') center center / cover no-repeat;
 }
 #screen-game.combat-mode #game-container { background: transparent; }
 

@@ -1,6 +1,6 @@
 // ── Chapitre II : La Forêt Enchantée ─────────────────────────
 
-import { SaveManager } from '/bremanie/js/SaveManager.js';
+import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showVictoryBadgeInteractive, onChapterEnd }) {
@@ -15,9 +15,9 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     function _preload() {
         if (_preloaded) return;
         _preloaded = true;
-        audio.preload('combat_theme', '/bremanie/audio/combat_theme.mp3');
-        audio.preload('boss_entry',  '/bremanie/audio/boss_entry.mp3');
-        audio.preload('wind',        '/bremanie/audio/wind.mp3');
+        audio.preload('combat_theme', '/audio/combat_theme.mp3');
+        audio.preload('boss_entry',  '/audio/boss_entry.mp3');
+        audio.preload('wind',        '/audio/wind.mp3');
     }
 
     function startChapter2() {

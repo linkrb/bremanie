@@ -163,7 +163,7 @@ export class TDRenderer {
     async loadAssets() {
         // Tower sprites (4 orientations × 3 niveaux)
         for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
-            const base = `/bremanie/images/td/towers/${type}`;
+            const base = `/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
                     const tex = await PIXI.Assets.load(`${base}/tower_${type}_${variant}.png`);
@@ -182,7 +182,7 @@ export class TDRenderer {
 
         // Idle spritesheets pour tours animées (convention : tower_{type}_{variant}_idle.png, 8 frames)
         for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
-            const base = `/bremanie/images/td/towers/${type}`;
+            const base = `/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
                     const sheet = await PIXI.Assets.load(`${base}/tower_${type}_${variant}_idle.png`);
@@ -200,7 +200,7 @@ export class TDRenderer {
                             'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
                             'coin', 'heart', 'proj_archer', 'proj_fauconnier']) {
             try {
-                const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
+                const texture = await PIXI.Assets.load(`/images/td/${name}.png`);
                 this.assets[name] = texture;
             } catch (e) { }
         }
@@ -208,7 +208,7 @@ export class TDRenderer {
         // Projectiles animés (convention : proj_{type}_anim.png, spritesheet carré)
         for (const type of ['fauconnier']) {
             try {
-                const sheet = await PIXI.Assets.load(`/bremanie/images/td/proj_${type}_anim.png`);
+                const sheet = await PIXI.Assets.load(`/images/td/proj_${type}_anim.png`);
                 const frameCount = Math.round(sheet.width / sheet.height);
                 const fw = Math.floor(sheet.width / frameCount);
                 this.assets[`proj_${type}_anim_frames`] = Array.from({ length: frameCount }, (_, i) =>
@@ -223,7 +223,7 @@ export class TDRenderer {
             ['suzanne_attack_frames', 'suzanne_attack_sheet.png'],
         ]) {
             try {
-                const sheet = await PIXI.Assets.load(`/bremanie/images/td/characters/${file}`);
+                const sheet = await PIXI.Assets.load(`/images/td/characters/${file}`);
                 const frameCount = Math.round(sheet.width / sheet.height);
                 const fw = Math.floor(sheet.width / frameCount);
                 this.assets[key] = Array.from({ length: frameCount }, (_, i) =>
@@ -236,7 +236,7 @@ export class TDRenderer {
         for (const level of LEVELS) {
             if (!level.theme) continue;
             const themeId = level.theme.id;
-            const basePath = `/bremanie/images/td/levels/${themeId}`;
+            const basePath = `/images/td/levels/${themeId}`;
 
             // Themed tiles
             for (const tileKey of Object.values(level.theme.tiles)) {
@@ -260,7 +260,7 @@ export class TDRenderer {
             // Themed enemies — static + spritesheet animé (_walk_right.png) si disponible
             // Si le thème a enemyFolder, les sprites ennemis viennent d'un dossier partagé
             const enemyBasePath = level.theme.enemyFolder
-                ? `/bremanie/images/td/${level.theme.enemyFolder}`
+                ? `/images/td/${level.theme.enemyFolder}`
                 : basePath;
             for (const [type, enemyAsset] of Object.entries(level.theme.enemies)) {
                 const assets = Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset];

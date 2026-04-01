@@ -1,6 +1,6 @@
 // ── Chapitre IV : Évasion sous la lune ───────────────────────
 
-import { SaveManager } from '/bremanie/js/SaveManager.js';
+import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showVictoryBadgeInteractive, onChapterEnd }) {
@@ -15,13 +15,13 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     function _preload() {
         if (_preloaded) return;
         _preloaded = true;
-        audio.preload('seraphelle_theme',   '/bremanie/audio/seraphelle_theme.mp3');
-        audio.preload('night_battle_theme', '/bremanie/audio/night_battle_theme.mp3');
-        audio.preload('punch_1', '/bremanie/audio/punch_1.mp3');
-        audio.preload('punch_2', '/bremanie/audio/punch_2.mp3');
-        audio.preload('punch_3', '/bremanie/audio/punch_3.mp3');
-        audio.preload('night',              '/bremanie/audio/night_sound.mp3');
-        audio.preload('wind',               '/bremanie/audio/wind.mp3');
+        audio.preload('seraphelle_theme',   '/audio/seraphelle_theme.mp3');
+        audio.preload('night_battle_theme', '/audio/night_battle_theme.mp3');
+        audio.preload('punch_1', '/audio/punch_1.mp3');
+        audio.preload('punch_2', '/audio/punch_2.mp3');
+        audio.preload('punch_3', '/audio/punch_3.mp3');
+        audio.preload('night',              '/audio/night_sound.mp3');
+        audio.preload('wind',               '/audio/wind.mp3');
     }
 
     function startChapter4() {

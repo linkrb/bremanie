@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>La Brémanie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/splash.css">
+    <link rel="stylesheet" href="/css/title.css">
+    <link rel="stylesheet" href="/css/game.css">
+    <link rel="stylesheet" href="/css/towers.css">
+    <link rel="stylesheet" href="/css/hero-ability.css">
+</head>
+<body>
+
+    <!-- ══ ÉCRAN 1 : SPLASH ══════════════════════════════════ -->
+    <div id="screen-splash" class="screen active">
+
+        <!-- Press-Start overlay (par-dessus tout) -->
+        <div id="press-start">
+            <div class="ps-title">La Brémanie</div>
+            <div class="ps-prompt">Appuyez pour commencer</div>
+        </div>
+
+        <div class="splash-bg"></div>
+        <div class="vignette-splash"></div>
+        <div class="particles" id="particles"></div>
+
+        <div class="splash-content">
+            <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+            <h1 class="splash-title">La Brémanie</h1>
+            <p class="splash-subtitle">Défendez le Royaume des Ténèbres</p>
+            <button class="btn-start" id="btn-start">Commencer l'Aventure</button>
+            <button class="btn-start btn-resume" id="btn-resume" style="display:none; margin-top:1.2rem; font-size:0.82em; border-color:rgba(201,168,76,0.35); color:rgba(245,230,184,0.85);">
+                ↩ Reprendre<br>
+                <small id="resume-desc" style="font-size:0.8em; opacity:0.65; letter-spacing:0.12em;"></small>
+            </button>
+        </div>
+
+        <div class="splash-footer">Un royaume. Une famille. Un destin.</div>
+    </div>
+
+    <!-- ══ ÉCRAN 2 : TITLE CARD ══════════════════════════════ -->
+    <div id="screen-title" class="screen">
+        <div id="title-bg"></div>
+        <div class="vignette"></div>
+        <div class="title-stage">
+            <div class="ornament-line top"><hr><span class="diamond">◆</span><hr></div>
+            <div class="title-label" id="title-label">Prologue</div>
+            <h1 class="title-main" id="title-main">L'Ombre</h1>
+            <p class="title-sub" id="title-sub">du Nécromancien</p>
+            <div class="ornament-line bottom"><hr><span class="diamond">◆</span><hr></div>
+        </div>
+        <div class="tap-hint">Toucher pour continuer</div>
+    </div>
+
+    <!-- ══ ÉCRAN 3 : JEU TD ══════════════════════════════════ -->
+    <div id="screen-game" class="screen">
+
+        <!-- Portrait héros (visible en mode combat, src changée via JS) -->
+        <div class="hero-portrait">
+            <img id="hero-portrait-img" src="/images/nathan/neutral.png" alt="">
+        </div>
+
+        <!-- Stats verticales flottantes (visibles en mode combat) -->
+        <div class="stats">
+            <div class="stat">
+                <img class="stat-icon" src="/images/td/icon_gold.png" alt="Gold">
+                <span class="stat-value" id="gold">150</span>
+            </div>
+            <div class="stat">
+                <img class="stat-icon" src="/images/td/icon_heart.png" alt="Health">
+                <span class="stat-value" id="health">15</span>
+            </div>
+            <div class="stat">
+                <img class="stat-icon" src="/images/td/icon_wave.png" alt="Wave">
+                <span class="stat-value" id="wave">0</span>
+            </div>
+            <div class="stat">
+                <img class="stat-icon" src="/images/td/icon_enemy.png" alt="Enemies">
+                <span class="stat-value" id="enemies">0</span>
+            </div>
+        </div>
+
+        <!-- Top bar vide (cachée via CSS) -->
+        <div class="top-bar"></div>
+
+        <div id="game-container">
+            <div class="action-buttons" id="action-buttons">
+                <button class="speed-btn" id="speed-btn">x1</button>
+                <button class="wave-btn" id="wave-btn">Vague 1 ▶</button>
+            </div>
+            <div class="buffs" id="buffs"></div>
+            <div class="selection-info" id="selection-info">Touchez une case verte pour placer</div>
+
+
+            <div class="tower-info" id="tower-info">
+                <div class="tower-info-name" id="tower-info-name">Archer</div>
+                <div class="tower-info-stats">
+                    <div class="tower-info-stat"><span class="label">Deg</span><span class="value" id="ti-dmg">25</span></div>
+                    <div class="tower-info-stat"><span class="label">Port</span><span class="value" id="ti-range">3</span></div>
+                    <div class="tower-info-stat"><span class="label">Vit</span><span class="value" id="ti-cd">0.7s</span></div>
+                    <div class="tower-info-stat"><span class="label">XP</span><span class="value" id="ti-xp">0/100</span></div>
+                </div>
+                <div class="tower-xp-bar-container"><div class="tower-xp-bar" id="ti-xp-bar"></div></div>
+            </div>
+
+            <!-- Pastille Combat (remplace le wave-announce) -->
+            <div id="combat-badge" class="combat-badge">
+                <img src="/images/combat_badge.png" alt="Combat">
+            </div>
+
+            <!-- Pouvoir héros Suzanne -->
+            <div id="hero-ability-overlay">
+                <img src="/images/suzanne_attack.png" alt="Suzanne">
+                <div class="hero-ability-title">✦ Pouvoir de Suzanne ✦</div>
+            </div>
+
+            <div class="game-over" id="game-over">
+                <h1 id="game-over-title">💀 Défaite</h1>
+                <div class="wave-reached">Vague atteinte : <span id="final-wave">0</span></div>
+                <button id="game-over-restart">Rejouer</button>
+            </div>
+
+            <div class="game-over" id="level-transition">
+                <h1 id="level-transition-title">Niveau 2</h1>
+                <div class="wave-reached">Préparez vos défenses !</div>
+                <button id="level-continue-btn">Continuer</button>
+            </div>
+
+            <button class="dev-btn" id="dev-btn" style="top:230px">LVL</button>
+            <button class="dev-btn devmode-toggle" id="devmode-btn" style="top:254px">DEV</button>
+            <div class="devmode-badge" id="devmode-badge" style="display:none">DEV MODE</div>
+            <div class="dev-spawn-panel" id="dev-spawn-panel" style="display:none">
+                <button class="dev-spawn-btn" data-enemy="basic">🟢 Basic</button>
+                <button class="dev-spawn-btn" data-enemy="fast">⚡ Fast</button>
+                <button class="dev-spawn-btn" data-enemy="tank">🛡️ Tank</button>
+                <button class="dev-spawn-btn" data-enemy="boss">💀 Boss</button>
+                <button class="dev-spawn-btn" data-enemy="flying">🦋 Flying</button>
+            </div>
+
+        </div>
+
+        <div class="tower-bar">
+            <div class="tower-btn selected" data-tower="archer">
+                <div class="tower-preview"><img src="/images/td/towers/archer/tower_archer_front.png" alt="Archer"></div>
+                <div class="tower-cost">50g</div><div class="tower-name">Archer</div><div class="tower-range">⊕3</div>
+            </div>
+            <div class="tower-btn" data-tower="mage">
+                <div class="tower-preview"><img src="/images/td/towers/mage/tower_mage_front.png" alt="Mage"></div>
+                <div class="tower-cost">75g</div><div class="tower-name">Mage</div><div class="tower-range">⊕2.5</div>
+            </div>
+            <div class="tower-btn" data-tower="light">
+                <div class="tower-preview"><img src="/images/td/towers/light/tower_light_front.png" alt="Lumière"></div>
+                <div class="tower-cost">40g</div><div class="tower-name">Lumière</div><div class="tower-range">⊕2.5</div>
+            </div>
+            <div class="tower-btn" data-tower="fauconnier">
+                <div class="tower-preview"><img src="/images/td/towers/fauconnier/tower_fauconnier_front.png" alt="Fauconnier"></div>
+                <div class="tower-cost">40g</div><div class="tower-name">Fauconnier</div><div class="tower-range">⊕3.5</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Particules splash
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 35; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.width = (Math.random() * 3 + 1) + 'px';
+            p.style.height = p.style.width;
+            p.style.animationDuration = (Math.random() * 12 + 8) + 's';
+            p.style.animationDelay = (Math.random() * 10) + 's';
+            p.style.setProperty('--drift', (Math.random() * 100 - 50) + 'px');
+            container.appendChild(p);
+        }
+    </script>
+
+    <script type="module" src="/js/main.js"></script>
+    <script type="module">
+        import { SaveManager } from '/js/SaveManager.js';
+        const save = SaveManager.load();
+        if (save) {
+            const btn = document.getElementById('btn-resume');
+            btn.style.display = 'inline-block';
+            document.getElementById('resume-desc').textContent = SaveManager.describe(save);
+            btn.addEventListener('click', async () => {
+                document.getElementById('loader').classList.remove('hidden');
+                const audio = window._bremanieAudio;
+                if (audio) audio.stop(1500);
+                const fade = document.getElementById('fade-black');
+                fade.style.transition = 'opacity 1.5s ease';
+                fade.style.pointerEvents = 'all';
+                fade.style.opacity = '1';
+                setTimeout(() => {
+                    window._bremanieResume?.(save);
+                    fade.style.transition = 'opacity 1s ease';
+                    fade.style.opacity = '0';
+                    setTimeout(() => { fade.style.pointerEvents = 'none'; }, 1000);
+                }, 1500);
+            });
+        }
+    </script>
+
+    <!-- Overlay fondu au noir -->
+    <div class="loader-overlay hidden" id="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">Chargement...</div>
+    </div>
+
+    <div id="fade-black" style="
+        position: fixed; inset: 0; z-index: 8000;
+        background: #000; opacity: 0; pointer-events: none;
+        transition: opacity 2s ease;
+    "></div>
+
+    <!-- Badge de victoire -->
+    <div id="victory-badge" class="result-badge">
+        <img src="/images/victory_badge.png" alt="Victoire">
+    </div>
+
+    <!-- Badge de défaite -->
+    <div id="defeat-badge" class="result-badge">
+        <img src="/images/defeat_badge.png" alt="Défaite">
+    </div>
+
+    <!-- Overlay fin de chapitre -->
+    <div id="chapter-end" style="
+        position: fixed; inset: 0; z-index: 8100;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        pointer-events: none; opacity: 0; transition: opacity 1s ease;
+        gap: 1rem;
+    ">
+        <p style="
+            font-family: 'Cinzel', serif;
+            font-size: clamp(0.6rem, 2vw, 0.85rem);
+            letter-spacing: 0.55em;
+            text-transform: uppercase;
+            color: rgba(201,168,76,0.6);
+        ">Fin du</p>
+        <h2 style="
+            font-family: 'Cinzel Decorative', serif;
+            font-weight: 900;
+            font-size: clamp(2rem, 8vw, 4.5rem);
+            color: #f5e6b8;
+            letter-spacing: 0.06em;
+            text-align: center;
+            text-shadow: 0 0 40px rgba(201,168,76,0.5), 2px 3px 6px rgba(0,0,0,0.9);
+        " id="chapter-end-title">Chapitre I</h2>
+    </div>
+</body>
+</html>

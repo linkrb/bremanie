@@ -8,7 +8,7 @@
 .splash-bg {
     position: absolute;
     inset: 0;
-    background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+    background: url('/images/td/splash_bremanie.jpg') center center / cover no-repeat;
     animation: slowZoom 30s ease-in-out infinite alternate;
 }
 

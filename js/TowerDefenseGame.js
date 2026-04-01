@@ -5,7 +5,7 @@ import {
 } from './tdConfig.js';
 import { TDRenderer } from './TDRenderer.js';
 import { TDEngine } from './TDEngine.js';
-import { DialogueEngine } from '/bremanie/js/DialogueEngine.js';
+import { DialogueEngine } from '/js/DialogueEngine.js';
 
 export class TowerDefenseGame {
     constructor() {
@@ -21,8 +21,8 @@ export class TowerDefenseGame {
 
         // Système de dialogues en jeu
         this.dialogueEngine = new DialogueEngine({
-            basePath:     '/bremanie/images/',
-            dialoguePath: '/bremanie/dialogues/',
+            basePath:     '/images/',
+            dialoguePath: '/dialogues/',
             typeSpeed: 25,
         });
         // Triggers : clé = "level_wave" (ex: "0_1" = level 0 vague 1), valeur = nom du script
