@@ -122,6 +122,78 @@ export const LEVELS = [
             [{ type: 'boss', count: 2 }, { type: 'tank', count: 8 }, { type: 'fast', count: 16 }, { type: 'flying', count: 10 }],
         ]
     },
+    // ── Chapitre II : Forêt Enchantée — archer uniquement ──
+    {
+        name: 'Forêt',
+        theme: {
+            id: 'forest',
+            noCastle: true,
+            enemyScale: 1.4,
+            enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
+            spriteScales: { enemy_fox: 1.2, enemy_boar: 1.4 },
+            enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
+            decoTiles: [
+                'deco/bush_01', 'deco/bush_01', 'deco/bush_01',
+                'deco/bush_02', 'deco/bush_02', 'deco/bush_02',
+                'deco/bush_03', 'deco/bush_03',
+                'deco/bush_04', 'deco/bush_04',
+                'deco/bush_05', 'deco/bush_05',
+                'deco/bush_06', 'deco/bush_07',
+                'deco/arbre01', 'deco/arbre02',
+            ],
+            grassVariants: [
+                'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
+                'tile_grass_02', 'tile_grass_02', 'tile_grass_02',
+                'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
+                'tile_grass_04', 'tile_grass_04',
+                'tile_grass_05', 'tile_grass_05',
+                'tile_grass_06', 'tile_grass_06',
+                'tile_patch_01', 'tile_vines_01',
+                'tile_flower_01', 'tile_flower_03',
+                'tile_fungi_01',
+            ],
+            decorations: [],
+            decoRate: 0.22,
+            enemies: {
+                basic: ['enemy_fox', 'enemy_boar'],
+                fast:  'enemy_wolf',
+                tank:  'enemy_bear',
+                flying:'enemy_flying',
+                boss:  'enemy_bear'
+            }
+        },
+        path: [
+            {x:0,y:0},
+            {x:0,y:1},
+            {x:1,y:2},
+            {x:1,y:3},
+            {x:2,y:4},
+            {x:2,y:5},
+            {x:3,y:6},
+            {x:2,y:7},
+            {x:2,y:8},
+            {x:1,y:9},
+            {x:1,y:10},
+            {x:0,y:11},
+            {x:0,y:12},
+            {x:0,y:13},
+            {x:1,y:14},
+            {x:1,y:15},
+            {x:2,y:16},
+            {x:2,y:17},
+            {x:3,y:18},
+            {x:2,y:19},
+            {x:2,y:20},
+            {x:1,y:21},
+        ],
+        waves: [
+            [{ type: 'basic', count: 8 }],
+            [{ type: 'basic', count: 10 }, { type: 'fast', count: 6 }],
+            [{ type: 'basic', count: 12 }, { type: 'fast', count: 8 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 6 }, { type: 'tank', count: 1 }],
+        ]
+    },
     // ── Chapitre IV : Forêt de Nuit — archer + mage ──
     {
         name: 'Forêt de Nuit',
