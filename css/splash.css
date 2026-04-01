@@ -1,0 +1,213 @@
+/* ── Écran Splash (Press Start) ──────────────────────────────── */
+
+#screen-splash {
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-bg {
+    position: absolute;
+    inset: 0;
+    background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+    animation: slowZoom 30s ease-in-out infinite alternate;
+}
+
+@keyframes slowZoom {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.08); }
+}
+
+.vignette-splash {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.55) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 30%, transparent 60%, rgba(0,0,0,0.7) 100%);
+}
+
+.splash-content {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    text-align: center;
+    padding: 2rem;
+}
+
+.ornament {
+    color: #c9a84c;
+    font-size: 1.4rem;
+    letter-spacing: 0.5em;
+    opacity: 0.8;
+    margin-bottom: 0.5rem;
+    animation: fadeIn 2s ease forwards;
+}
+
+.splash-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 900;
+    font-size: clamp(2.8rem, 8vw, 7rem);
+    color: #f5e6b8;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    text-shadow:
+        0 0 20px rgba(201, 168, 76, 0.9),
+        0 0 60px rgba(201, 168, 76, 0.5),
+        0 0 120px rgba(201, 168, 76, 0.3),
+        2px 2px 4px rgba(0,0,0,0.8);
+    animation: titleAppear 2.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes titleAppear {
+    0%   { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.splash-subtitle {
+    font-family: 'Cinzel', serif;
+    font-weight: 400;
+    font-size: clamp(0.85rem, 2vw, 1.3rem);
+    color: #d4b483;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 0.6rem;
+    margin-bottom: 3rem;
+    text-shadow: 0 0 20px rgba(0,0,0,0.9), 1px 1px 3px rgba(0,0,0,0.8);
+    animation: fadeIn 3.5s ease forwards;
+    opacity: 0;
+}
+
+@keyframes fadeIn {
+    0%   { opacity: 0; }
+    40%  { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.btn-start {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #f5e6b8;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(201, 168, 76, 0.6);
+    padding: 0.9em 2.8em;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    position: relative;
+    transition: all 0.3s ease;
+    animation: fadeIn 5s ease forwards;
+    opacity: 0;
+}
+
+.btn-start::before, .btn-start::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-start:hover {
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 1);
+    color: #fff;
+    text-shadow: 0 0 15px rgba(201, 168, 76, 0.8);
+    box-shadow: 0 0 30px rgba(201, 168, 76, 0.3);
+}
+
+.btn-start:hover::before { border-color: rgba(201, 168, 76, 0.4); inset: -6px; }
+
+.particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    bottom: -10px;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #f5e6b8, rgba(201,168,76,0.3));
+    animation: floatPart linear infinite;
+    opacity: 0;
+}
+
+@keyframes floatPart {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-100vh) translateX(var(--drift)); opacity: 0; }
+}
+
+.splash-footer {
+    position: absolute;
+    bottom: 1.5rem;
+    width: 100%;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: rgba(212, 180, 131, 0.5);
+    letter-spacing: 0.2em;
+    animation: fadeIn 6s ease forwards;
+    opacity: 0;
+}
+
+/* ── Press-Start overlay ────────────────────────────────────── */
+#press-start {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity 1.4s ease;
+}
+
+#press-start .ps-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 6vw, 5rem);
+    color: #f5e6b8;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 20px rgba(201,168,76,0.7), 0 0 60px rgba(201,168,76,0.3);
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: psTitle 2s ease 0.3s forwards;
+}
+
+@keyframes psTitle {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+#press-start .ps-prompt {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.75rem, 1.5vw, 1rem);
+    color: #c9a84c;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    animation: psBlink 1.6s ease-in-out 1.5s infinite both;
+}
+
+@keyframes psBlink {
+    0%, 100% { opacity: 0.9; }
+    50%       { opacity: 0.2; }
+}
+
+#press-start.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}

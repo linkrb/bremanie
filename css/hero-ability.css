@@ -1,0 +1,68 @@
+/* ── Hero Ability Overlay ────────────────────────────────────── */
+
+#hero-ability-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 450;
+    pointer-events: none;
+    background: rgba(0,0,0,0);
+    overflow: hidden;
+}
+#hero-ability-overlay.active {
+    animation: heroOverlayBg 2.8s ease forwards;
+}
+@keyframes heroOverlayBg {
+    0%   { background: rgba(0,0,0,0); }
+    8%   { background: rgba(0,0,0,0.65); }
+    70%  { background: rgba(0,0,0,0.65); }
+    100% { background: rgba(0,0,0,0); }
+}
+
+/* ── Image héros (par défaut) ────────────────────────────────── */
+#hero-ability-overlay img {
+    position: absolute;
+    bottom: -5%;
+    left: -20%;
+    height: 76vh;
+    width: auto;
+    transform: translateY(100%) rotate(-4deg);
+    opacity: 0;
+}
+#hero-ability-overlay.active img {
+    animation: heroImgAnim 2.8s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes heroImgAnim {
+    0%   { transform: translateY(100%) rotate(-4deg); opacity: 0; }
+    7%   { transform: translateY(0%)   rotate(0deg);  opacity: 1; }
+    68%  { transform: translateY(0%)   rotate(0deg);  opacity: 1; }
+    100% { transform: translateY(110%) rotate(3deg);  opacity: 0; }
+}
+
+/* ── Titre ───────────────────────────────────────────────────── */
+.hero-ability-title {
+    position: absolute;
+    bottom: 14%;
+    left: 0; right: 0;
+    text-align: center;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.15rem;
+    color: #c8f0c0;
+    text-shadow: 0 0 16px rgba(80,220,80,0.9), 0 2px 6px rgba(0,0,0,0.95);
+    letter-spacing: 0.14em;
+    opacity: 0;
+}
+#hero-ability-overlay.active .hero-ability-title {
+    animation: heroTitleAnim 2.8s ease forwards 0.2s;
+}
+@keyframes heroTitleAnim {
+    0%   { opacity: 0; transform: translateY(10px); }
+    15%  { opacity: 1; transform: translateY(0); }
+    65%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── Suzanne ─────────────────────────────────────────────────── */
+#hero-ability-overlay[data-hero="suzanne"] img {
+    filter: drop-shadow(0 0 35px rgba(80,230,100,0.65));
+    transform: translateX(-30px);
+}

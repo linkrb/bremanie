@@ -5,15 +5,17 @@ export const GRID_WIDTH = 4;
 export const GRID_HEIGHT = 22;
 
 export const TOWER_TYPES = {
-    archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8, anchorY: 0.85 },
-    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, anchorY: 1.0 },
-    light:  { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0, color: 0xFFD700, displayScale: 1.8, illuminates: true, anchorY: 0.85 },
+    archer: { cost: 50,  damage: 20, range: 3,   cooldown: 750,  speed: 42, color: 0x98D4BB, displayScale: 1.8, anchorY: 0.85, noFlying: true },
+    mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, anchorY: 1.0, noFlying: true },
+    light:      { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0,  color: 0xFFD700, displayScale: 1.8, illuminates: true, anchorY: 0.85 },
+    fauconnier: { cost: 40,  damage: 30, range: 3.5, cooldown: 800,   speed: 55, color: 0x44CC88, displayScale: 1.8, anchorY: 0.85, flyingOnly: true },
 };
 
 export const ENEMY_TYPES = {
     basic: { hp: 120, speed: 2.2, reward: 3, color: 0xFFB5C5, size: 0.75, anchorY: 0.65 },
     fast: { hp: 70, speed: 3.4, reward: 4, color: 0xFFD93D, size: 0.85, anchorY: 0.65 },
     tank: { hp: 400, speed: 1.2, reward: 10, color: 0x9B59B6, size: 0.95, anchorY: 0.65 },
+    tank2: { hp: 400, speed: 1.2, reward: 5, color: 0x9B59B6, size: 0.95, anchorY: 0.65 },
     boss: { hp: 1400, speed: 0.9, reward: 40, color: 0xC0392B, size: 1.3, anchorY: 0.85 },
     flying:  { hp: 90,   speed: 2.7, reward: 5,   color: 0xBB88FF, size: 0.70, anchorY: 0.5,  flying: true },
     tornado:      { hp: 600, speed: 1.5, reward: 20, color: 0x88DDFF, size: 2.2, anchorY: 0.85, darkness: true },
@@ -120,185 +122,61 @@ export const LEVELS = [
             [{ type: 'boss', count: 2 }, { type: 'tank', count: 8 }, { type: 'fast', count: 16 }, { type: 'flying', count: 10 }],
         ]
     },
+    // ── Chapitre IV : Forêt de Nuit — archer + mage ──
     {
-        name: 'Volcan',
+        name: 'Forêt de Nuit',
         theme: {
-            id: 'volcano',
-            castleScale: 2.0,
-            tileScale: 0.75,
-            towerScale: 0.85,
-            enemyScale: 0.85,
-            enemyScales: { tank: 1.3, boss: 1.4 },
-            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
-            decorations: [
-                { name: 'geyser', scale: 0.7, anchorY: 0.9 },
-                { name: 'fire_tree', scale: 0.75, anchorY: 0.9 },
-                { name: 'lamppost', scale: 0.95, anchorY: 0.9 }
-            ],
-            decoRate: 0.20,
-            enemies: {
-                basic: 'enemy_basic',
-                fast: 'enemy_fast',
-                tank: 'enemy_tank',
-                flying: 'enemy_flying',
-                boss: 'enemy_boss'
-            }
-        },
-        path: [
-            {x:3,y:0}, {x:3,y:1}, {x:3,y:2},
-            { fork: [
-                [{x:3,y:3},{x:2,y:3},{x:1,y:3},{x:0,y:3},{x:0,y:4},{x:0,y:5},{x:0,y:6},{x:0,y:7},{x:1,y:7},{x:2,y:7},{x:3,y:7}],
-                [{x:3,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:6,y:4},{x:6,y:5},{x:6,y:6},{x:6,y:7},{x:5,y:7},{x:4,y:7},{x:3,y:7}]
-            ]},
-            {x:3,y:8}, {x:3,y:9}, {x:3,y:10}, {x:3,y:11}
-        ],
-        waves: [
-            [{ type: 'basic', count: 8 }, { type: 'fast', count: 4 }],
-            [{ type: 'fast', count: 10 }, { type: 'basic', count: 8 }],
-            [{ type: 'tank', count: 3 }, { type: 'basic', count: 10 }, { type: 'fast', count: 3 }],
-            [{ type: 'tank', count: 5 }, { type: 'fast', count: 8 }],
-            [{ type: 'basic', count: 12 }, { type: 'fast', count: 10 }, { type: 'tank', count: 5 }],
-            [{ type: 'flying', count: 10 }, { type: 'tank', count: 7 }, { type: 'fast', count: 10 }],
-            [{ type: 'basic', count: 18 }, { type: 'fast', count: 14 }, { type: 'flying', count: 8 }, { type: 'tank', count: 5 }],
-            [{ type: 'fast', count: 22 }, { type: 'flying', count: 14 }, { type: 'tank', count: 7 }],
-            [{ type: 'tank', count: 13 }, { type: 'fast', count: 20 }, { type: 'flying', count: 11 }],
-            [{ type: 'boss', count: 3 }, { type: 'tank', count: 11 }, { type: 'fast', count: 18 }, { type: 'flying', count: 13 }],
-        ]
-    },
-    {
-        name: 'Forêt',
-        theme: {
-            id: 'forest',
+            id: 'night_forest',
             noCastle: true,
-            enemyScale: 1.4,
-            enemyScales: { basic: 0.75, fast: 0.8, tank: 1.2, boss: 2.0 },
-            spriteScales: { enemy_fox: 1.2, enemy_boar: 1.4 },
-            enemyAnchors: { basic: 0.88, fast: 0.88, tank: 0.88, boss: 0.88 },
+            enemyFolder: 'enemies/skeleton',
+            enemyScales: { tank: 1.35, tank2: 1.35 },
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, tank2: 0.85, flying: 0.85 },
+            enemies: {
+                basic:  ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                         'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
+                fast:   ['enemy_basic_1','enemy_basic_2','enemy_basic_7'],
+                tank:   'enemy_tank_knight',
+                tank2:  'enemy_tank_knight',
+                flying: 'enemy_flying_crow',
+            },
             tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
-            decoTiles: [
-                // Buissons (priorité × 3)
-                'deco/bush_01', 'deco/bush_01', 'deco/bush_01',
-                'deco/bush_02', 'deco/bush_02', 'deco/bush_02',
-                'deco/bush_03', 'deco/bush_03',
-                'deco/bush_04', 'deco/bush_04',
-                'deco/bush_05', 'deco/bush_05',
-                'deco/bush_06',
-                'deco/bush_07',
-                // Décos basses (fichiers à ajouter dans forest/deco/)
-                // 'deco/stump_fern', 'deco/stump', 'deco/mushroom', 'deco/flowers',
-                // Arbres (rare — 1 entrée chacun)
-                'deco/arbre01',
-                'deco/arbre02',
-            ],
             grassVariants: [
-                // Herbe simple (poids ×4)
-                'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
-                'tile_grass_02', 'tile_grass_02', 'tile_grass_02',
                 'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
-                'tile_grass_04', 'tile_grass_04',
-                'tile_grass_05', 'tile_grass_05',
-                'tile_grass_06', 'tile_grass_06',
-                // Patchs sol / vignes (rare)
-                'tile_patch_01', 'tile_vines_01',
-                // Fleurs (très rare)
-                'tile_flower_01', 'tile_flower_03',
-                // Champignons
-                'tile_fungi_01',
+                'tile_flower_01', 'tile_flower_01',
+                'tile_soil_02', 'tile_soil_02',
+                'tile_vines_01', 'tile_vines_01',
+            ],
+            decoTiles: [
+                'deco/decor1', 'deco/decor1',
+                'deco/decor2', 'deco/decor2',
+                'deco/decor3',
             ],
             decorations: [],
-            decoRate: 0.22,
-            enemies: {
-                basic: ['enemy_fox', 'enemy_boar'],
-                fast:  'enemy_wolf',
-                tank:  'enemy_bear',
-                flying:'enemy_flying',
-                boss:  'enemy_bear'
-            }
+            decoRate: 0.18,
         },
         path: [
-            // Règles d'adjacence staggered : paire→(col,y+1)ou(col-1,y+1) / impaire→(col,y+1)ou(col+1,y+1)
-            // Diagonale droite col 0 → col 3 (y 0→6)
-            {x:0,y:0},  // pair  → (0,1)
-            {x:0,y:1},  // impair → (1,2)
-            {x:1,y:2},  // pair  → (1,3)
-            {x:1,y:3},  // impair → (2,4)
-            {x:2,y:4},  // pair  → (2,5)
-            {x:2,y:5},  // impair → (3,6)
-            {x:3,y:6},  // bord droit — pair → (2,7)
-            // Diagonale gauche col 3 → col 0 (y 6→12)
-            {x:2,y:7},  // impair → (2,8)
-            {x:2,y:8},  // pair  → (1,9)
-            {x:1,y:9},  // impair → (1,10)
-            {x:1,y:10}, // pair  → (0,11)
-            {x:0,y:11}, // impair → (0,12)
-            {x:0,y:12}, // bord gauche — pair → (0,13)
-            // Diagonale droite col 0 → col 3 (y 12→18)
-            {x:0,y:13}, // impair → (1,14)
-            {x:1,y:14}, // pair  → (1,15)
-            {x:1,y:15}, // impair → (2,16)
-            {x:2,y:16}, // pair  → (2,17)
-            {x:2,y:17}, // impair → (3,18)
-            {x:3,y:18}, // bord droit — pair → (2,19)
-            // Diagonale gauche → fort (y 18→21)
-            {x:2,y:19}, // impair → (2,20)
-            {x:2,y:20}, // pair  → (1,21)
-            {x:1,y:21}, // fort
+            // Entrée centre-gauche, descente droite 2 cases, puis diagonale gauche
+            {x:2,y:0}, {x:2,y:1}, {x:2,y:2},
+            {x:1,y:3}, {x:1,y:4}, {x:0,y:5}, {x:0,y:6}, {x:0,y:7},
+            // Virage → diagonale droite jusqu'au bord
+            {x:1,y:8}, {x:1,y:9}, {x:2,y:10}, {x:2,y:11}, {x:3,y:12},
+            // Descente droite 2 cases, puis diagonale gauche jusqu'au bas
+            {x:3,y:13}, {x:3,y:14},
+            {x:2,y:15}, {x:2,y:16}, {x:1,y:17}, {x:1,y:18}, {x:0,y:19}, {x:0,y:20}, {x:0,y:21},
         ],
         waves: [
-            [{ type: 'basic', count: 8 }],
-            [{ type: 'basic', count: 10 }, { type: 'fast', count: 6 }],
-            [{ type: 'basic', count: 12 }, { type: 'fast', count: 8 }],
-            [{ type: 'basic', count: 8 }, { type: 'fast', count: 6 }, { type: 'tank', count: 1 }],
+            [{ type: 'basic', count: 6 }],
+            [{ type: 'fast', count: 4 }, { type: 'basic', count: 4 }],
+            [{ type: 'tank2', count: 3 }, { type: 'basic', count: 10 }, { type: 'fast', count: 3 }],
+            [{ type: 'tank2', count: 6 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }],
+            [{ type: 'tank2', count: 6 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }, { type: 'flying', count: 1 }],
+            [{ type: 'tank2', count: 3 }, { type: 'basic', count: 3 }, { type: 'fast', count: 3 }, { type: 'flying', count: 3 }],
+            [{ type: 'tank2', count: 8 }, { type: 'basic', count: 3 }, { type: 'fast', count: 4 }, { type: 'flying', count: 5 }],
+            [{ type: 'tank2', count: 10 }, { type: 'basic', count: 5 }, { type: 'fast', count: 8 }, { type: 'flying', count: 9 }],
+            [{ type: 'tank2', count: 20 }, { type: 'basic', count: 5 }, { type: 'fast', count: 15 }, { type: 'flying', count: 10 }],
         ]
     },
-    {
-        name: 'Glacier',
-        theme: {
-            id: 'ice',
-            castleScale: 2.0,
-            castleAnchorY: 0.75,
-            tileScale: 0.85,
-            towerScale: 0.85,
-            enemyScale: 1.2,
-            enemyScales: { tank: 1.2, boss: 1.0 },
-            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
-            decorations: [
-                { name: 'snowy_tree', scale: 1.5, anchorY: 0.75 },
-                { name: 'snowy_tree', scale: 1.3, anchorY: 0.75 },
-                { name: 'ice_portal', scale: 1.0, anchorY: 0.75 }
-            ],
-            decoRate: 0.20,
-            enemies: {
-                basic:  'enemy_basic',
-                fast:   'enemy_fast',
-                tank:   'enemy_tank',
-                flying: 'enemy_flying',
-                boss:   'enemy_boss'
-            }
-        },
-        path: [
-            {x:0, y:0}, {x:0, y:1}, {x:0, y:2},
-            {x:1, y:2}, {x:2, y:2}, {x:3, y:2}, {x:4, y:2}, {x:5, y:2}, {x:6, y:2},
-            {x:6, y:3}, {x:6, y:4}, {x:6, y:5},
-            {x:5, y:5}, {x:4, y:5}, {x:3, y:5}, {x:2, y:5}, {x:1, y:5}, {x:0, y:5},
-            {x:0, y:6}, {x:0, y:7}, {x:0, y:8},
-            {x:1, y:8}, {x:2, y:8}, {x:3, y:8}, {x:4, y:8}, {x:5, y:8}, {x:6, y:8},
-            {x:6, y:9}, {x:6, y:10}, {x:6, y:11}
-        ],
-        waves: [
-            [{ type: 'basic', count: 10 }, { type: 'fast', count: 5 }],
-            [{ type: 'fast', count: 12 }, { type: 'basic', count: 10 }],
-            [{ type: 'tank', count: 4 }, { type: 'basic', count: 10 }, { type: 'fast', count: 4 }],
-            [{ type: 'flying', count: 8 }, { type: 'fast', count: 10 }],
-            [{ type: 'basic', count: 14 }, { type: 'tank', count: 6 }, { type: 'fast', count: 9 }],
-            [{ type: 'flying', count: 12 }, { type: 'fast', count: 12 }, { type: 'tank', count: 5 }],
-            [{ type: 'tank', count: 10 }, { type: 'flying', count: 11 }, { type: 'fast', count: 13 }],
-            [{ type: 'fast', count: 24 }, { type: 'flying', count: 15 }, { type: 'tank', count: 7 }],
-            [{ type: 'tank', count: 14 }, { type: 'fast', count: 20 }, { type: 'flying', count: 12 }],
-            [{ type: 'boss', count: 3 }, { type: 'tank', count: 12 }, { type: 'flying', count: 15 }, { type: 'fast', count: 18 }],
-        ]
-    },
-    // ── Chapitre III : Fort de l'Est (index 5) — archer + mage débloquée ──
+    // ── Chapitre III : Fort de l'Est — archer + mage ──
     {
         name: "Fort de l'Est",
         theme: {
@@ -349,7 +227,7 @@ export const LEVELS = [
             [{ type: 'basic', count: 12 }, { type: 'fast', count: 10 }, { type: 'tank', count: 3 }, { type: 'boss', count: 1 }],
         ]
     },
-    // ── Chapitre III : Château (index 6) — combat final, archer + mage ──
+    // ── Chapitre III : Château — combat final, archer + mage ──
     {
         name: 'Château',
         theme: {
@@ -612,7 +490,8 @@ export const TOWER_DISPLAY = {
     sniper:   { icon: '🎯', name: 'Sniper',    unlockName: null },
     cemetery: { icon: '👻', name: 'Fantôme',   unlockName: 'Tour Fantôme' },
     wind:     { icon: '🌀', name: 'Eolienne',  unlockName: 'Tour Éolienne' },
-    fire:     { icon: '🔥', name: 'Feu',       unlockName: 'Tour de Feu' },
+    fire:       { icon: '🔥', name: 'Feu',        unlockName: 'Tour de Feu' },
+    fauconnier: { icon: '🦅', name: 'Fauconnier', unlockName: null },
 };
 
 export const SHOP_ITEMS = {

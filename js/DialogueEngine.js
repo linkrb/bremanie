@@ -12,11 +12,14 @@ const CHAR_NAMES = {
     lucas:        'Lucas',
     necromancien: 'Le Nécromancien',
     seraphelle:   'Séraphelle',
+    skeleton:     'Squelette',
+    martin:       'Martin',
 };
 
 // Scale override par personnage (1 = taille par défaut)
 const CHAR_SCALE = {
-    david: 1.2,
+    david:      1.2,
+    seraphelle: 1.25,
 };
 
 const CHAR_COLORS = {
@@ -30,6 +33,8 @@ const CHAR_COLORS = {
     lucas:        { bg: '#4a5a2e', border: '#9ab07a' },
     necromancien: { bg: '#1a0a2e', border: '#6633aa' },
     seraphelle:   { bg: '#1a1a2a', border: '#4455aa' },
+    skeleton:     { bg: '#1c1c1c', border: '#4ab8c8' },
+    martin:       { bg: '#5a3a1a', border: '#b07840' },
 };
 
 const CSS = `
@@ -271,6 +276,43 @@ const CSS = `
     letter-spacing: 0.04em;
 }
 
+/* ── Overlay vidéo plein écran ── */
+#dlg-video-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    background: #000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#dlg-video-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#dlg-video-hint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.85);
+    pointer-events: none;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.5s ease 0.4s;
+    animation: dlgSceneHint 0.8s ease-in-out infinite alternate;
+}
+
+#dlg-video-hint.visible { opacity: 1; }
+
 /* ── Bouton skip (hold 1s) ── */
 .dlg-skip-btn {
     position: absolute;
@@ -311,6 +353,7 @@ export class DialogueEngine {
     constructor(options = {}) {
         this.basePath     = options.basePath     || '/bremanie/images/';
         this.dialoguePath = options.dialoguePath || '/bremanie/dialogues/';
+        this.videoPath    = options.videoPath     || '/bremanie/videos/';
         this.typeSpeed    = options.typeSpeed     ?? 28; // ms per char
 
         this.overlay  = null;
@@ -374,6 +417,18 @@ export class DialogueEngine {
         document.body.appendChild(overlay);
         this.overlay = overlay;
 
+        // Overlay vidéo (au-dessus du dialogue)
+        const videoWrap = document.createElement('div');
+        videoWrap.id = 'dlg-video-wrap';
+        videoWrap.innerHTML = `
+            <video id="dlg-video" playsinline></video>
+            <div id="dlg-video-hint">▼ Toucher pour continuer</div>
+        `;
+        document.body.appendChild(videoWrap);
+        this._videoWrap = videoWrap;
+        this._videoEl   = videoWrap.querySelector('#dlg-video');
+        this._videoHint = videoWrap.querySelector('#dlg-video-hint');
+
         this._bgActive = 'a'; // 'a' ou 'b'
         this.els = {
             bgA:      overlay.querySelector('#dlg-bg-a'),
@@ -424,7 +479,7 @@ export class DialogueEngine {
     }
 
     // ── Background crossfade ──────────────────────────────────
-    _setBg(url, position) {
+    _setBg(url, position, size) {
         const next = this._bgActive === 'a' ? 'b' : 'a';
         const elNext = next === 'a' ? this.els.bgA : this.els.bgB;
         const elCurr = next === 'a' ? this.els.bgB : this.els.bgA;
@@ -432,6 +487,7 @@ export class DialogueEngine {
         elNext.style.backgroundImage    = (url && url !== 'black') ? `url('${url}')` : '';
         elNext.style.backgroundColor   = url === 'black' ? '#000' : '';
         elNext.style.backgroundPosition = position || 'center';
+        elNext.style.backgroundSize     = size || '';
         elNext.classList.remove('hidden');  // fade in next
         elCurr.classList.add('hidden');     // fade out current
         this._bgActive = next;
@@ -496,6 +552,7 @@ export class DialogueEngine {
         const script = [];
         let pendingBg    = null;
         let pendingBgPos = null;
+        let pendingBgSize = null;
         let pendingMusic = null;
         let pendingMusicStop = false;
         let pendingSfx     = null;
@@ -519,13 +576,21 @@ export class DialogueEngine {
                     else pendingBgPos = val;
                     continue;
                 }
+                if (cmd === 'bgsize') {
+                    const last = script[script.length - 1];
+                    if (last?.type === 'scene_pause') last.bgSize = val;
+                    else pendingBgSize = val;
+                    continue;
+                }
                 if (cmd === 'scene') {
                     // @scene crée une pause autonome : image plein écran, tap pour continuer
-                    script.push({ type: 'scene_pause', scene: val, bgPos: pendingBgPos || 'center' });
+                    script.push({ type: 'scene_pause', scene: val, bgPos: pendingBgPos || 'center', bgSize: pendingBgSize || null });
                     pendingBgPos = null;
+                    pendingBgSize = null;
                     continue;
                 }
                 if (cmd === 'hide')  { script.push({ type: 'hide', side: val }); continue; }
+                if (cmd === 'video') { script.push({ type: 'video', src: val }); continue; }
 
                 // Directives audio : si la dernière entrée est une scene_pause, on lui attache
                 // (ex. @scene X\n@music Y → la musique démarre quand la scène apparaît)
@@ -621,10 +686,16 @@ export class DialogueEngine {
             return;
         }
 
+        // ── Vidéo plein écran (@video) ───────────────────────
+        if (line.type === 'video') {
+            this._playVideo(this.videoPath + line.src, () => this._advance());
+            return;
+        }
+
         // ── Scene pause (@scene) ─────────────────────────────
         // Image plein écran sans boîte de dialogue — tap pour continuer
         if (line.type === 'scene_pause') {
-            this._setBg(line.scene === 'black' ? 'black' : `${this.basePath}${line.scene}`, line.bgPos || 'center');
+            this._setBg(line.scene === 'black' ? 'black' : `${this.basePath}${line.scene}`, line.bgPos || 'center', line.bgSize);
             this.overlay.classList.add('cinematic', 'scene-pause');
             this.typing = false;
             return;
@@ -724,9 +795,58 @@ export class DialogueEngine {
         tick();
     }
 
+    _playVideo(src, onDone) {
+        this._videoEl.src = src;
+        this._videoHint.classList.remove('visible');
+        this._videoWrap.style.display = 'flex';
+        this._videoEl.play().catch(() => {});
+
+        let ended = false;
+
+        const onEnded = () => {
+            ended = true;
+            this._videoHint.classList.add('visible');
+        };
+
+        const onTap = (e) => {
+            if (!ended) return;
+            e.stopPropagation();
+            this._videoWrap.removeEventListener('pointerup', onTap);
+            this._videoEl.removeEventListener('ended', onEnded);
+            this._videoWrap.style.display = 'none';
+            this._videoHint.classList.remove('visible');
+            this._videoEl.src = '';
+            onDone();
+        };
+
+        const onKey = (e) => {
+            if (!ended) return;
+            if (!['Space', 'Enter', 'ArrowRight'].includes(e.code)) return;
+            e.preventDefault();
+            document.removeEventListener('keydown', onKey);
+            this._videoWrap.removeEventListener('pointerup', onTap);
+            this._videoEl.removeEventListener('ended', onEnded);
+            this._videoWrap.style.display = 'none';
+            this._videoHint.classList.remove('visible');
+            this._videoEl.src = '';
+            onDone();
+        };
+
+        this._videoEl.addEventListener('ended', onEnded, { once: true });
+        this._videoWrap.addEventListener('pointerup', onTap);
+        document.addEventListener('keydown', onKey);
+    }
+
     _end() {
         clearTimeout(this.typeTimer);
         this.typing = false;
+        // Fermer la vidéo si elle tourne encore (ex: skip pendant une vidéo)
+        if (this._videoWrap.style.display !== 'none') {
+            this._videoEl.pause();
+            this._videoEl.src = '';
+            this._videoWrap.style.display = 'none';
+            this._videoHint.classList.remove('visible');
+        }
         this.overlay.classList.remove('cinematic');
         this.overlay.style.display = 'none';
 

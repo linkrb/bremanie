@@ -1,0 +1,41 @@
+@musicstop
+@scene scenes/dark-forest.png
+
+> Les faucons de lumière plongent une dernière fois, dispersant la nuée de corbeaux dans un éclair aveuglant.
+> Au sol, l'épée de Suzanne fracasse le crâne du dernier garde d'os, le réduisant en poussière.
+
+suzanne(center):determined C'est le moment ! Ses défenses sont affaiblies, son essaim est dispersé !
+suzanne:determined Martin, attrape Anna ! On se tire d'ici, tout de suite !
+
+martin(right):surprised Mais... on commençait à prendre le dessus !
+
+suzanne:angry Ne sois pas idiot ! Cette sorcière est beaucoup trop puissante, elle va nous massacrer si on reste une seconde de plus !
+suzanne:determined Bougez-vous, bon sang ! C'est notre seule fenêtre de tir, l'urgence est vitale ! Courez vers l'est !
+
+anna(left):sad D'accord ! Je suis juste derrière vous !
+
+> Anna libère une dernière onde d'énergie aveuglante pour couvrir leur départ, soulevant un épais nuage de poussière.
+
+martin(right):determined Allez, Anna ! Vite, on fonce ! Ne regarde surtout pas en arrière !
+
+seraphelle(right):angry Misérables petits insectes !
+seraphelle:angry Vous croyez vraiment pouvoir me glisser entre les doigts dans MA propre forêt ?!
+seraphelle:determined Relevez-vous, tas d'os inutiles ! Traquez-les ! Qu'aucun d'eux ne voie la lumière du jour !
+
+@hide left
+@hide right
+
+> Les trois jeunes s'élancent à corps perdu dans les fourrés mortels, le souffle court, le cœur battant à tout rompre.
+> Derrière eux, la voix enragée de la sorcière résonne, promettant une traque impitoyable jusqu'à l'aube.
+
+@scene scenes/castle_siege.jpg
+
+> Pendant ce temps, bien loin des bois corrompus...
+> Au cœur de la capitale, dans l'enceinte réputée imprenable du château de la Brémanie, un terrible drame se jouait en silence.
+
+@music boss_entry
+
+necromancien(right):focused Lève-toi.
+
+@bgsize 60%
+@scene scenes/romain_necro.png

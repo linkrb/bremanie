@@ -1,0 +1,24 @@
+@bg black
+
+anna(left):worried Il y en a trop ! Ils sont trop agiles !
+anna:angry Mes tirs d'énergie n'arrivent pas à tous les toucher en plein vol !
+martin(right):determined Reste concentrée, Anna ! Ne tire pas à l'aveuglette, tu vas t'épuiser !
+martin:worried Des défenses au sol ne serviront à rien contre un essaim pareil. Il faut changer de stratégie !
+
+
+anna(left):worried Il y en a trop ! Ils sont trop agiles !
+anna:angry Mes tirs d'énergie n'arrivent pas à tous les toucher en plein vol !
+martin(right):determined Reste concentrée, Anna ! Ne tire pas à l'aveuglette, tu vas t'épuiser !
+martin:worried Des défenses au sol ne serviront à rien contre un essaim pareil. Il faut changer de stratégie !
+
+anna(left):sad Mais comment on fait pour frapper le ciel ?!
+martin(right):determined On envoie le ciel contre eux !
+martin:proud Réfléchis, Anna... qu'est-ce qui terrorise les corbeaux à l'état sauvage ? Qu'est-ce qui chasse en piqué ?
+martin:determined Tu as le pouvoir de Bâtisseur ! Si elle t'envoie des oiseaux de malheur, construis de quoi lui répondre !
+
+anna(left):surprised Des prédateurs...
+anna:determined Des faucons ! Bien sûr ! Il me faut un perchoir en hauteur !
+
+> Anna ancre solidement ses pieds dans le sol, joignant ses mains.
+> Elle ferme les yeux, visualisant avec précision les plans de la structure.
+> Son aura cyan jaillit de plus belle, s'enfonçant dans la terre.

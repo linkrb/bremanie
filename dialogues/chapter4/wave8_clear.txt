@@ -1,0 +1,34 @@
+@bg black
+
+> La Tour de Fauconnier abat les corbeaux un à un, mais l'effort épuise Anna.
+> La lumière cyan de son aura commence à vaciller dangereusement.
+
+anna(left):sad Je... je n'en peux plus, Martin. La pierre est trop lourde à maintenir...
+anna:worried Ma magie s'épuise. L'essaim ne s'arrête jamais.
+martin(left):worried Tiens bon, Anna ! Ne lâche rien ! Si la tour s'effondre, ils vont nous submerger !
+
+> Séraphelle s'avance lentement, un sourire sadique étirant ses lèvres.
+
+seraphelle(right):laughing Pitoyable. Impressionnant pour une novice, mais totalement pitoyable.
+seraphelle:proud Tu as le sang des Bâtisseurs, fillette, mais tu n'as ni l'entraînement ni l'endurance.
+seraphelle:determined Tu n'es qu'une étincelle vouée à s'étouffer dans ma nuit.
+seraphelle:angry Squelettes ! Abattez cette tour ridicule et mettez-les à genoux !
+
+anna(left):sad Martin... pardonne-moi... je n'ai plus de force...
+martin(left):angry Non ! Reste derrière moi, Anna ! Je ne les laisserai pas te toucher !
+
+> Soudain, une lame d'acier fend l'obscurité et pulvérise le crâne du squelette le plus proche.
+> Une silhouette bondit hors des buissons, se dressant fièrement devant les enfants, l'arme au poing.
+
+suzanne(center):angry Éloignez vos sales pattes d'os de ma famille, espèce de monstre !
+
+suzanne(center):proud Vous pensiez vraiment que j'allais vous laisser vous faire enlever sous mon nez sans réagir ?
+suzanne:determined Quand ces tas d'os vous ont emportés, j'ai attrapé mon épée et j'ai pisté leurs traces dans la brume !
+suzanne:angry Je suis la fille de David, bon sang ! Personne ne s'en prend à mon sang sans en payer le prix !
+
+seraphelle(right):surprised Une traqueuse humaine ? Cette forêt est donc un moulin pour que des enfants s'y promènent ainsi...
+seraphelle:angry Qu'importe. Ton acier pathétique ne vous sauvera pas de ma magie !
+
+suzanne(center):determined On va bien voir ça ! Anna, respire un grand coup et reconcentre-toi sur ta tour.
+suzanne:proud Martin, couvre ses arrières et guide ses tirs. Je me charge de briser ces pantins au sol !
+suzanne:determined Montrons à cette sorcière de quel bois on se chauffe au domaine !

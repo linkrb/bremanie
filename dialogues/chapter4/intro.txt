@@ -1,0 +1,164 @@
+@bg black
+@music seraphelle_theme
+
+> Loin du fracas des armes, au cœur des bois corrompus...
+> Les ombres s'épaississent sous un feuillage impénétrable.
+
+@scene scenes/dark-forest.png
+
+skeleton(right):neutral Maîtresse Séraphelle. L'escouade est de retour.
+skeleton:determined La tornade a parfaitement fait diversion, comme prévu.
+seraphelle(left):neutral Et les cibles ? Les avez-vous capturées ?
+skeleton:proud Oui. Nous tenons le frère et la sœur entre nos mains.
+
+seraphelle:determined Parfait. Le Maître sera satisfait de cette nouvelle.
+skeleton(right):surprised Si je puis me permettre, Maîtresse...
+skeleton:worried Pourquoi le Seigneur accorde-t-il tant de valeur à ces enfants ?
+skeleton:neutral Ce ne sont que de petits humains vulnérables.
+
+seraphelle(left):angry Prends garde à ce que tu dis, tas d'ossements.
+seraphelle:determined Ils portent dans leurs veines le sang des Bâtisseurs.
+seraphelle:neutral Le garçon a déjà commencé à éveiller ce pouvoir ancien.
+seraphelle:determined S'il apprenait à le maîtriser, il menacerait nos plans.
+
+skeleton(right):neutral Je comprends. Que devons-nous faire d'eux ?
+seraphelle(left):neutral Amène-les-moi. Immédiatement.
+skeleton(right):determined À vos ordres. Ils attendent sous bonne garde, à la lisière.
+seraphelle(left):proud Je veux voir de mes propres yeux à quoi ressemblent ces petits prodiges...
+seraphelle:determined ...et s'ils sont aussi spéciaux que le prétend notre Maître.
+
+@hide right
+
+> Le squelette s'incline lourdement avant de disparaître dans la brume.
+> Séraphelle attend, son regard violet perçant l'obscurité.
+
+
+@hide left
+> Plus loin dans la forêt corrompue, sous la garde d'ombres silencieuses...
+> Deux enfants marchent, les poignets liés, entourés par la brume épaisse.
+
+martin(left):worried Anna... tu crois qu'ils nous emmènent où, au juste ?
+anna(right):determined Je ne sais pas, Martin. Mais redresse-toi. On ne doit pas leur montrer qu'on a peur.
+martin:angry Facile à dire ! Ces choses ne respirent même pas.
+martin:worried Et puis... pourquoi nous avoir enlevés, nous ? On n'a rien de spécial.
+martin:surprised Ils m'ont sauté dessus en premier dans le donjon, comme s'ils me cherchaient absolument.
+
+anna:neutral C'est vrai que c'est incompréhensible. Tu es mon cousin, on n'a pas de pouvoirs magiques ni d'importance militaire...
+anna:worried C'est comme s'ils s'étaient trompés de cible.
+martin:determined Qu'ils se soient trompés ou pas, il faut qu'on trouve un moyen de couper ces cordes dès qu'ils relâcheront leur attention.
+
+anna:proud C'est l'esprit. Garde ce courage, on va s'en sortir.
+anna:determined Observe bien le chemin qu'on prend. Cherche un bout de verre, une pierre tranchante, n'importe quoi.
+martin:proud Lucas a dû s'apercevoir de notre disparition. C'est le meilleur pisteur du domaine.
+martin:determined Et avec ce que Nathan a réussi à faire ce soir... je suis sûr qu'ils sont déjà en route. On doit juste tenir bon.
+
+@hide right
+@hide left
+@musicstop
+@sfxloop night
+
+@scene scenes/chambre_nuit.png
+> Dans la salle de commandement du domaine, de grandes cartes sont étalées.
+> L'ambiance est lourde, éclairée par la lueur vacillante des bougies.
+
+lucas(left):worried J'ai fouillé jusqu'à la lisière des bois, Père. La piste s'arrête net.
+lucas:angry Cette brume magique est impénétrable. On n'y voit pas à deux pas.
+david(right):determined C'est bien ce que je craignais. C'est un voile tissé par la magie noire.
+adeline(right):sad Ils ont profité du chaos de ton combat, Nathan, pour se glisser dans le donjon.
+adeline:worried Ils ont enlevé Anna, ton cousin Martin, et même Suzanne qui a dû tenter de s'interposer.
+
+nathan(left):angry Mais on ne peut pas rester là à ne rien faire !
+nathan:worried Ils sont tous les trois entre les mains de ces monstres ! Chaque minute compte !
+david(right):neutral Calme-toi, Nathan. Nous n'irons nulle part cette nuit.
+nathan(left):surprised Quoi ?! Mais Oncle David, on doit les poursuivre !
+
+adeline(right):sad Écoute ton oncle, mon garçon. Cette brume est un piège mortel.
+david(right):determined L'impatience est le pire ennemi d'un commandant.
+david:neutral Si nous fonçons à l'aveugle dans cette forêt corrompue, nous tomberons dans une embuscade.
+lucas(left):sad Ce qui m'échappe, c'est leur objectif. Pourquoi Anna, Martin et ma petite sœur ?
+lucas:worried Aucun des trois n'a de réelle valeur stratégique sur un champ de bataille.
+
+nathan(left):surprised Se pourrait-il... qu'ils soient à ma recherche ?
+nathan:worried Le Nécromancien a peut-être senti l'éveil de mes pouvoirs de Bâtisseur ?
+david(right):determined C'est l'hypothèse la plus probable. Tes capacités sont une menace pour lui.
+lucas(left):surprised Mais dans ce cas, pourquoi avoir enlevé d'autres enfants ?
+lucas:neutral S'ils te voulaient, pourquoi s'encombrer de Martin, Anna et Suzanne ?
+
+adeline(right):worried C'est totalement illogique. S'ils cherchaient le Bâtisseur, pourquoi prendre ceux qui n'ont pas de pouvoirs ?
+david(right):angry Soit ces pantins d'os sont stupides et ont emporté ce qu'ils trouvaient dans le noir...
+david:determined Soit il y a un plan tordu derrière tout ça qui nous échappe encore.
+david:proud Quoi qu'il en soit, nous ne les abandonnerons pas. Nous partirons aux premières lueurs de l'aube.
+
+nathan(left):determined La lumière dissipera la brume. Mais où irons-nous ? La piste est froide.
+david(right):neutral Il n'y a qu'un seul endroit d'où une telle attaque a pu être coordonnée.
+david:determined La capitale. Le château de ton père Nathan.
+david:proud Préparez vos armes et reposez-vous. Demain, nous marchons sur cette forteresse.
+
+@hide right
+@hide left
+@sfxstop night
+@sfxloop wind
+@scene scenes/dark-forest.png
+
+> Au cœur des bois corrompus, la marche forcée s'arrête enfin.
+> La brume se déchire, révélant une clairière baignée d'une lueur violette malsaine.
+> Une silouette sombre se tient là, dos aux captifs, observant les ombres.
+
+skeleton(right):neutral Maîtresse Séraphelle. Les enfants sont là, comme commandé.
+skeleton:proud Le garçon... le "Bâtisseur", et sa soeur qui l'accompagnait.
+martin(left):worried Anna... regarde cette femme... son aura est terrifiante.
+anna(left):determined Reste derrière moi, Martin. Ne tremble pas.
+
+> Séraphelle se retourne lentement. Son regard violet perçant se pose sur les captifs.
+
+seraphelle(right):neutral Enfin. Le Maître sera...
+seraphelle:surprised ...attendez.
+
+> Elle s'avance, son visage se figeant dans une expression de pure incompréhension.
+> Elle scrute Martin, puis Anna, puis revient sur Martin.
+
+seraphelle:angry C'est quoi ça ? Ce garçon... ce n'est pas lui.
+skeleton(right):surprised Pardon, Maîtresse ? Mais... c'est le garçon du donjon.
+seraphelle:angry Imbéciles ! Amas d'os décérébrés !
+seraphelle:angry Le Maître a senti l'éveil du *Bâtisseur* ! La magie de la Pierre !
+
+> Séraphelle disjoncte complètement. Sa brume violette crépite violemment autour d'elle.
+> Les squelettes reculent, tremblants, devant sa fureur protectrice.
+
+seraphelle:angry Vous avez pris... un simple humain !
+seraphelle:angry Notre maîter ne tolère pas l'incompétence ! Vous allez le payer cher !
+anna(left):determined Qui êtes-vous ? Qu'est-ce que vous nous voulez ?
+seraphelle(right):neutral Oh... Mais regarde-moi ça.
+seraphelle:determined Ton pouvoir n'est pas encore éveillé, petite, mais je le sens pulser dans tes veines.
+seraphelle:proud Tu portes la même magie de Bâtisseur que ton idiot de frère. Tu es un joyau brut.
+
+anna(left):surprised Mes... mes pouvoirs ? De quoi parlez-vous ?
+seraphelle(right):laughing Tu l'ignores toi-même ? Fascinant. Nous allons prendre grand soin de toi, mon enfant.
+seraphelle:neutral Quant à l'autre humain...
+
+seraphelle(right):determined Débarrassez-vous de lui. Comme bon vous semble.
+martin(left):surprised Quoi ? Non ! Lâchez-moi !
+
+> Les squelettes agrippent brutalement Martin et le traînent vers l'obscurité.
+> Anna se débat de toutes ses forces, mais les poignes d'os sont impossibles à briser.
+> Épuisée, elle baisse la tête et ferme les yeux.
+
+anna(left):sad Lâchez-le... Je vous en supplie...
+
+> Le vent tombe brusquement. L'air de la clairière devient lourd, presque électrique.
+> Les champignons luminescents accrochés aux arbres se mettent à palpiter.
+
+anna(left):angry J'ai dit...
+
+@video anna_power.mp4
+
+
+skeleton(right):surprised *Cliquetis terrifié des os*
+martin(left):surprised Anna... ?! Mais comment...
+seraphelle(right):surprised Quelle puissance brute... La résonance avec la terre est prodigieuse !
+anna(left):angry Touchez encore à un seul cheveu de mon cousin...
+anna:determined ...et je réduirai cette forêt et vos tas d'os en cendres !
+
+seraphelle(right):surprised Arrêtez la !
+
+@sfxstop wind

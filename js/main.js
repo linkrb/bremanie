@@ -4,6 +4,7 @@ import { TowerDefenseGame } from '/bremanie/js/TowerDefenseGame.js';
 import { setup as setupChapter1 } from './chapters/chapter1.js';
 import { setup as setupChapter2 } from './chapters/chapter2.js';
 import { setup as setupChapter3 } from './chapters/chapter3.js';
+import { setup as setupChapter4 } from './chapters/chapter4.js';
 import { SaveManager }     from './SaveManager.js';
 
 // ── Instances globales ────────────────────────────────────────
@@ -101,6 +102,7 @@ const combatBadge = document.getElementById('combat-badge');
 const victoryBadge = document.getElementById('victory-badge');
 const defeatBadge  = document.getElementById('defeat-badge');
 let combatMusicStarted = false;
+let currentCombatChapter = null;
 let skipEntryWaveBadge = false;
 
 function showBadge(el, duration = 3100) {
@@ -143,15 +145,28 @@ function showBadgeInteractive(el, next) {
 function showVictoryBadgeInteractive(next) { showBadgeInteractive(victoryBadge, next); }
 function showDefeatBadgeInteractive(next)  { showBadgeInteractive(defeatBadge,  next); }
 
+const combatThemes = {
+    4: 'night_battle_theme',
+};
 function startCombatMusic() {
     if (combatMusicStarted) return;
     combatMusicStarted = true;
-    audio.crossfadeTo('combat_theme', 2000);
+    const track = combatThemes[currentCombatChapter] ?? 'combat_theme';
+    audio.crossfadeTo(track, 2000);
 }
+
+const heroPortraitImg = document.getElementById('hero-portrait-img');
+const heroPortraits = {
+    4: '/bremanie/images/anna/neutral.png',
+};
+const heroPortraitDefault = '/bremanie/images/nathan/neutral.png';
 
 function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);
     screenGame.classList.toggle('chapter2-mode', on && chapter === 2);
+    screenGame.classList.toggle('chapter4-mode', on && chapter === 4);
+    heroPortraitImg.src = (on && heroPortraits[chapter]) || heroPortraitDefault;
+    currentCombatChapter = on ? chapter : null;
     combatMusicStarted = false;
 }
 
@@ -184,8 +199,12 @@ function onChapterEnd(chapterNumber) {
         showChapterEnd('Chapitre II',  () => chapter3.startChapter3());
     }
     if (chapterNumber === 3) {
+        SaveManager.save({ stage: 'chapter4_start' });
+        showChapterEnd('Chapitre III', () => chapter4.startChapter4());
+    }
+    if (chapterNumber === 4) {
         SaveManager.save({ stage: 'complete' });
-        showChapterEnd('Chapitre III', () => { /* chapitre IV à venir */ });
+        showChapterEnd('Chapitre IV', () => { /* chapitre V à venir */ });
     }
 }
 
@@ -195,6 +214,7 @@ async function resumeFromSave(save) {
     chapter1._preload();
     chapter2._preload();
     chapter3._preload();
+    chapter4._preload();
     // S'assurer que le jeu est initialisé avant d'appeler showGame (pour rester synchrone)
     await ensureGameInit();
 
@@ -208,9 +228,13 @@ async function resumeFromSave(save) {
         return;
     }
 
+    if (save.stage === 'chapter4_start') {
+        chapter4.startChapter4();
+        return;
+    }
+
     if (save.stage === 'complete') {
-        // Chapitre 3 terminé — afficher l'écran de fin en attendant le chapitre 4
-        showChapterEnd('Chapitre III', () => { /* Chapitre IV à venir */ });
+        showChapterEnd('Chapitre IV', () => { /* Chapitre V à venir */ });
         return;
     }
 
@@ -226,6 +250,7 @@ const ctx = {
 const chapter1 = setupChapter1(ctx);
 const chapter2 = setupChapter2(ctx);
 const chapter3 = setupChapter3(ctx);
+const chapter4 = setupChapter4(ctx);
 
 // ── Lazy init + callbacks ─────────────────────────────────────
 
@@ -247,6 +272,7 @@ function wireGameCallbacks() {
     chapter1.wireCallbacks(game);
     chapter2.wireCallbacks(game);
     chapter3.wireCallbacks(game);
+    chapter4.wireCallbacks(game);
 }
 
 async function ensureGameInit() {
@@ -318,6 +344,11 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true;
         game.setChateauFinalMode();
+    } else if (mode === 'chapter4') {
+        setCombatMode(true, 4);
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChapter4Mode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -369,6 +400,10 @@ window._bremanieResume = resumeFromSave;
 // ?dev=end_ch1        → écran fin Chapitre I → début ch2
 // ?dev=end_ch2        → dialogue final ch2 → écran fin Chapitre II → début ch3
 // ?dev=end_ch3        → dialogue victoire ch3 → écran fin Chapitre III
+// ?dev=chapter4       → titre Chapitre IV → dialogue intro → combat
+// ?dev=combat_ch4     → TD mode chapter4 direct (sans dialogue)
+// ?dev=ch4_suzanne    → TD chapter4 + déclenche fin vague 8 (test apparition Suzanne)
+// ?dev=end_ch4        → dialogue victoire ch4 → écran fin Chapitre IV
 // ?dev=victory        → alias end_ch3 (rétro-compat)
 const params  = new URLSearchParams(location.search);
 const chapter = params.get('chapter');
@@ -399,3 +434,7 @@ if (dev === 'chateau_final')  { chapter3._preload(); showGame('chateau_final'); 
 if (dev === 'end_ch1')        { chapter1._preload(); chapter2._preload(); onChapterEnd(1); }
 if (dev === 'end_ch2')        { chapter2._preload(); chapter3._preload(); showDialogue('chapter2/final', () => { onChapterEnd('2b'); }); }
 if (dev === 'end_ch3' || dev === 'victory') { chapter3._preload(); showDialogue('chapter3/victory', () => { onChapterEnd(3); }); }
+if (dev === 'chapter4')    { chapter4._preload(); chapter4.startChapter4(); }
+if (dev === 'combat_ch4')   { chapter4._preload(); ensureGameInit().then(() => showGame('chapter4')); }
+if (dev === 'ch4_suzanne') { chapter4._preload(); ensureGameInit().then(() => { showGame('chapter4'); setTimeout(() => game.onWaveCompleted?.(8), 300); }); }
+if (dev === 'end_ch4')    { chapter4._preload(); showDialogue('chapter4/victory', () => { onChapterEnd(4); }); }

@@ -26,6 +26,15 @@ export class TDRenderer {
         this.currentTheme = null;
         this._litTiles = null;        // null = pas d'obscurité ; Set "x,y" = cases éclairées
         this._lightingTweenFn = null; // tween de transition lumière/obscurité
+        // Système héros
+        this.onHeroClick = null;
+        this._suzanneSprite = null;
+        this._suzanneGridX = 0;
+        this._suzanneGridY = 0;
+        this._heroChargeBar = null;
+        this._heroAura = null;
+        this._suzanneBaseScaleX = 0;
+        this._suzanneBaseScaleY = 0;
     }
 
     async init(container) {
@@ -153,7 +162,7 @@ export class TDRenderer {
 
     async loadAssets() {
         // Tower sprites (4 orientations × 3 niveaux)
-        for (const type of ['archer', 'mage', 'light']) {
+        for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
             const base = `/bremanie/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
@@ -172,7 +181,7 @@ export class TDRenderer {
         }
 
         // Idle spritesheets pour tours animées (convention : tower_{type}_{variant}_idle.png, 8 frames)
-        for (const type of ['archer', 'mage', 'light']) {
+        for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
             const base = `/bremanie/images/td/towers/${type}`;
             for (const variant of ['front', 'side', 'left', 'back']) {
                 try {
@@ -189,10 +198,37 @@ export class TDRenderer {
         // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
         for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
                             'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
-                            'coin', 'heart', 'proj_archer']) {
+                            'coin', 'heart', 'proj_archer', 'proj_fauconnier']) {
             try {
                 const texture = await PIXI.Assets.load(`/bremanie/images/td/${name}.png`);
                 this.assets[name] = texture;
+            } catch (e) { }
+        }
+
+        // Projectiles animés (convention : proj_{type}_anim.png, spritesheet carré)
+        for (const type of ['fauconnier']) {
+            try {
+                const sheet = await PIXI.Assets.load(`/bremanie/images/td/proj_${type}_anim.png`);
+                const frameCount = Math.round(sheet.width / sheet.height);
+                const fw = Math.floor(sheet.width / frameCount);
+                this.assets[`proj_${type}_anim_frames`] = Array.from({ length: frameCount }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
+        }
+
+        // Personnage Suzanne (idle + attack spritesheets)
+        for (const [key, file] of [
+            ['suzanne_idle_frames',   'suzanne_idle.png'],
+            ['suzanne_attack_frames', 'suzanne_attack_sheet.png'],
+        ]) {
+            try {
+                const sheet = await PIXI.Assets.load(`/bremanie/images/td/characters/${file}`);
+                const frameCount = Math.round(sheet.width / sheet.height);
+                const fw = Math.floor(sheet.width / frameCount);
+                this.assets[key] = Array.from({ length: frameCount }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
             } catch (e) { }
         }
 
@@ -310,6 +346,11 @@ export class TDRenderer {
         this.projectileLayer.removeChildren();
         this.effectLayer.removeChildren();
         this.rangeLayer.removeChildren();
+
+        // Reset héros
+        this._suzanneSprite = null;
+        this._heroChargeBar = null;
+        this._heroAura      = null;
 
         // Remove fullscreen flash overlays added directly to app.stage
         const layers = new Set([this.groundLayer, this.rangeLayer, this.entityLayer,
@@ -809,6 +850,107 @@ export class TDRenderer {
         this.createPlaceEffect(iso.x, iso.y + TILE_HEIGHT / 2);
     }
 
+    placeSuzanneOnTile(gridX, gridY) {
+        const frames = this.assets['suzanne_idle_frames'];
+        if (!frames || frames.length === 0) return;
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 0.9);
+        sprite.width  = TILE_WIDTH * 1.2;
+        sprite.height = TILE_WIDTH * 1.2;
+        sprite.scale.x *= -1;
+        sprite.animationSpeed = 0.12;
+        sprite.play();
+        const iso = toIso(gridX, gridY);
+        sprite.x = iso.x;
+        sprite.y = iso.y + TILE_HEIGHT / 2;
+        sprite.eventMode = 'static';
+        sprite.on('pointerdown', () => this.onHeroClick?.());
+
+        this._suzanneSprite = sprite;
+        this._suzanneGridX  = gridX;
+        this._suzanneGridY  = gridY;
+        this._suzanneBaseScaleX = sprite.scale.x;
+        this._suzanneBaseScaleY = sprite.scale.y;
+
+        // Aura derrière tous les sprites (groundLayer)
+        this._heroAura = new PIXI.Graphics();
+        this.groundLayer.addChild(this._heroAura);
+
+        // Barre de charge + indicateur clic (entityLayer)
+        this._heroChargeBar = new PIXI.Graphics();
+        this.entityLayer.addChild(this._heroChargeBar);
+        this.entityLayer.addChild(sprite);
+        this.sortEntities();
+    }
+
+    updateHeroCharge(charge, maxCharge, now) {
+        const bar    = this._heroChargeBar;
+        const sprite = this._suzanneSprite;
+        if (!bar || !sprite) return;
+
+        const ratio   = charge / maxCharge;
+        const charged = ratio >= 1;
+        const iso     = toIso(this._suzanneGridX, this._suzanneGridY);
+        const cx      = iso.x;
+        const baseY   = iso.y + TILE_HEIGHT / 2;
+
+        // ── Aura dorée (groundLayer, derrière tout) ──────────────
+        if (this._heroAura) {
+            this._heroAura.clear();
+            if (charged) {
+                const aAlpha = 0.18 + Math.sin(now * 0.005) * 0.10;
+                const aR     = TILE_WIDTH * 0.68 + Math.sin(now * 0.003) * 9;
+                this._heroAura.circle(cx, baseY, aR);
+                this._heroAura.fill({ color: 0xFFD700, alpha: aAlpha });
+                this._heroAura.circle(cx, baseY, aR * 1.22);
+                this._heroAura.stroke({ color: 0xFFAA00, alpha: aAlpha * 0.8, width: 2.5 });
+            }
+        }
+
+        // ── Barre de charge ───────────────────────────────────────
+        bar.clear();
+        const barW = 52;
+        const barH = 7;
+        const bx   = cx - barW / 2;
+        const by   = baseY - sprite.height * 0.9 - 14;
+
+        bar.roundRect(bx - 1, by - 1, barW + 2, barH + 2, 3);
+        bar.fill({ color: 0x111111, alpha: 0.75 });
+        if (ratio > 0) {
+            const fillColor = charged
+                ? (Math.sin(now * 0.007) > 0 ? 0xFFD700 : 0xFFA500)
+                : 0x44AAFF;
+            bar.roundRect(bx, by, barW * Math.min(ratio, 1), barH, 2);
+            bar.fill({ color: fillColor });
+        }
+
+        // ── Indicateur de clic (triangle clignotant au-dessus de la barre) ──
+        const triY    = by - 12;
+        const triSize = 5;
+        const triA    = charged
+            ? 0.7 + Math.sin(now * 0.006) * 0.3
+            : 0.28 + Math.sin(now * 0.003) * 0.10;
+        const triColor = charged ? 0xFFD700 : 0xCCCCCC;
+        const bob = charged ? Math.sin(now * 0.004) * 3 : 0;
+
+        bar.moveTo(cx,             triY - triSize + bob);
+        bar.lineTo(cx + triSize,   triY + triSize + bob);
+        bar.lineTo(cx - triSize,   triY + triSize + bob);
+        bar.closePath();
+        bar.fill({ color: triColor, alpha: triA });
+
+        // ── Curseur + micro-pulse quand chargé ────────────────────
+        sprite.cursor = charged ? 'pointer' : 'default';
+        if (charged) {
+            const pulse = 1 + Math.sin(now * 0.004) * 0.025;
+            sprite.scale.x = this._suzanneBaseScaleX * pulse;
+            sprite.scale.y = this._suzanneBaseScaleY * pulse;
+        } else {
+            sprite.scale.x = this._suzanneBaseScaleX;
+            sprite.scale.y = this._suzanneBaseScaleY;
+        }
+    }
+
     createEnemySprite(type) {
         const config = ENEMY_TYPES[type];
         const container = new PIXI.Container();
@@ -994,6 +1136,18 @@ export class TDRenderer {
     }
 
     createProjectileSprite(towerType) {
+        const animFrames = this.assets[`proj_${towerType}_anim_frames`];
+        if (animFrames) {
+            const sprite = new PIXI.AnimatedSprite(animFrames);
+            sprite.anchor.set(0.5, 0.5);
+            const base = TILE_WIDTH * (towerType === 'fauconnier' ? 0.40 : 0.22);
+            sprite.width = base;
+            sprite.height = base;
+            sprite.animationSpeed = 0.2;
+            sprite.play();
+            return sprite;
+        }
+
         const assetKey = `proj_${towerType}`;
         if (this.assets[assetKey]) {
             const sprite = new PIXI.Sprite(this.assets[assetKey]);
@@ -1537,6 +1691,79 @@ export class TDRenderer {
             this.entityLayer.removeChild(tower._xpBar);
             tower._xpBar = null;
         }
+    }
+
+    // worldX/Y = coordonnées grille de l'ennemi (peuvent être fractionnaires)
+    // facingRight = true si l'ennemi se déplace vers la droite sur le chemin
+    heroTeleportAttack(worldX, worldY, facingRight, frames, onSound, onHit, onDone) {
+        if (!frames || frames.length === 0) { onDone?.(); return; }
+
+        const iso = toIso(worldX, worldY);
+        const px = iso.x;
+        const py = iso.y + TILE_HEIGHT / 2;
+
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 0.9);
+        const size = TILE_WIDTH * 1.2;
+        sprite.width  = size;
+        sprite.height = size;
+        if (!facingRight) sprite.scale.x *= -1;
+        sprite.animationSpeed = 0.22;
+        sprite.loop = false;
+        sprite.alpha = 0;
+        sprite.x = px;
+        sprite.y = py + 55;
+
+        const n = frames.length;
+        const soundFrame   = Math.floor(n * 0.30); // son en avance sur l'impact
+        const hitFrame     = Math.floor(n * 0.55);
+        const fadeOutStart = n - 2;
+
+        sprite.onFrameChange = (f) => {
+            if (f <= 2) {
+                sprite.alpha = f / 2;
+                sprite.y = py + 55 * (1 - f / 2);
+            } else {
+                sprite.alpha = 1;
+                sprite.y = py;
+            }
+            if (f === soundFrame) onSound?.();
+            if (f === hitFrame)   onHit?.();
+            if (f >= fadeOutStart) {
+                sprite.alpha = Math.max(0, (n - f) / 2);
+            }
+        };
+
+        sprite.onComplete = () => {
+            this.entityLayer.removeChild(sprite);
+            onDone?.();
+        };
+
+        this.entityLayer.addChild(sprite);
+        sprite.play();
+        this.sortEntities();
+    }
+
+    createHeroAttackFlash() {
+        // Flash vert plein écran dans l'effectLayer
+        const flash = new PIXI.Graphics();
+        const w = (this.app.screen.width  + Math.abs(this.offsetX) * 2) / this.mapScale;
+        const h = (this.app.screen.height + Math.abs(this.offsetY) * 2) / this.mapScale;
+        flash.rect(-w / 2, -h / 2, w * 2, h * 2);
+        flash.fill({ color: 0x55EE88, alpha: 0.55 });
+        this.effectLayer.addChild(flash);
+
+        let alpha = 0.55;
+        const fade = () => {
+            alpha -= 0.035;
+            if (alpha <= 0) {
+                this.effectLayer.removeChild(flash);
+            } else {
+                flash.alpha = alpha;
+                requestAnimationFrame(fade);
+            }
+        };
+        requestAnimationFrame(fade);
     }
 
     createWindPulseEffect(tower) {

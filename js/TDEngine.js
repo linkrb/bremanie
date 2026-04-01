@@ -31,6 +31,7 @@ export class TDEngine {
         this._gameOver = false;
         this.devMode = false;
         this.buffs = { damage: false, slow: false };
+        this.hero = null; // { charge, maxCharge, chargeRate }
         this.routes = [];
         this.litTiles = null; // null = tout éclairé ; Set de "x,y" = tuiles éclairées (mode obscurité)
         this.initLevel();
@@ -132,7 +133,7 @@ export class TDEngine {
     canPlaceTower(x, y, towerType) {
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return false;
         const cell = this.grid[y][x];
-        if (cell.type !== 'grass' || cell.tower || cell.hasTree) return false;
+        if (cell.type !== 'grass' || cell.tower || cell.hasTree || cell.blockedByHero) return false;
         if (!this.devMode && !this.isTowerAvailable(towerType)) return false;
         if (this.devMode) return true;
         return this.gold >= TOWER_TYPES[towerType].cost;
@@ -197,6 +198,29 @@ export class TDEngine {
         if (idx > -1) this.towers.splice(idx, 1);
 
         return sellValue;
+    }
+
+    // Système héros
+    initHero() {
+        // chargeRate : unités/s normalisées. 100 / (chargeRate) = secondes pour remplir à x1 speed
+        this.hero = { charge: 0, maxCharge: 100, chargeRate: 2.8 }; // ~36s à vitesse x1
+    }
+
+    heroSpecialAttack(damage = 80) {
+        if (!this.hero || this.hero.charge < this.hero.maxCharge) return false;
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+            enemy.hp -= damage;
+            if (this.onEnemyDamaged) this.onEnemyDamaged(enemy, damage);
+            if (enemy.hp <= 0) {
+                this.gold += enemy.reward;
+                this.enemies.splice(i, 1);
+                if (this.onEnemyDied) this.onEnemyDied(enemy, i);
+                if (this.onGoldChanged) this.onGoldChanged(this.gold);
+            }
+        }
+        this.hero.charge = 0;
+        return true;
     }
 
     // Mode scripté : vagues custom, 1 HP, pas d'or
@@ -355,6 +379,11 @@ export class TDEngine {
         this.updateEnemies(dt, now);
         this.updateTowers(now);
         this.updateProjectiles(dt, now);
+
+        // Charge héros
+        if (this.hero && this.waveInProgress) {
+            this.hero.charge = Math.min(this.hero.maxCharge, this.hero.charge + this.hero.chargeRate * dt);
+        }
     }
 
     updateEnemies(dt, now) {
@@ -502,8 +531,10 @@ export class TDEngine {
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
                 if (dist <= tower.range && enemy.pathIndex > bestProgress) {
-                    if (tower.grasp && enemy.flying) continue; // cemetery can't grab flying
-                    if (tower.burn && enemy.flying) continue;  // fire can't target flying
+                    if (tower.grasp && enemy.flying) continue;     // cemetery can't grab flying
+                    if (tower.burn && enemy.flying) continue;      // fire can't target flying
+                    if (tower.flyingOnly && !enemy.flying) continue;  // fauconnier: volants uniquement
+                    if (tower.noFlying  &&  enemy.flying) continue;  // archer/mage: pas de volants
                     bestTarget = enemy;
                     bestProgress = enemy.pathIndex;
                 }
@@ -600,6 +631,8 @@ export class TDEngine {
             burn: tower.burn || false,
             burnDuration: tower.burnDuration || 0,
             burnDot: tower.burnDot || 0,
+            noFlying: tower.noFlying || false,
+            flyingOnly: tower.flyingOnly || false,
             sprite: null
         };
 
@@ -617,6 +650,8 @@ export class TDEngine {
                 let nearest = null;
                 let nearestDist = Infinity;
                 for (const enemy of this.enemies) {
+                    if (proj.noFlying   &&  enemy.flying) continue;
+                    if (proj.flyingOnly && !enemy.flying) continue;
                     const d = Math.sqrt((enemy.x - proj.x) ** 2 + (enemy.y - proj.y) ** 2);
                     if (d < nearestDist) {
                         nearestDist = d;
@@ -772,6 +807,7 @@ export class TDEngine {
         this.spawnQueue = [];
         this.towers = [];
         this.buffs = { damage: false, slow: false };
+        this.hero = null;
         this.litTiles = null;
         this.initLevel();
     }

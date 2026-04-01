@@ -41,6 +41,7 @@ export class TowerDefenseGame {
         this.onChateauFinalWin  = null;  // ()
         this.onTornadoSpawned   = null;  // ()
         this.onTowerPlaced      = null;  // () — son de pose
+        this.onHeroPunch        = null;  // () — bruitage coup héros
     }
 
     // Affiche un dialogue en pausant le jeu, puis reprend à la fin
@@ -86,6 +87,7 @@ export class TowerDefenseGame {
             this.renderer.updateGraspEffects(now);
             this.renderer.updateWindAnimation(now);
             this.renderer.animateWindTowers(this.engine.towers, now);
+            if (this.engine.hero) this.renderer.updateHeroCharge(this.engine.hero.charge, this.engine.hero.maxCharge, now);
             this.renderer.sortEntities();
             this.updateEnemyCount();
         });
@@ -601,6 +603,9 @@ export class TowerDefenseGame {
             waveBtn.disabled = false;
         }
 
+        if (this._chapter4Mode && (this.engine.wave >= 6 || (this.engine.wave === 5 && !this.engine.waveInProgress)))
+            this._availableTowers.add('fauconnier');
+
         document.querySelectorAll('.tower-btn').forEach(btn => {
             const type = btn.dataset.tower;
             const config = TOWER_TYPES[type];
@@ -692,6 +697,7 @@ export class TowerDefenseGame {
         if (this._fortMode)        { this.onChapter3Win?.();     return; }
         if (this._chateauMode)     { this.onChateauWin?.();      return; }
         if (this._chateauFinalMode){ this.onChateauFinalWin?.(); return; }
+        if (this._chapter4Mode)    { this.onChapter4Win?.();     return; }
         this._continuing = true;
     }
 
@@ -716,6 +722,96 @@ export class TowerDefenseGame {
         this._enterTutorialMode();
     }
 
+    _triggerHeroAbility() {
+        const hero = this.engine.hero;
+        if (!hero || hero.charge < hero.maxCharge) return;
+
+        this.engine.paused = true;
+        hero.charge = 0;
+
+        // Suzanne disparaît de sa tuile
+        if (this.renderer._suzanneSprite) this.renderer._suzanneSprite.visible = false;
+        if (this.renderer._heroChargeBar)  this.renderer._heroChargeBar.visible  = false;
+
+        const overlay = document.getElementById('hero-ability-overlay');
+        if (overlay) { overlay.dataset.hero = 'suzanne'; overlay.classList.add('active'); }
+
+        // Sélection des cibles : jusqu'à 3 ennemis répartis sur le chemin
+        const allEnemies = [...this.engine.enemies].sort((a, b) => a.pathIndex - b.pathIndex);
+        const targets = [];
+        if (allEnemies.length > 0) {
+            const count = Math.min(6, allEnemies.length);
+            if (allEnemies.length <= count) {
+                targets.push(...allEnemies);
+            } else {
+                const step = (allEnemies.length - 1) / (count - 1);
+                for (let i = 0; i < count; i++) targets.push(allEnemies[Math.round(i * step)]);
+            }
+        }
+
+        // Attaques démarrent quand l'overlay commence à se refermer (~1.8s)
+        const attackStart    = 1900;
+        const attackInterval = 300;
+        let   pendingAttacks = targets.length;
+
+        const onAllDone = () => {
+            pendingAttacks--;
+            if (pendingAttacks <= 0) this._endHeroAbility();
+        };
+
+        if (targets.length === 0) {
+            // Pas d'ennemi — fin après l'overlay
+            setTimeout(() => this._endHeroAbility(), 2800);
+        } else {
+            targets.forEach((enemy, i) => {
+                setTimeout(() => {
+                    // L'ennemi a peut-être déjà été tué
+                    if (!this.engine.enemies.includes(enemy)) { onAllDone(); return; }
+
+                    // Direction selon le sens de déplacement sur le chemin
+                    const curr = enemy.route?.[enemy.pathIndex]     || { x: enemy.x };
+                    const next = enemy.route?.[enemy.pathIndex + 1] || curr;
+                    const facingRight = next.x >= curr.x;
+
+                    this.renderer.heroTeleportAttack(
+                        enemy.x, enemy.y,
+                        facingRight,
+                        this.renderer.assets['suzanne_attack_frames'],
+                        () => this.onHeroPunch?.(),
+                        () => {
+                            // Impact : dégâts sur cet ennemi
+                            if (!this.engine.enemies.includes(enemy)) return;
+                            enemy.hp -= 150;
+                            if (this.engine.onEnemyDamaged) this.engine.onEnemyDamaged(enemy, 80);
+                            if (enemy.hp <= 0) {
+                                this.engine.gold += enemy.reward;
+                                const idx = this.engine.enemies.indexOf(enemy);
+                                if (idx > -1) {
+                                    this.engine.enemies.splice(idx, 1);
+                                    if (this.engine.onEnemyDied)   this.engine.onEnemyDied(enemy, idx);
+                                    if (this.engine.onGoldChanged) this.engine.onGoldChanged(this.engine.gold);
+                                }
+                            }
+                            this.updateUI();
+                        },
+                        onAllDone
+                    );
+                }, attackStart + i * attackInterval);
+            });
+        }
+
+        // Ferme l'overlay à la fin naturelle de l'animation CSS (2.8s)
+        setTimeout(() => { if (overlay) { overlay.classList.remove('active'); delete overlay.dataset.hero; } }, 2800);
+    }
+
+    _endHeroAbility() {
+        // Suzanne réapparaît sur sa tuile
+        if (this.renderer._suzanneSprite) this.renderer._suzanneSprite.visible = true;
+        if (this.renderer._heroChargeBar)  this.renderer._heroChargeBar.visible  = true;
+        this.engine.paused = false;
+        this.updateUI();
+    }
+
     setNormalMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
@@ -725,6 +821,7 @@ export class TowerDefenseGame {
     replay() {
         if (this._chapter2Mode) { this.setChapter2Mode(); return; }
         if (this._fortMode) { this.setFortMode(); return; }
+        if (this._chapter4Mode) { this.setChapter4Mode(); return; }
         if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
         if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
         if (this._chateauMode)     { this.setChateauMode();     return; }
@@ -925,12 +1022,69 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // Chapitre 4 : Évasion sous la lune — TODO: configurer le niveau dédié
+    setChapter4Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chapter4Mode    = true;
+        this._availableTowers = new Set(['archer', 'mage']);
+
+        const _ch4WaveStarted = this.onWaveStarted;
+        this.onWaveStarted = (waveNumber) => {
+            _ch4WaveStarted?.(waveNumber);
+            if (waveNumber >= 6 && !this._availableTowers.has('fauconnier')) {
+                this._availableTowers.add('fauconnier');
+                this.updateUI();
+            }
+        };
+
+        const _ch4WaveCompleted = this.onWaveCompleted;
+        this.onWaveCompleted = (waveNumber) => {
+            _ch4WaveCompleted?.(waveNumber);
+            if (waveNumber === 8) {
+                // Supprimer la tour en bas à droite si elle existe
+                const tx = GRID_WIDTH - 1, ty = GRID_HEIGHT - 1;
+                const towerAtTile = this.engine.towers.find(t => t.x === tx && t.y === ty);
+                if (towerAtTile) {
+                    // Suppression silencieuse (pas de remboursement)
+                    this.engine.grid[ty][tx].tower = null;
+                    const idx = this.engine.towers.indexOf(towerAtTile);
+                    if (idx > -1) this.engine.towers.splice(idx, 1);
+                    this.renderer.removeTowerFromStage(towerAtTile);
+                }
+                // Bloquer la tuile + placer Suzanne
+                this.engine.grid[ty][tx].blockedByHero = true;
+                this.renderer.placeSuzanneOnTile(tx, ty);
+                this.engine.initHero();
+                this.engine.hero.charge = this.engine.hero.maxCharge; // Suzanne arrive chargée
+                this.renderer.onHeroClick = () => this._triggerHeroAbility();
+            }
+        };
+
+        const levelIndex = LEVELS.findIndex(l => l.name === 'Forêt de Nuit');
+        if (levelIndex < 0) { console.error('[Brémanie] Niveau Forêt de Nuit introuvable'); return; }
+        this.engine.resetGameState(levelIndex, true);
+        this.engine.gold = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+        this.updateUI();
+    }
+
     _resetForMode() {
         this._chapter2Mode = false;
         this._fortMode     = false;
         this._chateauMode      = false;
         this._chateauBossMode  = false;
         this._chateauFinalMode = false;
+        this._chapter4Mode     = false;
         this._availableTowers  = new Set(['archer']);
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');

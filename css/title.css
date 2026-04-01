@@ -1,0 +1,115 @@
+/* ── Écran Title Card ────────────────────────────────────────── */
+
+#screen-title {
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#title-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.08) saturate(0.4);
+    animation: bgBreath 8s ease-in-out infinite alternate;
+}
+
+@keyframes bgBreath {
+    from { filter: brightness(0.08) saturate(0.4); }
+    to   { filter: brightness(0.13) saturate(0.5); }
+}
+
+#screen-title .vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.85) 100%);
+}
+
+.title-stage {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 0 2rem;
+    width: 100%;
+    max-width: 700px;
+}
+
+.ornament-line {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.ornament-line.top    { margin-bottom: 2rem; }
+.ornament-line.bottom { margin-top: 2rem; }
+
+.ornament-line hr {
+    flex: 1;
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right,
+        transparent, rgba(201,168,76,0.3), rgba(201,168,76,0.8), rgba(201,168,76,0.3), transparent);
+}
+.ornament-line.bottom hr {
+    background: linear-gradient(to left,
+        transparent, rgba(201,168,76,0.3), rgba(201,168,76,0.8), rgba(201,168,76,0.3), transparent);
+}
+.ornament-line .diamond { color: #c9a84c; font-size: 0.6rem; opacity: 0.8; flex-shrink: 0; }
+
+.title-label {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.6rem, 1.8vw, 0.85rem);
+    font-weight: 600;
+    letter-spacing: 0.55em;
+    text-transform: uppercase;
+    color: rgba(201,168,76,0.7);
+    margin-bottom: 1rem;
+}
+
+.title-main {
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 900;
+    font-size: clamp(2.8rem, 10vw, 6.5rem);
+    color: #f5e6b8;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-align: center;
+    text-shadow:
+        0 0 30px rgba(201,168,76,0.6),
+        0 0 80px rgba(201,168,76,0.25),
+        2px 3px 6px rgba(0,0,0,0.9);
+}
+
+.title-sub {
+    font-family: 'Cinzel', serif;
+    font-weight: 400;
+    font-size: clamp(0.75rem, 2.2vw, 1.1rem);
+    color: #c4a06a;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: 1.2rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+}
+
+.tap-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    width: 100%;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(201,168,76,0.35);
+    animation: pulse 2.5s ease infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.35; }
+    50%       { opacity: 0.7; }
+}

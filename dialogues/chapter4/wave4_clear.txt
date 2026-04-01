@@ -1,0 +1,6 @@
+@bg black
+
+seraphelle(right):angry Tss... Je reconnais que tu as du répondant pour une novice, petite Bâtisseuse.
+seraphelle:determined Tes barrières magiques sont impressionnantes, c'est vrai.
+seraphelle:proud Mais penses-tu vraiment que cela suffira à vous sauver ?
+seraphelle:angry Voyons comment tu te défends quand le danger vient du ciel !
