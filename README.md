@@ -4,7 +4,11 @@ Jeu narratif / tower defense en JavaScript vanilla, sans framework.
 
 ## Histoire
 
-La Brémanie est un royaume en danger. Romain (le roi/père), Nathan (le fils/héros), Anna (l'archère), et Suzanne (la cousine) affrontent un nécromancien qui menace le royaume.
+Un royaume plongé dans l'obscurité. Un nécromancien surgit des terres maudites, levant ses armées de l'ombre pour dévorer la Brémanie.
+
+Face à lui, une famille. Romain, le roi-père, qui a tout sacrifié pour son peuple. Nathan, son fils, contraint de devenir le héros qu'il n'a jamais voulu être. Anna, l'archère, précise et implacable. Suzanne, la cousine, dont la douceur cache une force inattendue.
+
+Quatre destins liés. Un seul espoir : tenir ensemble jusqu'au bout.
 
 ## Lancer le jeu
 
