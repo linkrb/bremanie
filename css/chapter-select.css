@@ -9,7 +9,7 @@
 .cs-bg {
     position: absolute;
     inset: 0;
-    background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+    background: url('/images/td/splash_bremanie.jpg') center center / cover no-repeat;
     filter: brightness(0.35) blur(3px);
     transform: scale(1.04); /* compense le clip du blur */
 }

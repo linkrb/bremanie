@@ -1,6 +1,6 @@
 import { AudioManager }    from './AudioManager.js';
 import { DialogueEngine }  from './DialogueEngine.js';
-import { TowerDefenseGame } from '/bremanie/js/TowerDefenseGame.js';
+import { TowerDefenseGame } from '/js/TowerDefenseGame.js';
 import { setup as setupChapter1 } from './chapters/chapter1.js';
 import { setup as setupChapter2 } from './chapters/chapter2.js';
 import { setup as setupChapter3 } from './chapters/chapter3.js';
@@ -10,8 +10,8 @@ import { SaveManager }     from './SaveManager.js';
 // ── Instances globales ────────────────────────────────────────
 const audio = new AudioManager({ targetVolume: 0.7, fadeInMs: 3000, fadeOutSec: 6 });
 const dlg   = new DialogueEngine({
-    basePath:     '/bremanie/images/',
-    dialoguePath: '/bremanie/dialogues/',
+    basePath:     '/images/',
+    dialoguePath: '/dialogues/',
     typeSpeed: 25,
 });
 
@@ -19,10 +19,10 @@ let game            = null;
 let gameInitPromise = null;
 
 // Sons UI globaux — chargés dès le départ (nécessaires dès le premier écran)
-audio.preload('main_theme',   '/bremanie/audio/main_theme.mp3');
-audio.preload('title_sting',  '/bremanie/audio/title_sting.mp3');
-audio.preload('combat_sting', '/bremanie/audio/combat_sting.mp3');
-audio.preload('tower_place',  '/bremanie/audio/tower_place.mp3');
+audio.preload('main_theme',   '/audio/main_theme.mp3');
+audio.preload('title_sting',  '/audio/title_sting.mp3');
+audio.preload('combat_sting', '/audio/combat_sting.mp3');
+audio.preload('tower_place',  '/audio/tower_place.mp3');
 // Les pistes par chapitre sont preloadées dans chaque chapter*.js au démarrage du chapitre
 
 dlg.onMusic     = (track) => audio.crossfadeTo(track, 1500);
@@ -157,9 +157,9 @@ function startCombatMusic() {
 
 const heroPortraitImg = document.getElementById('hero-portrait-img');
 const heroPortraits = {
-    4: '/bremanie/images/anna/neutral.png',
+    4: '/images/anna/neutral.png',
 };
-const heroPortraitDefault = '/bremanie/images/nathan/neutral.png';
+const heroPortraitDefault = '/images/nathan/neutral.png';
 
 function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);

@@ -23,7 +23,7 @@
         .bg {
             position: absolute;
             inset: 0;
-            background: url('/bremanie/images/td/splash_bremanie.jpg') center center / cover no-repeat;
+            background: url('/images/td/splash_bremanie.jpg') center center / cover no-repeat;
             filter: brightness(0.08) saturate(0.4);
             animation: bgBreath 8s ease-in-out infinite alternate;
         }
@@ -191,7 +191,7 @@
 
     <div class="tap-hint">Toucher pour continuer</div>
 
-    <audio id="bgm" src="/bremanie/audio/prologue_theme.mp3" preload="auto"></audio>
+    <audio id="bgm" src="/audio/prologue_theme.mp3" preload="auto"></audio>
 
     <script>
         // Musique prologue — fade-in immédiat + boucle avec fondu
@@ -233,8 +233,8 @@
         import { DialogueEngine } from './js/DialogueEngine.js';
 
         const engine = new DialogueEngine({
-            basePath:     '/bremanie/images/',
-            dialoguePath: '/bremanie/dialogues/',
+            basePath:     '/images/',
+            dialoguePath: '/dialogues/',
             typeSpeed: 25,
         });
 
@@ -262,7 +262,7 @@
 
                 // Chaîne : siege → chapitre 1
                 engine.load('prologue/siege', () => {
-                    window.location.href = '/bremanie/chapter1.html';
+                    window.location.href = '/chapter1.html';
                 });
             }, 800);
         }
