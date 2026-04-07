@@ -48,4 +48,18 @@ export class SaveManager {
         const n = chapterNumOf(save.stage);
         return n > 0 ? `Chapitre ${n}` : '';
     }
+
+    // Export base64 pour migration inter-domaine
+    static exportB64() {
+        const save = SaveManager.load();
+        if (!save) return null;
+        return btoa(unescape(encodeURIComponent(JSON.stringify(save))));
+    }
+
+    // Import forcé (sans garde anti-régression) — pour migration uniquement
+    static importForce(data) {
+        if (!data || !data.stage) return false;
+        localStorage.setItem(KEY, JSON.stringify({ ...data, v: 1, ts: Date.now() }));
+        return true;
+    }
 }

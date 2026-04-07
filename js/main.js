@@ -444,6 +444,19 @@ window._bremanieChapterSelect  = showChapterSelect;
 // ?dev=end_ch4        → dialogue victoire ch4 → écran fin Chapitre IV
 // ?dev=victory        → alias end_ch3 (rétro-compat)
 const params  = new URLSearchParams(location.search);
+
+// ── Migration inter-domaine (?save=BASE64) ────────────────────
+const saveParam = params.get('save');
+if (saveParam) {
+    try {
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(saveParam))));
+        if (SaveManager.importForce(decoded)) {
+            window._saveImported = true;
+        }
+    } catch { /* param malformé, ignoré */ }
+    history.replaceState(null, '', location.pathname);
+}
+
 const chapter = params.get('chapter');
 const scene   = params.get('scene');
 const dev     = params.get('dev');
