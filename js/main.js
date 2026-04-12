@@ -275,21 +275,28 @@ function wireGameCallbacks() {
     chapter4.wireCallbacks(game);
 }
 
+// Démarre l'init du jeu en tâche de fond, sans spinner (appelé dès que possible)
+function startGamePreload() {
+    if (game || gameInitPromise) return;
+    const g = new TowerDefenseGame();
+    gameInitPromise = g.init(document.getElementById('game-container')).then(() => {
+        game = g;
+        wireGameCallbacks();
+        window.game = game;
+    });
+}
+
+// Attend que le jeu soit prêt ; affiche le spinner uniquement si encore en cours
 async function ensureGameInit() {
     if (game) return;
-    if (!gameInitPromise) {
+    if (!gameInitPromise) startGamePreload();
+    if (!game) {
         const loader = document.getElementById('loader');
         loader?.classList.remove('hidden');
-        const g = new TowerDefenseGame();
-        gameInitPromise = g.init(document.getElementById('game-container')).then(() => {
-            game = g;
-            wireGameCallbacks();
-            window.game = game;
-            loader?.classList.add('hidden');
-            setTimeout(() => loader?.remove(), 600);
-        });
+        await gameInitPromise;
+        loader?.classList.add('hidden');
+        setTimeout(() => loader?.remove(), 600);
     }
-    await gameInitPromise;
 }
 
 // ── showGame ──────────────────────────────────────────────────
@@ -398,6 +405,7 @@ function showChapterSelect() {
             <div class="cs-card-title">${ch.title}</div>
             <div class="cs-card-sub">${ch.sub}</div>`;
         card.addEventListener('click', () => {
+            startGamePreload(); // précharge le jeu en fond pendant les dialogues
             audio.stop(1500);
             fadeToBlack(1500).then(() => { ch.start(); fadeFromBlack(1000); });
         });
