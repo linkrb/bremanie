@@ -34,8 +34,8 @@ function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function wireCallbacks(game) {
         const _ch5TowerOverrides = {
-            archer: {  vignette: '/images/td/towers/archer/tower_archer_front_ch5.png' },
-            mage:   {   anchorY: 0.85,             vignette: '/images/td/towers/mage/tower_mage_front_ch5.png'    },
+            archer: {  vignette: '/images/td/towers/archer/tower_archer_preview_ch5.png' },
+            mage:   {   anchorY: 0.85,             vignette: '/images/td/towers/mage/tower_mage_preview_ch5.png'    },
         };
 
         // Restaure sprites, anchorY et vignettes quand on quitte le ch5

@@ -30,7 +30,7 @@ export const LEVELS = [
         theme: {
             id: 'prairie',
             tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
-            grassVariants: ['tile_grass', 'tile_grass', 'tile_rock', 'tile_rock', 'tile_rock2', 'tile_rock2'],
+            grassVariants: ['tile_grass', 'tile_grass'],
             decoTiles: [
                 'deco/deco1', 'deco/deco1', 'deco/deco1',
                 'deco/deco2', 'deco/deco2', 'deco/deco2',
@@ -44,10 +44,6 @@ export const LEVELS = [
             enemies: {
                 basic: ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
                         'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
-                fast: 'enemy_fast',
-                tank: 'enemy_tank',
-                flying: 'enemy_flying',
-                boss: 'enemy_boss'
             }
         },
         path: [
@@ -146,11 +142,10 @@ export const LEVELS = [
                 'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
                 'tile_grass_02', 'tile_grass_02', 'tile_grass_02',
                 'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
-                'tile_grass_04', 'tile_grass_04',
                 'tile_grass_05', 'tile_grass_05',
                 'tile_grass_06', 'tile_grass_06',
                 'tile_patch_01', 'tile_vines_01',
-                'tile_flower_01', 'tile_flower_03',
+                'tile_flower_01',
                 'tile_fungi_01',
             ],
             decorations: [],
@@ -159,7 +154,6 @@ export const LEVELS = [
                 basic: ['enemy_fox', 'enemy_boar'],
                 fast:  'enemy_wolf',
                 tank:  'enemy_bear',
-                flying:'enemy_flying',
                 boss:  'enemy_bear'
             }
         },
@@ -215,8 +209,6 @@ export const LEVELS = [
             grassVariants: [
                 'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
                 'tile_flower_01', 'tile_flower_01',
-                'tile_soil_02', 'tile_soil_02',
-                'tile_vines_01', 'tile_vines_01',
             ],
             decoTiles: [
                 'deco/decor1', 'deco/decor1',
@@ -271,7 +263,7 @@ export const LEVELS = [
             grassVariants: [
                 'tile_grass_01', 'tile_grass_01', 'tile_grass_01', 'tile_grass_01',
                 'tile_grass_02', 'tile_grass_02', 'tile_grass_03', 'tile_grass_03',
-                'tile_grass_04', 'tile_grass_05', 'tile_grass_06',
+                'tile_grass_05', 'tile_grass_06',
                 'tile_patch_01', 'tile_vines_01', 'tile_flower_01', 'tile_fungi_01',
             ],
             decorations: [],
@@ -280,7 +272,6 @@ export const LEVELS = [
                 basic: ['enemy_fox', 'enemy_boar'],
                 fast:  'enemy_wolf',
                 tank:  'enemy_bear',
-                flying:'enemy_flying',
                 boss:  'enemy_bear'
             }
         },

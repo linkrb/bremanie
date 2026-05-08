@@ -63,7 +63,7 @@ export class TowerDefenseGame {
         this.container = container || document.getElementById('game-container');
 
         await this.renderer.init(this.container);
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
 
         this.wireCallbacks();
@@ -277,8 +277,8 @@ export class TowerDefenseGame {
             this.renderer.showFloatingDamage(enemy.x, enemy.y, '🔥', this.container);
         };
 
-        this.engine.onLevelChanged = (levelData) => {
-            this.renderer.setTheme(levelData);
+        this.engine.onLevelChanged = async (levelData) => {
+            await this.renderer.setTheme(levelData);
         };
     }
 
@@ -548,7 +548,7 @@ export class TowerDefenseGame {
         });
     }
 
-    jumpToLevel(levelIndex) {
+    async jumpToLevel(levelIndex) {
         if (levelIndex < 0 || levelIndex >= LEVELS.length) return;
 
         const continuing = this._continuing;
@@ -562,7 +562,7 @@ export class TowerDefenseGame {
             this.engine.health = 15;
         }
 
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -692,7 +692,7 @@ export class TowerDefenseGame {
         document.getElementById('game-over').classList.add('visible');
     }
 
-    showLevelTransition(completedLevel) {
+    async showLevelTransition(completedLevel) {
         if (this._chapter2Mode)    { this.onChapter2Win?.();     return; }
         if (this._fortMode)        { this.onChapter3Win?.();     return; }
         if (this._chateauMode)     { this.onChateauWin?.();      return; }
@@ -704,7 +704,7 @@ export class TowerDefenseGame {
 
     // ===== MODES SPA =====
 
-    setScriptedMode() {
+    async setScriptedMode() {
         this._scriptedMode = true;
         this._tutorialMode = false;
         this._resetForMode();
@@ -716,7 +716,7 @@ export class TowerDefenseGame {
         this._setupScriptedMode(); // cache l'UI + auto-start
     }
 
-    setTutorialMode() {
+    async setTutorialMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -813,7 +813,7 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
-    setNormalMode() {
+    async setNormalMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -832,7 +832,7 @@ export class TowerDefenseGame {
 
     // Chapitre 2b : Fort de l'Est (archer + mage)
     // skipDefaultTower=true lors d'une restauration de sauvegarde
-    setFortMode(skipDefaultTower = false) {
+    async setFortMode(skipDefaultTower = false) {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -845,7 +845,7 @@ export class TowerDefenseGame {
         this.engine.gold = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -873,7 +873,7 @@ export class TowerDefenseGame {
 
     // Chapitre 3 : Château (niveau Château, archer + mage)
     // skipDefaultTower=true lors d'une restauration de sauvegarde
-    setChateauMode(skipDefaultTower = false) {
+    async setChateauMode(skipDefaultTower = false) {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -886,7 +886,7 @@ export class TowerDefenseGame {
         this.engine.gold = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -910,7 +910,7 @@ export class TowerDefenseGame {
     }
 
     // Chapitre 3 : Boss final (1 tornado, même carte que Château, tours préservées via applySaveState)
-    setChateauBossMode() {
+    async setChateauBossMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -922,7 +922,7 @@ export class TowerDefenseGame {
         this.engine.resetGameState(idx, true);
         this.engine.health    = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -945,7 +945,7 @@ export class TowerDefenseGame {
     }
 
     // Chapitre 3 : Combat Final (après dialogue post_tornado, tour lumière offerte, 14 coeurs)
-    setChateauFinalMode() {
+    async setChateauFinalMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -958,7 +958,7 @@ export class TowerDefenseGame {
         this.engine.maxHealth = 14;
         // litTiles reste null — l'obscurité ne s'active que quand la tornade arrive
 
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -1000,7 +1000,7 @@ export class TowerDefenseGame {
     }
 
     // Chapitre 2 : combat de la Forêt (niveau index 3, archer uniquement)
-    setChapter2Mode() {
+    async setChapter2Mode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -1014,7 +1014,7 @@ export class TowerDefenseGame {
         this.engine.gold = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -1025,7 +1025,7 @@ export class TowerDefenseGame {
     }
 
     // Chapitre 4 : Évasion sous la lune — TODO: configurer le niveau dédié
-    setChapter4Mode() {
+    async setChapter4Mode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -1070,7 +1070,7 @@ export class TowerDefenseGame {
         this.engine.gold = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -1081,7 +1081,7 @@ export class TowerDefenseGame {
     }
 
     // Chapitre 5 : [Titre à définir]
-    setChapter5Mode() {
+    async setChapter5Mode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
         this._resetForMode();
@@ -1094,7 +1094,7 @@ export class TowerDefenseGame {
         this.engine.gold   = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
@@ -1168,10 +1168,10 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
-    startNextLevel() {
+    async startNextLevel() {
         this.engine.nextLevel();
 
-        this.renderer.setTheme(this.engine.currentLevelData);
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.clearStage();
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();

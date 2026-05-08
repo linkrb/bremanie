@@ -7,6 +7,7 @@ export class TDRenderer {
     constructor() {
         this.app = null;
         this.assets = {};
+        this._loadedThemeIds = new Set();
         this.tileSprites = [];
         this.tileMap = {};
         this.groundLayer = null;
@@ -167,16 +168,6 @@ export class TDRenderer {
     }
 
     async loadAssets() {
-        // Tower sprites (4 orientations × 3 niveaux)
-        for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
-            const base = `/images/td/towers/${type}`;
-            for (const variant of ['front', 'side', 'left', 'back']) {
-                try {
-                    const tex = await PIXI.Assets.load(`${base}/tower_${type}_${variant}.png`);
-                    this.assets[`tower_${type}_${variant}`] = tex;
-                } catch (e) { }
-            }
-        }
 
         // Idle spritesheets pour tours animées — liste explicite des fichiers existants
         const towerIdleSheets = [
@@ -204,9 +195,8 @@ export class TDRenderer {
             } catch (e) { }
         }
 
-        // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
+        // Fallbacks globaux
         for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
-                            'enemy_basic', 'enemy_fast', 'enemy_tank', 'enemy_boss', 'enemy_flying',
                             'coin', 'heart', 'proj_archer', 'proj_fauconnier']) {
             try {
                 const texture = await PIXI.Assets.load(`/images/td/${name}.png`);
@@ -241,107 +231,84 @@ export class TDRenderer {
             } catch (e) { }
         }
 
-        // Load themed assets for each level — dédupliqué par themeId
-        const loadedThemeIds = new Set();
-        for (const level of LEVELS) {
-            if (!level.theme) continue;
-            const themeId = level.theme.id;
-            if (loadedThemeIds.has(themeId)) continue;
-            loadedThemeIds.add(themeId);
-            const basePath = `/images/td/levels/${themeId}`;
+    }
 
-            // Themed tiles
-            for (const tileKey of Object.values(level.theme.tiles)) {
-                const assetKey = `${tileKey}_${themeId}`;
-                try {
-                    const tex = await PIXI.Assets.load(`${basePath}/${tileKey}.png`);
-                    this.assets[assetKey] = tex;
-                } catch (e) { }
-            }
+    async _ensureThemeLoaded(levelData) {
+        const theme = levelData?.theme;
+        if (!theme) return;
+        const themeId = theme.id;
+        if (this._loadedThemeIds.has(themeId)) return;
+        this._loadedThemeIds.add(themeId);
 
-            // Themed decorations
-            for (const deco of level.theme.decorations) {
-                const decoName = typeof deco === 'string' ? deco : deco.name;
-                const assetKey = `${decoName}_${themeId}`;
-                try {
-                    const tex = await PIXI.Assets.load(`${basePath}/${decoName}.png`);
-                    this.assets[assetKey] = tex;
-                } catch (e) { }
-            }
+        const basePath = `/images/td/levels/${themeId}`;
 
-            // Themed enemies — static + spritesheet animé (_walk_right.png) si disponible
-            // Si le thème a enemyFolder, les sprites ennemis viennent d'un dossier partagé
-            const enemyBasePath = level.theme.enemyFolder
-                ? `/images/td/${level.theme.enemyFolder}`
-                : basePath;
-            for (const [type, enemyAsset] of Object.entries(level.theme.enemies)) {
-                const assets = Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset];
-                for (const name of assets) {
-                    const assetKey = `${name}_${themeId}`;
-                    // Texture statique
-                    try {
-                        const tex = await PIXI.Assets.load(`${enemyBasePath}/${name}.png`);
-                        this.assets[assetKey] = tex;
-                    } catch (e) { }
-                    // Spritesheet animé (convention : {name}_walk_right.png)
-                    const animKey = `${assetKey}_anim_frames`;
-                    if (!this.assets[animKey]) {
-                        try {
-                            const sheet = await PIXI.Assets.load(`${enemyBasePath}/${name}_walk_right.png`);
-                            const frameCount = Math.round(sheet.width / sheet.height);
-                            const fw = Math.floor(sheet.width / frameCount);
-                            this.assets[animKey] = Array.from({ length: frameCount }, (_, i) =>
-                                new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
-                            );
-                        } catch (e) { }
-                    }
-                }
-            }
-
-            // Themed castle
+        // Tiles
+        for (const tileKey of Object.values(theme.tiles || {})) {
             try {
-                const tex = await PIXI.Assets.load(`${basePath}/castle.png`);
-                this.assets[`castle_${themeId}`] = tex;
+                this.assets[`${tileKey}_${themeId}`] = await PIXI.Assets.load(`${basePath}/${tileKey}.png`);
             } catch (e) { }
+        }
 
-            // Scene background image (full map sprite)
-            if (level.theme.sceneBg) {
-                try {
-                    const tex = await PIXI.Assets.load(`${basePath}/${level.theme.sceneBg}.png`);
-                    this.assets[`sceneBg_${themeId}`] = tex;
-                } catch (e) { }
-            }
+        // Decorations
+        for (const deco of (theme.decorations || [])) {
+            const name = typeof deco === 'string' ? deco : deco.name;
+            try {
+                this.assets[`${name}_${themeId}`] = await PIXI.Assets.load(`${basePath}/${name}.png`);
+            } catch (e) { }
+        }
 
-            // Deco tiles (tuiles avec base iso baked-in)
-            if (level.theme.decoTiles) {
-                const unique = [...new Set(level.theme.decoTiles.map(d => typeof d === 'string' ? d : d.name))];
-                for (const tileName of unique) {
-                    const assetKey = `${tileName}_${themeId}`;
-                    if (this.assets[assetKey]) continue;
+        // Deco tiles
+        for (const tileName of [...new Set((theme.decoTiles || []).map(d => typeof d === 'string' ? d : d.name))]) {
+            const key = `${tileName}_${themeId}`;
+            if (this.assets[key]) continue;
+            try {
+                this.assets[key] = await PIXI.Assets.load(`${basePath}/${tileName}.png`);
+            } catch (e) { }
+        }
+
+        // Grass variants
+        for (const v of [...new Set(theme.grassVariants || [])]) {
+            const key = `${v}_${themeId}`;
+            if (this.assets[key]) continue;
+            try {
+                this.assets[key] = await PIXI.Assets.load(`${basePath}/grass/${v}.png`);
+            } catch (e) { }
+        }
+
+        // Castle
+        try {
+            this.assets[`castle_${themeId}`] = await PIXI.Assets.load(`${basePath}/castle.png`);
+        } catch (e) { }
+
+        // Scene background
+        if (theme.sceneBg) {
+            try {
+                this.assets[`sceneBg_${themeId}`] = await PIXI.Assets.load(`${basePath}/${theme.sceneBg}.png`);
+            } catch (e) { }
+        }
+
+        // Enemies — spritesheet animé (_walk_right.png) uniquement
+        const enemyBasePath = theme.enemyFolder ? `/images/td/${theme.enemyFolder}` : basePath;
+        for (const enemyAsset of Object.values(theme.enemies || {})) {
+            for (const name of (Array.isArray(enemyAsset) ? enemyAsset : [enemyAsset])) {
+                const key = `${name}_${themeId}`;
+                const animKey = `${key}_anim_frames`;
+                if (!this.assets[animKey]) {
                     try {
-                        const tex = await PIXI.Assets.load(`${basePath}/${tileName}.png`);
-                        this.assets[assetKey] = tex;
-                    } catch(e) {}
-                }
-            }
-
-            // Grass variants (dédoublonnés)
-            if (level.theme.grassVariants) {
-                const unique = [...new Set(level.theme.grassVariants)];
-                for (const variantKey of unique) {
-                    const assetKey = `${variantKey}_${themeId}`;
-                    if (this.assets[assetKey]) continue;
-                    try {
-                        const tex = await PIXI.Assets.load(`${basePath}/grass/${variantKey}.png`);
-                        this.assets[assetKey] = tex;
+                        const sheet = await PIXI.Assets.load(`${enemyBasePath}/${name}_walk_right.png`);
+                        const frameCount = Math.round(sheet.width / sheet.height);
+                        const fw = Math.floor(sheet.width / frameCount);
+                        this.assets[animKey] = Array.from({ length: frameCount }, (_, i) =>
+                            new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                        );
                     } catch (e) { }
                 }
             }
         }
     }
 
-    setTheme(levelData) {
-        this.currentTheme = levelData.theme || null;
+    async setTheme(levelData) {
+        this.currentTheme = levelData?.theme || null;
         const bg = this.currentTheme?.bgColor;
         if (bg !== undefined) {
             this.app.renderer.background.color = bg;
@@ -349,6 +316,7 @@ export class TDRenderer {
         } else {
             this.app.renderer.background.alpha = 0;
         }
+        await this._ensureThemeLoaded(levelData);
     }
 
     clearStage() {
