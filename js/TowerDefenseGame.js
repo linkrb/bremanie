@@ -698,6 +698,7 @@ export class TowerDefenseGame {
         if (this._chateauMode)     { this.onChateauWin?.();      return; }
         if (this._chateauFinalMode){ this.onChateauFinalWin?.(); return; }
         if (this._chapter4Mode)    { this.onChapter4Win?.();     return; }
+        if (this._chapter5Mode)    { this.onChapter5Win?.();     return; }
         this._continuing = true;
     }
 
@@ -822,6 +823,7 @@ export class TowerDefenseGame {
         if (this._chapter2Mode) { this.setChapter2Mode(); return; }
         if (this._fortMode) { this.setFortMode(); return; }
         if (this._chapter4Mode) { this.setChapter4Mode(); return; }
+        if (this._chapter5Mode) { this.setChapter5Mode(); return; }
         if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
         if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
         if (this._chateauMode)     { this.setChateauMode();     return; }
@@ -1078,6 +1080,30 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // Chapitre 5 : [Titre à définir]
+    setChapter5Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chapter5Mode    = true;
+        this._availableTowers = new Set(['archer', 'mage']); // TODO: tours disponibles ch5
+
+        const levelIndex = LEVELS.findIndex(l => l.name === 'Plateau de Bois');
+        if (levelIndex < 0) { console.error('[Brémanie] Niveau Plateau de Bois introuvable'); return; }
+        this.engine.resetGameState(levelIndex, true);
+        this.engine.gold   = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+        this.updateUI();
+    }
+
     _resetForMode() {
         this._chapter2Mode = false;
         this._fortMode     = false;
@@ -1085,6 +1111,7 @@ export class TowerDefenseGame {
         this._chateauBossMode  = false;
         this._chateauFinalMode = false;
         this._chapter4Mode     = false;
+        this._chapter5Mode     = false;
         this._availableTowers  = new Set(['archer']);
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');

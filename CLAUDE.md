@@ -42,6 +42,8 @@ Chaque chapitre preloade TOUTES ses pistes audio, même si un chapitre précéde
 | `_chateauMode` | Château phase 1 | — |
 | `_chateauBossMode` | Château boss tornado | 8 (dernier → showVictory) |
 | `_chateauFinalMode` | Château combat final | — |
+| `_chapter4Mode` | Forêt de Nuit (Suzanne hero) | — |
+| `_chapter5Mode` | [Titre à définir] | — |
 
 ## Dimensions assets
 
@@ -62,6 +64,12 @@ Structure thème niveau (prairie/forêt) : `decorations` = `[]`, `decoTiles` = i
 - Canvas normalisé 520×560, ancrage bas, fond transparent (rembg)
 - Miroir CSS `scaleX(-1)` sur les deux côtés (tous les persos regardent naturellement à gauche)
 - Prompts Gemini détaillés dans `PROMPTS.md`
+
+### Portraits enfants (chapitre 5)
+
+- `images/anna_enfant/` et `images/nathan_enfant/` — même format 520×560, même 8 émotions
+- Générés via `temp/cut_anna_enfant.py` (spritesheet 4×2 → rembg u2net → normalisation canvas)
+- Scène associée : `images/scenes/chambre_enfant.jpeg`
 
 ## Détourage sprites ennemis
 

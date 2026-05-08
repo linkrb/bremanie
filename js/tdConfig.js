@@ -393,6 +393,53 @@ export const LEVELS = [
             [{ type: 'tornado', count: 1, position: 'start' }, { type: 'basic', count: 15 }, { type: 'fast', count: 9 }, { type: 'tank', count: 4 }, { type: 'tornado_boss', count: 1 }],
         ]
     },
+    // ── Chapitre V : Plateau de Bois — archer + mage ──
+    {
+        name: 'Plateau de Bois',
+        theme: {
+            id: 'wood_table',
+            noCastle: true,
+            enemyFolder: 'enemies/figurines',
+            enemyScales: { basic: 1.0, fast: 0.9, tank: 1.2 },
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85 },
+            enemies: {
+                basic: ['chevalier', 'mage'],
+                fast:  'cavalier',
+                tank:  'dragon',
+            },
+            tiles: { grass: 'grass/tile', corner: 'tile_corner', straight: 'tile_path_straight' },
+            grassVariants: [],
+            decoTiles: [
+                'deco/castle',
+                'deco/deco', 'deco/deco',
+                'deco/deco2', 'deco/deco2',
+                'deco/deco3',
+                'deco/deco4', 'deco/deco4',
+            ],
+            decorations: [],
+            decoRate: 0.28,
+        },
+        path: [
+            {x:0,y:0},  {x:0,y:1},
+            {x:1,y:2},  {x:1,y:3},
+            {x:2,y:4},  {x:2,y:5},
+            {x:3,y:6},
+            {x:2,y:7},  {x:2,y:8},
+            {x:1,y:9},  {x:1,y:10},
+            {x:0,y:11}, {x:0,y:12}, {x:0,y:13},
+            {x:1,y:14}, {x:1,y:15},
+            {x:2,y:16}, {x:2,y:17},
+            {x:3,y:18},
+            {x:2,y:19}, {x:2,y:20},
+            {x:1,y:21},
+        ],
+        waves: [
+            [{ type: 'basic', count: 5 }],
+            [{ type: 'basic', count: 7 }, { type: 'fast', count: 3 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 5 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 5 }, { type: 'tank', count: 2 }],
+        ]
+    },
     // ── Chapitre III : Château Boss (1 tornado, même carte que Château) ──
     {
         name: 'Château Boss',

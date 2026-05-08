@@ -21,6 +21,9 @@
         linear-gradient(rgba(2,5,18,0.45), rgba(2,5,18,0.45)),
         url('/images/scenes/dark-forest.png') center center / cover no-repeat;
 }
+#screen-game.combat-mode.chapter5-mode {
+    background: url('/images/scenes/plateau_bois.png') center center / cover no-repeat;
+}
 #screen-game.combat-mode #game-container { background: transparent; }
 
 /* Top bar masquée (remplacée par HUD flottant) */

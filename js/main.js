@@ -5,6 +5,7 @@ import { setup as setupChapter1 } from './chapters/chapter1.js';
 import { setup as setupChapter2 } from './chapters/chapter2.js';
 import { setup as setupChapter3 } from './chapters/chapter3.js';
 import { setup as setupChapter4 } from './chapters/chapter4.js';
+import setupChapter5 from './chapters/chapter5.js';
 import { SaveManager }     from './SaveManager.js';
 
 // ── Instances globales ────────────────────────────────────────
@@ -147,6 +148,7 @@ function showDefeatBadgeInteractive(next)  { showBadgeInteractive(defeatBadge,  
 
 const combatThemes = {
     4: 'night_battle_theme',
+    // 5: 'xxx_theme',  // TODO: thème combat ch5
 };
 function startCombatMusic() {
     if (combatMusicStarted) return;
@@ -158,6 +160,7 @@ function startCombatMusic() {
 const heroPortraitImg = document.getElementById('hero-portrait-img');
 const heroPortraits = {
     4: '/images/anna/neutral.png',
+    // 5: '/images/xxx/neutral.png',  // TODO: portrait héros ch5
 };
 const heroPortraitDefault = '/images/nathan/neutral.png';
 
@@ -165,6 +168,7 @@ function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);
     screenGame.classList.toggle('chapter2-mode', on && chapter === 2);
     screenGame.classList.toggle('chapter4-mode', on && chapter === 4);
+    screenGame.classList.toggle('chapter5-mode', on && chapter === 5);
     heroPortraitImg.src = (on && heroPortraits[chapter]) || heroPortraitDefault;
     currentCombatChapter = on ? chapter : null;
     combatMusicStarted = false;
@@ -203,8 +207,12 @@ function onChapterEnd(chapterNumber) {
         showChapterEnd('Chapitre III', () => chapter4.startChapter4());
     }
     if (chapterNumber === 4) {
+        SaveManager.save({ stage: 'chapter5_start' });
+        showChapterEnd('Chapitre IV', () => chapter5.startChapter5());
+    }
+    if (chapterNumber === 5) {
         SaveManager.save({ stage: 'complete' });
-        showChapterEnd('Chapitre IV', () => { /* chapitre V à venir */ });
+        showChapterEnd('Chapitre V', () => { /* chapitre VI à venir */ });
     }
 }
 
@@ -215,6 +223,7 @@ async function resumeFromSave(save) {
     chapter2._preload();
     chapter3._preload();
     chapter4._preload();
+    chapter5._preload();
     // S'assurer que le jeu est initialisé avant d'appeler showGame (pour rester synchrone)
     await ensureGameInit();
 
@@ -233,8 +242,13 @@ async function resumeFromSave(save) {
         return;
     }
 
+    if (save.stage === 'chapter5_start') {
+        chapter5.startChapter5();
+        return;
+    }
+
     if (save.stage === 'complete') {
-        showChapterEnd('Chapitre IV', () => { /* Chapitre V à venir */ });
+        showChapterEnd('Chapitre V', () => { /* Chapitre VI à venir */ });
         return;
     }
 
@@ -251,6 +265,7 @@ const chapter1 = setupChapter1(ctx);
 const chapter2 = setupChapter2(ctx);
 const chapter3 = setupChapter3(ctx);
 const chapter4 = setupChapter4(ctx);
+const chapter5 = setupChapter5(ctx);
 
 // ── Lazy init + callbacks ─────────────────────────────────────
 
@@ -273,6 +288,7 @@ function wireGameCallbacks() {
     chapter2.wireCallbacks(game);
     chapter3.wireCallbacks(game);
     chapter4.wireCallbacks(game);
+    chapter5.wireCallbacks(game);
 }
 
 // Démarre l'init du jeu en tâche de fond, sans spinner (appelé dès que possible)
@@ -356,6 +372,11 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true;
         game.setChapter4Mode();
+    } else if (mode === 'chapter5') {
+        setCombatMode(true, 5);
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        game.setChapter5Mode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -388,6 +409,7 @@ const CHAPTERS = [
     { num: 2, title: 'La Forêt Enchantée',    sub: 'Les périls de la forêt',  start: () => chapter2.startChapter2()  },
     { num: 3, title: "L'Assaut du Château",   sub: 'Le château assiégé',      start: () => chapter3.startChapter3()  },
     { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
+    { num: 5, title: '[Titre ch5]',            sub: '[Sous-titre ch5]',        start: () => chapter5.startChapter5()  },
 ];
 
 function showChapterSelect() {
@@ -497,3 +519,6 @@ if (dev === 'chapter4')    { chapter4._preload(); chapter4.startChapter4(); }
 if (dev === 'combat_ch4')   { chapter4._preload(); ensureGameInit().then(() => showGame('chapter4')); }
 if (dev === 'ch4_suzanne') { chapter4._preload(); ensureGameInit().then(() => { showGame('chapter4'); setTimeout(() => game.onWaveCompleted?.(8), 300); }); }
 if (dev === 'end_ch4')    { chapter4._preload(); showDialogue('chapter4/victory', () => { onChapterEnd(4); }); }
+if (dev === 'chapter5')   { chapter5._preload(); chapter5.startChapter5(); }
+if (dev === 'combat_ch5') { chapter5._preload(); ensureGameInit().then(() => showGame('chapter5')); }
+if (dev === 'end_ch5')    { chapter5._preload(); showDialogue('chapter5/victory', () => { onChapterEnd(5); }); }

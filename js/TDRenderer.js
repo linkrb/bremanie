@@ -92,7 +92,13 @@ export class TDRenderer {
 
         // Centrage vertical : la grille va de sprite.y=0 (row 0) à sprite.y=(GH-1)*TH/4 (last row)
         const gridCenterY = ((GRID_HEIGHT - 1) / 2) * (TILE_HEIGHT / 4);
-        this.offsetY = this.app.screen.height / 2 - gridCenterY * this.mapScale;
+        // Les decoTiles de la rangée 0 montent jusqu'à ~180px au-dessus de l'origine du layer.
+        // offsetY doit être suffisamment grand pour qu'ils restent dans le canvas.
+        const DECO_TOP_PAD = 180;
+        this.offsetY = Math.max(
+            this.app.screen.height / 2 - gridCenterY * this.mapScale,
+            DECO_TOP_PAD * this.mapScale
+        );
 
         [this.groundLayer, this.rangeLayer, this.entityLayer, this.projectileLayer, this.effectLayer, this.debugLayer].forEach(layer => {
             layer.x = this.offsetX;
@@ -189,6 +195,17 @@ export class TDRenderer {
                     const frameCount = Math.round(sheet.width / sheet.height);
                     const fw = Math.floor(sheet.width / frameCount);
                     this.assets[`tower_${type}_${variant}_idle_frames`] = Array.from({ length: frameCount }, (_, i) =>
+                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                    );
+                } catch (e) { }
+            }
+            // Variantes chapitre-spécifiques (_ch5, etc.)
+            for (const suffix of ['ch5']) {
+                try {
+                    const sheet = await PIXI.Assets.load(`${base}/tower_${type}_side_idle_${suffix}.png`);
+                    const frameCount = Math.round(sheet.width / sheet.height);
+                    const fw = Math.floor(sheet.width / frameCount);
+                    this.assets[`tower_${type}_side_idle_${suffix}_frames`] = Array.from({ length: frameCount }, (_, i) =>
                         new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
                     );
                 } catch (e) { }
@@ -551,6 +568,7 @@ export class TDRenderer {
                 if (useSprites) {
                     let texture;
                     let cornerFlip = 0; // 0=normal, -1=miroir
+                    let decoTileScale = 1.0;
                     if (cell.type === 'grass') {
                         // Deco tiles (base iso baked-in) — remplacent la tuile herbe
                         const _onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
@@ -560,7 +578,7 @@ export class TDRenderer {
                                 const entry = decoTileList[Math.floor(Math.random() * decoTileList.length)];
                                 const tileName = typeof entry === 'string' ? entry : entry.name;
                                 const decoTex = this.assets[`${tileName}_${theme?.id}`];
-                                if (decoTex) { texture = decoTex; isDecoTile = true; }
+                                if (decoTex) { texture = decoTex; isDecoTile = true; decoTileScale = entry.scale ?? 1.0; }
                             }
                         }
                         if (!isDecoTile) {
@@ -589,7 +607,7 @@ export class TDRenderer {
                     const tileScale = (this.currentTheme && this.currentTheme.tileScale) || 1.0;
                     if (isDecoTile) {
                         tile.anchor.set(0.5, 1.0);
-                        tile.width  = TILE_WIDTH * tileScale;
+                        tile.width  = TILE_WIDTH * tileScale * decoTileScale;
                         tile.scale.y = tile.scale.x; // ratio conservé
                     } else {
                         tile.anchor.set(0.5, 0.5);
