@@ -276,9 +276,11 @@ export class TDRenderer {
         }
 
         // Castle
-        try {
-            this.assets[`castle_${themeId}`] = await PIXI.Assets.load(`${basePath}/castle.png`);
-        } catch (e) { }
+        if (!theme.noCastle) {
+            try {
+                this.assets[`castle_${themeId}`] = await PIXI.Assets.load(`${basePath}/castle.png`);
+            } catch (e) { }
+        }
 
         // Scene background
         if (theme.sceneBg) {
