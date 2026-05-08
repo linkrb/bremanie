@@ -176,40 +176,32 @@ export class TDRenderer {
                     this.assets[`tower_${type}_${variant}`] = tex;
                 } catch (e) { }
             }
-            for (const lvl of [2, 3]) {
-                for (const variant of ['front', 'side', 'left', 'back']) {
-                    try {
-                        const tex = await PIXI.Assets.load(`${base}/tower_${type}_lvl${lvl}_${variant}.png`);
-                        this.assets[`tower_${type}_lvl${lvl}_${variant}`] = tex;
-                    } catch (e) { }
-                }
-            }
         }
 
-        // Idle spritesheets pour tours animées (convention : tower_{type}_{variant}_idle.png, 8 frames)
-        for (const type of ['archer', 'mage', 'light', 'fauconnier']) {
-            const base = `/images/td/towers/${type}`;
-            for (const variant of ['front', 'side', 'left', 'back']) {
-                try {
-                    const sheet = await PIXI.Assets.load(`${base}/tower_${type}_${variant}_idle.png`);
-                    const frameCount = Math.round(sheet.width / sheet.height);
-                    const fw = Math.floor(sheet.width / frameCount);
-                    this.assets[`tower_${type}_${variant}_idle_frames`] = Array.from({ length: frameCount }, (_, i) =>
-                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
-                    );
-                } catch (e) { }
-            }
-            // Variantes chapitre-spécifiques (_ch5, etc.)
-            for (const suffix of ['ch5']) {
-                try {
-                    const sheet = await PIXI.Assets.load(`${base}/tower_${type}_side_idle_${suffix}.png`);
-                    const frameCount = Math.round(sheet.width / sheet.height);
-                    const fw = Math.floor(sheet.width / frameCount);
-                    this.assets[`tower_${type}_side_idle_${suffix}_frames`] = Array.from({ length: frameCount }, (_, i) =>
-                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
-                    );
-                } catch (e) { }
-            }
+        // Idle spritesheets pour tours animées — liste explicite des fichiers existants
+        const towerIdleSheets = [
+            ['archer',     'side'],
+            ['mage',       'side'],
+            ['light',      'left'],
+            ['fauconnier', 'side'],
+            ['archer',     'side', 'ch5'],
+            ['mage',       'side', 'ch5'],
+        ];
+        for (const [type, variant, suffix] of towerIdleSheets) {
+            const filename = suffix
+                ? `tower_${type}_${variant}_idle_${suffix}.png`
+                : `tower_${type}_${variant}_idle.png`;
+            const key = suffix
+                ? `tower_${type}_${variant}_idle_${suffix}_frames`
+                : `tower_${type}_${variant}_idle_frames`;
+            try {
+                const sheet = await PIXI.Assets.load(`/images/td/towers/${type}/${filename}`);
+                const frameCount = Math.round(sheet.width / sheet.height);
+                const fw = Math.floor(sheet.width / frameCount);
+                this.assets[key] = Array.from({ length: frameCount }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
         }
 
         // Fallbacks globaux (tuiles/décors/château/ennemis pour niveaux sans dossier thématique)
@@ -249,10 +241,13 @@ export class TDRenderer {
             } catch (e) { }
         }
 
-        // Load themed assets for each level
+        // Load themed assets for each level — dédupliqué par themeId
+        const loadedThemeIds = new Set();
         for (const level of LEVELS) {
             if (!level.theme) continue;
             const themeId = level.theme.id;
+            if (loadedThemeIds.has(themeId)) continue;
+            loadedThemeIds.add(themeId);
             const basePath = `/images/td/levels/${themeId}`;
 
             // Themed tiles
