@@ -148,7 +148,7 @@ function showDefeatBadgeInteractive(next)  { showBadgeInteractive(defeatBadge,  
 
 const combatThemes = {
     4: 'night_battle_theme',
-    // 5: 'xxx_theme',  // TODO: thème combat ch5
+    5: 'chessmatch_theme',
 };
 function startCombatMusic() {
     if (combatMusicStarted) return;

@@ -15,7 +15,8 @@ function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     function _preload() {
         if (_preloaded) return;
         _preloaded = true;
-        audio.preload('cozy_family_theme', '/audio/cozy_family_theme.mp3');
+        audio.preload('cozy_family_theme',  '/audio/cozy_family_theme.mp3');
+        audio.preload('chessmatch_theme',   '/audio/chessmatch_theme.mp3');
     }
 
     function startChapter5() {
