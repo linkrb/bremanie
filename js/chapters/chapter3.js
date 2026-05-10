@@ -3,7 +3,7 @@
 import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
-                        showVictoryBadgeInteractive, onChapterEnd }) {
+                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme }) {
 
     // Dialogues déclenchés après chaque vague (clés = numéro de vague 1-based)
     const waveDialogues = {};
@@ -23,6 +23,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function startChapter3() {
         _preload();
+        preloadTheme('Château');
         showTitle({
             label: 'Chapitre III',
             title: 'Le Fort',
@@ -54,8 +55,8 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
             const savedGold   = game.engine.gold;
             const savedHealth = game.engine.health;
             hideGame();
-            showDialogue('chapter3/post_combat', () => {
-                showGame('chateau_boss');
+            showDialogue('chapter3/post_combat', async () => {
+                await showGame('chateau_boss');
                 game.applySaveState({ wave: 0, gold: savedGold, health: 15, towers: savedTowers });
             });
         };

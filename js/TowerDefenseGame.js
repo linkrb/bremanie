@@ -1137,6 +1137,12 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // Précharge les assets d'un thème en arrière-plan (fire-and-forget, idempotent)
+    preloadTheme(levelName) {
+        const levelData = LEVELS.find(l => l.name === levelName);
+        if (levelData) this.renderer._ensureThemeLoaded(levelData);
+    }
+
     // ── Sauvegarde / restauration ─────────────────────────────
 
     // Sérialise les tours placées pour la sauvegarde

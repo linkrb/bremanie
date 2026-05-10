@@ -254,11 +254,13 @@ async function resumeFromSave(save) {
 
 }
 
+const preloadTheme = (levelName) => game?.preloadTheme(levelName);
+
 const ctx = {
     audio, showTitle, showDialogue, showGame, hideGame,
     showDefeatBadgeInteractive, showVictoryBadgeInteractive,
     fadeToBlack, fadeFromBlack,
-    onChapterEnd, resumeFromSave,
+    onChapterEnd, resumeFromSave, preloadTheme,
 };
 
 const chapter1 = setupChapter1(ctx);
@@ -331,56 +333,56 @@ function showGame(mode) {
         startCombatMusic();
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setScriptedMode();
+        return game.setScriptedMode();
     } else if (mode === 'tutorial') {
         setCombatMode(true);
         startCombatMusic();
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setTutorialMode();
+        return game.setTutorialMode();
     } else if (mode === 'chapter2') {
         setCombatMode(true, 2);
         startCombatMusic();
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChapter2Mode();
+        return game.setChapter2Mode();
     } else if (mode === 'chapter2b') {
         setCombatMode(true, 2);
         startCombatMusic();
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setFortMode();
+        return game.setFortMode();
     } else if (mode === 'chateau') {
         setCombatMode(true, 2);
         audio.crossfadeTo('tactics', 2000);
         combatMusicStarted = true;
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChateauMode();
+        return game.setChateauMode();
     } else if (mode === 'chateau_boss') {
         setCombatMode(true, 2);
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChateauBossMode();
+        return game.setChateauBossMode();
     } else if (mode === 'chateau_final') {
         setCombatMode(true, 2);
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChateauFinalMode();
+        return game.setChateauFinalMode();
     } else if (mode === 'chapter4') {
         setCombatMode(true, 4);
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChapter4Mode();
+        return game.setChapter4Mode();
     } else if (mode === 'chapter5') {
         setCombatMode(true, 5);
         showCombatBadge();
         skipEntryWaveBadge = true;
-        game.setChapter5Mode();
+        return game.setChapter5Mode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
-        game.setNormalMode();
+        return game.setNormalMode();
     }
 }
 

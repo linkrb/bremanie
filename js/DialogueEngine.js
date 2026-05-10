@@ -507,6 +507,15 @@ export class DialogueEngine {
         // Couper tous les sfxloop actifs au démarrage d'un nouveau dialogue
         this.onSfxLoopStopAll?.();
 
+        // Réinitialiser le fond — chaque dialogue commence sans bg hérité du précédent
+        this.els.bgA.style.backgroundImage = '';
+        this.els.bgA.style.backgroundColor = '';
+        this.els.bgA.classList.add('hidden');
+        this.els.bgB.style.backgroundImage = '';
+        this.els.bgB.style.backgroundColor = '';
+        this.els.bgB.classList.add('hidden');
+        this._bgActive = 'a';
+
         this.overlay.style.display = 'block';
 
         // Calcule la hauteur réelle du cadre et met à jour --char-bottom

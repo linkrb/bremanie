@@ -3,7 +3,7 @@
 import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
-                        showVictoryBadgeInteractive, onChapterEnd }) {
+                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme }) {
 
     const waveDialogues = {
         4: 'chapter4/wave4_clear',
@@ -27,6 +27,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function startChapter4() {
         _preload();
+        preloadTheme('Forêt de Nuit');
         showTitle({
             label: 'Chapitre IV',
             title: 'Évasion',

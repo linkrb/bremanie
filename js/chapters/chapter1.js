@@ -5,7 +5,7 @@ import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showDefeatBadgeInteractive, showVictoryBadgeInteractive,
-                        fadeToBlack, fadeFromBlack, onChapterEnd }) {
+                        fadeToBlack, fadeFromBlack, onChapterEnd, preloadTheme }) {
 
     // Preload des pistes du chapitre 1 (lancé une seule fois au démarrage du prologue)
     let _preloaded = false;
@@ -36,6 +36,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
     }
 
     function startChapter1() {
+        preloadTheme('Prairie');
         showTitle({
             label: 'Chapitre I',
             title: 'La Fuite',

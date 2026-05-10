@@ -4,7 +4,7 @@ import { SaveManager } from '/js/SaveManager.js';
 import { TOWER_TYPES } from '/js/tdConfig.js';
 
 function setup({ audio, showTitle, showDialogue, showGame, hideGame,
-                        showVictoryBadgeInteractive, onChapterEnd }) {
+                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme }) {
 
     // Dialogues déclenchés entre les vagues — à compléter
     const waveDialogues = {
@@ -20,6 +20,7 @@ function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
     function startChapter5() {
         _preload();
+        preloadTheme('Plateau de Bois');
         showTitle({
             label: 'Chapitre V',
             title: '[Titre]',
