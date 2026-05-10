@@ -74,8 +74,6 @@ export class TowerDefenseGame {
         this.setupSpeedButton();
         this.setupShop();
         this.setupLevelSelector();
-        this.setupDevMode();
-        this.setupSpawnButtons();
 
         window.addEventListener('resize', () => this.renderer.handleResize(this.container));
 
@@ -490,63 +488,6 @@ export class TowerDefenseGame {
 
     setupLevelSelector() { /* worldmap supprimée */ }
 
-    setupDevMode() {
-        const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-        const btn = document.getElementById('devmode-btn');
-        if (!isLocal || !btn) {
-            if (btn) btn.style.display = 'none';
-            return;
-        }
-
-        btn.addEventListener('click', () => this.toggleDevMode());
-
-        // Keyboard shortcut: D to toggle devmode, G to toggle debug grid
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'd' || e.key === 'D') {
-                this.toggleDevMode();
-            }
-            if (e.key === 'g' || e.key === 'G') {
-                const path = this.engine.currentLevelData?.path || [];
-                this.renderer.toggleDebugGrid(path);
-            }
-            if (e.key === 'h' || e.key === 'H') {
-                this.renderer.toggleCleanView();
-            }
-        });
-    }
-
-    toggleDevMode() {
-        const engine = this.engine;
-        engine.devMode = !engine.devMode;
-
-        const btn = document.getElementById('devmode-btn');
-        const badge = document.getElementById('devmode-badge');
-        const spawnPanel = document.getElementById('dev-spawn-panel');
-
-        if (engine.devMode) {
-            this._savedGold = engine.gold;
-            if (btn) { btn.textContent = 'DEV ✓'; btn.classList.add('active'); }
-            if (badge) badge.style.display = '';
-            if (spawnPanel) spawnPanel.style.display = '';
-        } else {
-            // Restore real gold
-            engine.gold = this._savedGold ?? engine.gold;
-            if (btn) { btn.textContent = 'DEV'; btn.classList.remove('active'); }
-            if (badge) badge.style.display = 'none';
-            if (spawnPanel) spawnPanel.style.display = 'none';
-        }
-
-        this.updateUI();
-    }
-
-    setupSpawnButtons() {
-        document.querySelectorAll('.dev-spawn-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const type = btn.dataset.enemy;
-                if (type) this.engine.spawnQueue.push(type);
-            });
-        });
-    }
 
     async jumpToLevel(levelIndex) {
         if (levelIndex < 0 || levelIndex >= LEVELS.length) return;

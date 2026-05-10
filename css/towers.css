@@ -177,32 +177,6 @@
 }
 .shop-close:active { transform: scale(0.95); }
 
-/* ── Outils Dev ──────────────────────────────────────────────── */
-.dev-btn {
-    position: absolute; top: 8px; left: 8px;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-    color: rgba(255,255,255,0.5); padding: 4px 8px; border-radius: 6px;
-    font-size: 0.65rem; font-weight: 700; cursor: pointer; z-index: 60; transition: all 0.2s;
-}
-.dev-btn:hover { background: rgba(255,255,255,0.25); color: white; }
-.devmode-toggle.active { background: rgba(78,205,196,0.35); border-color: #4ECDC4; color: #4ECDC4; }
-.devmode-badge {
-    position: absolute; top: 56px; left: 8px;
-    background: rgba(78,205,196,0.25); border: 1px solid #4ECDC4; color: #4ECDC4;
-    padding: 2px 8px; border-radius: 6px; font-size: 0.55rem; font-weight: 800;
-    z-index: 60; animation: buffPulse 1.5s ease-in-out infinite; pointer-events: none;
-}
-.dev-spawn-panel {
-    position: absolute; top: 72px; left: 8px;
-    display: flex; flex-direction: column; gap: 4px; z-index: 60;
-}
-.dev-spawn-btn {
-    background: rgba(20,20,40,0.85); border: 1px solid rgba(78,205,196,0.4);
-    color: rgba(78,205,196,0.9); padding: 3px 8px; border-radius: 5px;
-    font-size: 0.6rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
-    text-align: left; white-space: nowrap;
-}
-.dev-spawn-btn:hover { background: rgba(78,205,196,0.2); border-color: #4ECDC4; color: #fff; }
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (min-width: 768px) {
