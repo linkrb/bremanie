@@ -6,7 +6,7 @@ romain:laughing Mais j'espère que tu as gardé tes meilleurs blocs en réserve.
 
 @sfx wooden_pieces_heavy
 > Romain dépose avec fracas de nouvelles figurines sur le plateau.
-> Ce sont de magnifiques et redoutables dragons en position de marche. (C'est le dragon d'image_0.png !)
+> Ce sont de magnifiques et redoutables dragons en position de marche.
 
 nathan_enfant(right):worried Attends... C'est quoi ces énormes blocs sculptés ? Tu ne les avais pas sortis tout à l'heure !
 romain(left):laughing Voici mes redoutables dragons. Le cauchemar absolu de tous les architectes de Brémanie.
