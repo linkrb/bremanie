@@ -25,7 +25,6 @@ export class AudioManager {
         this._current = name;
         track.volume = 0;
         track.currentTime = 0;
-        if (track.readyState === 0) track.load();
         track.play().catch(() => {
             track.addEventListener('canplay', () => track.play().catch(() => {}), { once: true });
         });
