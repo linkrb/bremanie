@@ -395,7 +395,7 @@ document.getElementById('game-over-restart').addEventListener('click', () => {
 // ── Press-Start ───────────────────────────────────────────────
 const ps = document.getElementById('press-start');
 ps.addEventListener('pointerdown', () => {
-    audio.play('main_theme');
+    audio.crossfadeTo('main_theme', 200);
     ps.classList.add('fade-out');
     setTimeout(() => ps.remove(), 1500);
 });
