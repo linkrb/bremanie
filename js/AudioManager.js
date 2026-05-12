@@ -14,7 +14,7 @@ export class AudioManager {
     preload(name, src) {
         if (this._tracks[name]) return;
         const audio = new Audio(src);
-        audio.preload = 'none';
+        audio.preload = 'metadata';
         this._tracks[name] = audio;
     }
 
