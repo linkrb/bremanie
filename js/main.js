@@ -220,29 +220,29 @@ function onChapterEnd(chapterNumber) {
 
 async function resumeFromSave(save) {
     chapter1._preload();
-    chapter2._preload();
-    chapter3._preload();
-    chapter4._preload();
-    chapter5._preload();
-    // S'assurer que le jeu est initialisé avant d'appeler showGame (pour rester synchrone)
     await ensureGameInit();
 
     if (save.stage === 'chapter2_start') {
+        chapter2._preload();
         chapter2.startChapter2();
         return;
     }
 
     if (save.stage === 'chapter3_start') {
+        chapter2._preload();
+        chapter3._preload();
         chapter3.startChapter3();
         return;
     }
 
     if (save.stage === 'chapter4_start') {
+        chapter4._preload();
         chapter4.startChapter4();
         return;
     }
 
     if (save.stage === 'chapter5_start') {
+        chapter5._preload();
         chapter5.startChapter5();
         return;
     }
@@ -411,7 +411,7 @@ const CHAPTERS = [
     { num: 2, title: 'La Forêt Enchantée',    sub: 'Les périls de la forêt',  start: () => chapter2.startChapter2()  },
     { num: 3, title: "L'Assaut du Château",   sub: 'Le château assiégé',      start: () => chapter3.startChapter3()  },
     { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
-    { num: 5, title: '[Titre ch5]',            sub: '[Sous-titre ch5]',        start: () => chapter5.startChapter5()  },
+    { num: 5, title: 'La Leçon du Roi',         sub: 'Le plateau enchanté',     start: () => chapter5.startChapter5()  },
 ];
 
 function showChapterSelect() {

@@ -974,6 +974,8 @@ export class TowerDefenseGame {
         this._resetForMode();
         this._chapter4Mode    = true;
         this._availableTowers = new Set(['archer', 'mage']);
+        const _img = document.getElementById('hero-ability-img');
+        if (_img && !_img.src.includes('suzanne_attack')) _img.src = '/images/suzanne_attack.png';
 
         const _ch4WaveStarted = this.onWaveStarted;
         this.onWaveStarted = (waveNumber) => {
