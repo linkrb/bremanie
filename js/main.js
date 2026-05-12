@@ -20,10 +20,10 @@ let game            = null;
 let gameInitPromise = null;
 
 // Sons UI globaux — chargés dès le départ (nécessaires dès le premier écran)
-audio.preload('main_theme',   '/audio/main_theme.mp3',  true);
-audio.preload('title_sting',  '/audio/title_sting.mp3', true);
-audio.preload('combat_sting', '/audio/combat_sting.mp3', true);
-audio.preload('tower_place',  '/audio/tower_place.mp3', true);
+audio.preload('main_theme',   '/audio/main_theme.mp3');
+audio.preload('title_sting',  '/audio/title_sting.mp3');
+audio.preload('combat_sting', '/audio/combat_sting.mp3');
+audio.preload('tower_place',  '/audio/tower_place.mp3');
 // Les pistes par chapitre sont preloadées dans chaque chapter*.js au démarrage du chapitre
 
 dlg.onMusic     = (track) => audio.crossfadeTo(track, 1500);

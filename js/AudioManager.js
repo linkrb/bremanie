@@ -11,10 +11,10 @@ export class AudioManager {
         this._sfxLoops   = {};
     }
 
-    preload(name, src, eager = false) {
+    preload(name, src) {
         if (this._tracks[name]) return;
         const audio = new Audio(src);
-        audio.preload = eager ? 'auto' : 'metadata';
+        audio.preload = 'auto';
         this._tracks[name] = audio;
     }
 
