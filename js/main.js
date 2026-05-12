@@ -260,7 +260,7 @@ const ctx = {
     audio, showTitle, showDialogue, showGame, hideGame,
     showDefeatBadgeInteractive, showVictoryBadgeInteractive,
     fadeToBlack, fadeFromBlack,
-    onChapterEnd, resumeFromSave, preloadTheme,
+    onChapterEnd, resumeFromSave, preloadTheme, dlg,
 };
 
 const chapter1 = setupChapter1(ctx);

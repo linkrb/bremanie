@@ -177,6 +177,10 @@ export class TDRenderer {
             ['fauconnier', 'side'],
             ['archer',     'side', 'ch5'],
             ['mage',       'side', 'ch5'],
+            // Tours quiz ch5+ — spritesheets chargées si le fichier existe
+            ['ice',    'side', 'ch5'],
+            ['cannon', 'side', 'ch5'],
+            ['fire',   'side', 'ch5'],
         ];
         for (const [type, variant, suffix] of towerIdleSheets) {
             const filename = suffix
@@ -197,7 +201,11 @@ export class TDRenderer {
 
         // Fallbacks globaux
         for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
-                            'coin', 'heart', 'proj_archer', 'proj_fauconnier']) {
+                            'coin', 'heart', 'proj_archer', 'proj_fauconnier',
+                            'proj_ice', 'proj_cannon', 'proj_fire',
+                            'proj_fire_fast', 'proj_fire_balanced', 'proj_fire_slow',
+                            'proj_ice_fast', 'proj_ice_balanced', 'proj_ice_slow',
+                            'proj_cannon_fast', 'proj_cannon_balanced', 'proj_cannon_slow']) {
             try {
                 const texture = await PIXI.Assets.load(`/images/td/${name}.png`);
                 this.assets[name] = texture;
@@ -619,7 +627,7 @@ export class TDRenderer {
                 tile.alpha = sceneBgTex ? 0 : 1;
                 tile.originalTint = tile.tint || 0xffffff;
 
-                this.groundLayer.addChild(tile);
+                (isDecoTile ? this.entityLayer : this.groundLayer).addChild(tile);
                 this.tileSprites.push(tile);
 
                 if (cell.type === 'base') {
@@ -1131,12 +1139,25 @@ export class TDRenderer {
             return sprite;
         }
 
-        const assetKey = `proj_${towerType}`;
+        const QUIZ_TOWERS = ['fire', 'ice', 'cannon'];
+        let assetKey = `proj_${towerType}`;
+        let cadence = null;
+        if (QUIZ_TOWERS.includes(towerType)) {
+            cadence = TOWER_TYPES[towerType]?.cadence || 'balanced';
+            const cadenceKey = `proj_${towerType}_${cadence}`;
+            if (this.assets[cadenceKey]) assetKey = cadenceKey;
+        }
         if (this.assets[assetKey]) {
             const sprite = new PIXI.Sprite(this.assets[assetKey]);
             sprite.anchor.set(0.5, 0.5);
             const base = TILE_WIDTH * 0.22;
-            const size = towerType === 'cannon' ? base * 1.3 : towerType === 'fire' ? base * 1.4 : base;
+            const cadenceScale = cadence === 'slow' ? 3.8 : cadence === 'fast' ? 0.75 : 1.4;
+            const cannonFastScale = cadence === 'fast' ? 1.2 : cadenceScale;
+            const fireFastScale   = cadence === 'fast' ? 1.0 : cadenceScale;
+            const size = towerType === 'cannon' ? base * (cadence ? cannonFastScale : 1.3)
+                       : towerType === 'fire'   ? base * (cadence ? fireFastScale   : cadenceScale)
+                       : QUIZ_TOWERS.includes(towerType) ? base * cadenceScale
+                       : base;
             sprite.width = size;
             sprite.height = size;
             return sprite;

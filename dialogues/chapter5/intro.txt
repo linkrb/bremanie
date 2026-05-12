@@ -6,16 +6,15 @@
 > Les souvenirs de Nathan remontent à la surface...
 > Il y a des années, dans la chaleur rassurante d'une chambre du château de la Brémanie.
 
-romain(right):smile Et voilà, l'histoire du grand dragon d'émeraude est terminée. Allez, sous les couvertures, tous les deux.
-anna(left):happy C'était super ! Mais... on n'a pas sommeil du tout !
-nathan(left):determined Papa, s'il te plaît ! Juste une dernière partie du "Jeu des Tours" ! 
-nathan:proud Anna et moi, on a réfléchi à une toute nouvelle stratégie. On est sûrs de te battre cette fois !
+romain(right):laughing Et voilà, l'histoire du grand dragon d'émeraude est terminée. Allez, sous les couvertures, tous les deux.
+anna_enfant(left):neutral C'était super ! Mais... on n'a pas sommeil du tout !
+nathan_enfant(left):determined Papa, s'il te plaît ! Juste une dernière partie du "Jeu des Tours" ! 
+nathan_enfant:proud Anna et moi, on a réfléchi à une toute nouvelle stratégie. On est sûrs de te battre cette fois !
 
 romain(right):laughing Oh, vraiment ? Le futur commandant et la brillante architecte pensent pouvoir vaincre l'armée de leur vieux père ?
-romain:smile Très bien. Une seule partie. Je prépare le jeu sur la table en bois.
+romain:proud Très bien. Une seule partie. Je prépare le jeu sur la table en bois.
 
 @sfx wooden_pieces_rattle
 > Romain aligne méticuleusement ses petites figurines de monstres, tandis qu'il tend un sac de petits blocs à ses enfants.
 
 @musicstop
-> *** DÉBUT DE LA PHASE DE JEU : LE PLATEAU DE BOIS ***

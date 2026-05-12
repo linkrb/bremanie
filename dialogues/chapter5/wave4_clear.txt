@@ -1,0 +1,15 @@
+# chapter5/wave5_end.txt
+
+nathan_enfant(right):proud Pfiou... J'ai cru que mon mur ouest allait céder !
+romain(left):proud Tu as bien géré tes réparations, Nathan. Ta forteresse est solide.
+romain:laughing Mais j'espère que tu as gardé tes meilleurs blocs en réserve... car j'ai gardé ma botte secrète pour la fin.
+
+@sfx wooden_pieces_heavy
+> Romain dépose avec fracas de nouvelles figurines sur le plateau.
+> Ce sont de magnifiques et redoutables dragons en position de marche. (C'est le dragon d'image_0.png !)
+
+nathan_enfant(right):worried Attends... C'est quoi ces énormes blocs sculptés ? Tu ne les avais pas sortis tout à l'heure !
+romain(left):laughing Voici mes redoutables dragons. Le cauchemar absolu de tous les architectes de Brémanie.
+romain:determined Leurs écailles sont épaisses comme des murs de donjon. Tes petites flèches habituelles ne leur feront même pas une égratignure.
+nathan_enfant(right):determined Il faut que je trouve une solution...
+romain:proud C'est l'heure de passer à la vitesse supérieure, mon garçon. Il va falloir innover et concevoir une arme sur mesure.

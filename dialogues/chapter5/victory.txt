@@ -1,3 +1,44 @@
-@bg black
+@scene scenes/chambre_enfant.jpg
+@music cozy_family_theme
 
-> [À écrire]
+nathan_enfant(right):laughing On a gagné ! Tes dragons sont en morceaux !
+anna_enfant(right):laughing C'était la tour parfaite ! On est les meilleurs tacticiens du royaume !
+
+romain(left):surprised Je n'arrive pas à y croire... Mon invincible armée, balayée par deux enfants ? C'est un désastre militaire absolu !
+romain:laughing Vous êtes décidément bien trop forts pour moi. Je rends les armes. Chapeau bas au futur commandant et à la brillante architecte de la Brémanie.
+
+nathan_enfant(right):proud Allez papa, on refait juste une petite partie ? Je suis sûr que je peux battre tes Trolls des montagnes maintenant !
+anna_enfant(right):laughing Oui, s'il te plaît ! Juste une !
+
+romain(left):laughing Ah, la gourmandise de la victoire... Malheureusement pour vous, mes petits loups, toutes les bonnes choses ont une fin.
+romain:determined Le feu se meurt dans la cheminée, et même les plus grands bâtisseurs ont besoin de sommeil s'ils veulent avoir les idées claires pour les batailles de demain.
+romain:proud Allez, on range le plateau. L'heure du coucher a sonné pour de bon, cette fois ! Au lit !
+
+
+nathan_enfant(right):smile D'accord... Bonne nuit, papa.
+anna_enfant(right):smile Bonne nuit !
+
+romain(left):smile Bonne nuit, mes enfants. Je vous aime fort.
+
+@bg black
+@music oboe_march_theme
+
+> Au même moment, dans le château de l'oncle David...
+> Nathan se redresse lentement, les yeux encore embués par le souvenir de la chambre d'enfance.
+
+nathan(left):neutral ... "Toutes les bonnes choses ont une fin."
+nathan:sad Dire qu'à l'époque, la pire chose qui pouvait nous arriver, c'était d'aller dormir...
+
+> Il passe la main sur les plans du château, effleurant les positions défensives tracées au fusain.
+> Soudain, son regard s'arrête sur une intersection dessinée sur la carte. Les mots de son père résonnent dans sa tête.
+
+nathan(left):surprised Attends... Ces angles. Ce placement...
+nathan:determined Toutes ces soirées sur le tapis, ces pièces en bois, ces questions sur la vitesse de tir ou le type de projectiles...
+nathan:determined Papa ne jouait pas simplement avec nous. Il me formait.
+nathan:surprised Le "Jeu des Tours"... c'était mon entraînement militaire. Il savait quel don j'avais en moi. Il savait que je deviendrais un Bâtisseur.
+
+nathan(left):determined Il m'a appris à voir le vrai champ de bataille comme un plateau, à anticiper les faiblesses des monstres, à chercher les points de croisement parfaits.
+nathan:proud Chaque conseil qu'il m'a donné à l'époque... c'est une arme que j'ai entre les mains aujourd'hui.
+
+nathan(left):sad Anna... j'espère que tu es à l'abri, où que tu sois.
+nathan:determined Je te promets que je vais nous ramener notre père. On ne va pas juste construire des murs pour survivre. On va construire la tour idéale. Celle qu'il m'a apprise à concevoir.

@@ -1,0 +1,2 @@
+romain(left):determined Nathan, regarde ces dragons qui approchent. À ton avis, qu'est-ce qui leur ferait le plus de mal ?
+@choice De l'eau | Des boulets de canon | Du feu

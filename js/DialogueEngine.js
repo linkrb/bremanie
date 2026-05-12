@@ -3,8 +3,10 @@
 
 const CHAR_NAMES = {
     romain:       'Romain',
-    nathan:       'Nathan',
-    anna:         'Anna',
+    nathan:         'Nathan',
+    anna:           'Anna',
+    nathan_enfant:  'Nathan',
+    anna_enfant:    'Anna',
     suzanne:      'Suzanne',
     garde:        'Garde',
     david:        'David',
@@ -24,8 +26,10 @@ const CHAR_SCALE = {
 
 const CHAR_COLORS = {
     romain:       { bg: '#2d4f8a', border: '#7aa3d4' },
-    nathan:       { bg: '#6b4a12', border: '#c8952a' },
-    anna:         { bg: '#7a1f1f', border: '#c85050' },
+    nathan:         { bg: '#6b4a12', border: '#c8952a' },
+    anna:           { bg: '#7a1f1f', border: '#c85050' },
+    nathan_enfant:  { bg: '#6b4a12', border: '#c8952a' },
+    anna_enfant:    { bg: '#7a1f1f', border: '#c85050' },
     suzanne:      { bg: '#2d6e35', border: '#72b87e' },
     garde:        { bg: '#3a4455', border: '#8a9ab0' },
     david:        { bg: '#2e5a3e', border: '#6aaa7e' },
@@ -313,6 +317,38 @@ const CSS = `
 
 #dlg-video-hint.visible { opacity: 1; }
 
+/* ── Choix interactifs (@choice) ── */
+.dlg-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+}
+.dlg-choice-btn {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(0.7rem, 2vw, 0.88rem);
+    letter-spacing: 0.06em;
+    color: #ede8d8;
+    background: rgba(4, 8, 28, 0.8);
+    border: 1px solid rgba(201, 168, 76, 0.55);
+    border-radius: 4px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    user-select: none;
+}
+.dlg-choice-btn:hover, .dlg-choice-btn:active {
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.85);
+    color: #fff;
+}
+#dlg-overlay.has-choices .dlg-box {
+    max-height: none;
+}
+
 /* ── Bouton skip (hold 1s) ── */
 .dlg-skip-btn {
     position: absolute;
@@ -370,6 +406,9 @@ export class DialogueEngine {
         this.onSfxLoop         = null; // callback(trackName) déclenché par @sfxloop
         this.onSfxStop         = null; // callback(trackName) déclenché par @sfxstop
         this.onSfxLoopStopAll  = null; // callback() — appelé au démarrage de chaque dialogue
+        this.onChoice    = null; // callback(answerIndex) déclenché par @choice
+        this._inChoice   = false;
+        this.skipDisabled = false;
 
         // Track what's displayed on each side
         this.sides = {
@@ -408,6 +447,7 @@ export class DialogueEngine {
             <div class="dlg-box">
                 <div class="dlg-namebox" id="dlg-namebox"></div>
                 <div class="dlg-text"    id="dlg-text"></div>
+                <div class="dlg-choices" id="dlg-choices" style="display:none"></div>
                 <div class="dlg-arrow"   id="dlg-arrow">▼</div>
                 <div class="dlg-tap-hint">Toucher pour continuer</div>
             </div>
@@ -430,6 +470,7 @@ export class DialogueEngine {
         this._videoHint = videoWrap.querySelector('#dlg-video-hint');
 
         this._bgActive = 'a'; // 'a' ou 'b'
+        this._scriptCache = new Map();
         this.els = {
             bgA:      overlay.querySelector('#dlg-bg-a'),
             bgB:      overlay.querySelector('#dlg-bg-b'),
@@ -439,6 +480,7 @@ export class DialogueEngine {
             imgRight: overlay.querySelector('#dlg-img-right'),
             namebox:  overlay.querySelector('#dlg-namebox'),
             text:     overlay.querySelector('#dlg-text'),
+            choices:  overlay.querySelector('#dlg-choices'),
             arrow:    overlay.querySelector('#dlg-arrow'),
         };
     }
@@ -455,6 +497,7 @@ export class DialogueEngine {
         };
         skipBtn.addEventListener('pointerdown', (e) => {
             e.stopPropagation();
+            if (this._inChoice || this.skipDisabled) return;
             skipBtn.classList.add('holding');
             skipTimer = setTimeout(() => { this._end(); }, 1000);
         });
@@ -516,6 +559,12 @@ export class DialogueEngine {
         this.els.bgB.classList.add('hidden');
         this._bgActive = 'a';
 
+        // Réinitialiser les choix (onChoice est réinitialisé dans _end(), pas ici)
+        this._inChoice = false;
+        this.els.choices.style.display = 'none';
+        this.els.choices.innerHTML = '';
+        this.overlay.classList.remove('has-choices');
+
         this.overlay.style.display = 'block';
 
         // Calcule la hauteur réelle du cadre et met à jour --char-bottom
@@ -533,21 +582,28 @@ export class DialogueEngine {
     // Charge un fichier .txt depuis dialoguePath et joue la scène
     // Usage : await engine.load('prologue/intro', () => startGame())
     async load(scriptName, onComplete) {
-        const url = `${this.dialoguePath}${scriptName}.txt`;
         try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error(`Script introuvable : ${url}`);
-            const text = await resp.text();
-            const script = DialogueEngine.parse(text);
-            if (script.length === 0) {
-                onComplete?.();
-                return;
-            }
+            const script = await this._fetchScript(scriptName);
+            if (script.length === 0) { onComplete?.(); return; }
             this.play(script, onComplete);
         } catch (e) {
             console.warn('[DialogueEngine] load() failed:', e.message);
             onComplete?.();
         }
+    }
+
+    async preload(scriptNames) {
+        await Promise.all(scriptNames.map(n => this._fetchScript(n).catch(() => {})));
+    }
+
+    async _fetchScript(scriptName) {
+        if (this._scriptCache.has(scriptName)) return this._scriptCache.get(scriptName);
+        const url = `${this.dialoguePath}${scriptName}.txt`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Script introuvable : ${url}`);
+        const script = DialogueEngine.parse(await resp.text());
+        this._scriptCache.set(scriptName, script);
+        return script;
     }
 
     // ── Parser de script texte ───────────────────────────────
@@ -578,6 +634,11 @@ export class DialogueEngine {
             if (line.startsWith('@')) {
                 const [cmd, ...args] = line.slice(1).split(/\s+/);
                 const val = args.join(' ');
+                if (cmd === 'choice') {
+                    const options = val.split('|').map(s => s.trim()).filter(Boolean);
+                    script.push({ type: 'choice', options });
+                    continue;
+                }
                 if (cmd === 'bg')    { pendingBg    = val; continue; }
                 if (cmd === 'bgpos') {
                     const last = script[script.length - 1];
@@ -657,6 +718,7 @@ export class DialogueEngine {
     }
 
     _advance() {
+        if (this._inChoice) return;
         if (this.typing) {
             // Skip typewriter → show full text instantly
             clearTimeout(this.typeTimer);
@@ -683,6 +745,12 @@ export class DialogueEngine {
         if (line.sfx)     this.onSfx?.(line.sfx);
         if (line.sfxloop) this.onSfxLoop?.(line.sfxloop);
         if (line.sfxstop) this.onSfxStop?.(line.sfxstop);
+
+        // ── Choix interactifs (@choice) ──────────────────────────
+        if (line.type === 'choice') {
+            this._showChoices(line.options);
+            return;
+        }
 
         // ── @hide left/right ─────────────────────────────────
         if (line.type === 'hide') {
@@ -773,6 +841,30 @@ export class DialogueEngine {
         this._typeText(line.text);
     }
 
+    _showChoices(options) {
+        this._inChoice = true;
+        this.overlay.classList.add('has-choices');
+        this.els.arrow.classList.add('hidden');
+        const container = this.els.choices;
+        container.innerHTML = '';
+        container.style.display = '';
+        options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'dlg-choice-btn';
+            btn.textContent = opt;
+            btn.addEventListener('pointerup', (e) => {
+                e.stopPropagation();
+                container.style.display = 'none';
+                container.innerHTML = '';
+                this.overlay.classList.remove('has-choices');
+                this._inChoice = false;
+                this.onChoice?.(i);
+                this._advance();
+            });
+            container.appendChild(btn);
+        });
+    }
+
     _findExistingSide(char) {
         if (this.sides.left.char  === char) return 'left';
         if (this.sides.right.char === char) return 'right';
@@ -856,7 +948,11 @@ export class DialogueEngine {
             this._videoWrap.style.display = 'none';
             this._videoHint.classList.remove('visible');
         }
-        this.overlay.classList.remove('cinematic');
+        this.overlay.classList.remove('cinematic', 'has-choices');
+        this._inChoice = false;
+        this.onChoice  = null;
+        this.els.choices.style.display = 'none';
+        this.els.choices.innerHTML = '';
         this.overlay.style.display = 'none';
 
         // Reset portraits for next use

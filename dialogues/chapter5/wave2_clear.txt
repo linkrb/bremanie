@@ -1,0 +1,12 @@
+# chapter5/wave2_end.txt
+
+romain(left):surprised Argh ! Mes pauvres chevaliers ! Ils se font tailler en pièces !
+nathan_enfant(right):laughing Je te l'avais dit ! L'astuce de l'angle a fonctionné parfaitement !
+anna_enfant(right):laughing Bien joué Nathan ! Tu vas gagner, c'est sûr !
+
+romain(left):laughing Ne vendez pas la peau de l'ours en bois avant de l'avoir tué, vous deux.
+romain:laughing Mais je dois avouer... je m'amuse beaucoup. Vous formez une équipe redoutable.
+nathan_enfant(right):proud C'est parce qu'on s'entraîne avec le meilleur tacticien du royaume.
+
+romain(left):proud Flatteur, va. Mais profite bien de cette petite victoire, mon garçon... 
+romain:determined Re-concentre-toi. Pour cette troisième vague, je déploie mes chevaliers. Voyons si tes murs tiendront le choc !

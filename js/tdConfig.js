@@ -9,6 +9,10 @@ export const TOWER_TYPES = {
     mage:   { cost: 75,  damage: 55, range: 2.5, cooldown: 2200, speed: 20, color: 0xAA66FF, displayScale: 1.8, splash: 1.0, anchorY: 1.0, noFlying: true },
     light:      { cost: 40,  damage: 0,  range: 2.5, cooldown: 999999, speed: 0,  color: 0xFFD700, displayScale: 1.8, illuminates: true, anchorY: 0.85 },
     fauconnier: { cost: 40,  damage: 30, range: 3.5, cooldown: 800,   speed: 55, color: 0x44CC88, displayScale: 1.8, anchorY: 0.85, flyingOnly: true },
+    // Tours débloquées par le quiz ch5+
+    ice:    { cost: 50,  damage: 25, range: 3,   cooldown: 1000, speed: 38, color: 0x88DDFF, displayScale: 1.8, anchorY: 0.85 },
+    cannon: { cost: 50,  damage: 90, range: 2,   cooldown: 3000, speed: 28, color: 0x888888, displayScale: 1.8, anchorY: 0.85, splash: 1.5 },
+    fire:   { cost: 50,  damage: 35, range: 2.5, cooldown: 1200, speed: 50, color: 0xFF4422, displayScale: 1.8, anchorY: 0.85 },
 };
 
 export const ENEMY_TYPES = {
@@ -387,6 +391,12 @@ export const LEVELS = [
     // ── Chapitre V : Plateau de Bois — archer + mage ──
     {
         name: 'Plateau de Bois',
+        enemyResistances: {
+            tank: { archer: 0.1, mage: 0.1, fire: 1.8, cannon: 1.8, ice: 2.5 },
+        },
+        enemySpeeds: {
+            tank: 1.5,
+        },
         theme: {
             id: 'wood_table',
             noCastle: true,
@@ -426,9 +436,13 @@ export const LEVELS = [
         ],
         waves: [
             [{ type: 'basic', count: 5 }],
-            [{ type: 'basic', count: 7 }, { type: 'fast', count: 3 }],
+            [{ type: 'basic', count: 7 }],
             [{ type: 'basic', count: 8 }, { type: 'fast', count: 5 }],
+            [{ type: 'basic', count: 12 }, { type: 'fast', count: 9 }],
             [{ type: 'basic', count: 8 }, { type: 'fast', count: 5 }, { type: 'tank', count: 2 }],
+            [{ type: 'basic', count: 5 }, { type: 'fast', count: 5 }, { type: 'tank', count: 1 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 3 }, { type: 'tank', count: 3 }],
+            [{ type: 'basic', count: 8 }, { type: 'fast', count: 3 }, { type: 'tank', count: 6 }],
         ]
     },
     // ── Chapitre III : Château Boss (1 tornado, même carte que Château) ──

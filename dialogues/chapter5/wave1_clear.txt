@@ -1,0 +1,9 @@
+romain(left):proud Beau travail ! Tu as repoussé ma première offensive avec brio.
+nathan_enfant(right):proud C'était facile ! C'est tout ce que ton armée sait faire ?
+romain:determined Ne crie pas victoire trop vite, jeune stratège. J'ai observé tes placements... tu laisses les angles du plateau complètement vides.
+nathan_enfant:worried Les angles ? Qu'est-ce que ça change ?
+romain:neutral Une tour placée dans un virage couvre deux directions à la fois. Quand l'ennemi tourne, il ralentit sa marche. C'est à ce moment précis que tu as le plus de temps pour frapper.
+nathan_enfant:determined Ah, c'est logique ! Je peux couvrir plus de terrain en utilisant la même tour.
+romain:determined Garde bien cette leçon en tête pour la suite. Car pour la prochaine vague... c'est moi qui mène la charge, et j'envoie mes troupes d'élite.
+nathan_enfant:worried Je sens que tu ne vas pas me faire de cadeau...
+romain:laughing Un roi ne fait jamais de cadeau sur le champ de bataille, mon fils ! En garde !

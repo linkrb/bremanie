@@ -71,6 +71,35 @@ Structure thème niveau (prairie/forêt) : `decorations` = `[]`, `decoTiles` = i
 - Générés via `temp/cut_anna_enfant.py` (spritesheet 4×2 → rembg u2net → normalisation canvas)
 - Scène associée : `images/scenes/chambre_enfant.jpeg`
 
+## Système waveEvents (chapitres)
+
+Dans chaque fichier `js/chapters/chapterN.js`, les événements inter-vagues sont définis dans `waveEvents` :
+```js
+const waveEvents = {
+    1: 'chapter5/wave1_clear',          // string → dialogue
+    2: { type: 'quiz', def: QUIZ_DEF }, // objet → quiz
+};
+```
+`onWaveCompleted` lit ce map et gère les deux cas. Chaque chapitre est autonome — ne pas migrer les autres chapitres.
+
+## Tours quiz ch5 — convention assets
+
+Les tours débloquées par quiz (ice, cannon, fire) ont des assets suffixés `_ch5` :
+- `tower_{type}_side_idle_ch5.png` — spritesheet 2048×256
+- `tower_{type}_preview_ch5.png` — vignette tower bar
+
+Elles sont swappées via `_ch5TowerOverrides` dans `chapter5.js::wireCallbacks`, exactement comme archer/mage.
+
+## Résistances ennemis par niveau
+
+Dans `tdConfig.js`, un niveau peut déclarer des résistances par type d'ennemi :
+```js
+enemyResistances: {
+    tank: { archer: 0.1, mage: 0.1 }, // 10% des dégâts
+}
+```
+Copié sur l'ennemi au spawn, appliqué via `TDEngine._resist(damage, towerType, enemy)`.
+
 ## Détourage sprites ennemis
 
 - Fond uni contrasté → MCP `mcp__detoureur__remove_background`

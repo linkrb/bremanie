@@ -1,0 +1,4 @@
+romain(left):determined Maintenant, comment tu veux qu'elle tire ?
+nathan_enfant(right):worried Je sais pas trop... ça change quoi ?
+romain:determined Ça change tout. Une tour qui tire vite fait des dégâts légers mais constants. Une tour lente frappe moins souvent, mais elle dévaste ce qu'elle touche.
+@choice Tirs rapides et légers | Cadence équilibrée | Tirs rares et dévastateurs

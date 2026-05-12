@@ -324,6 +324,7 @@ export class TowerDefenseGame {
         });
 
         app.stage.on('pointerdown', (e) => {
+            if (document.getElementById('dlg-overlay')?.style.display !== 'none') return;
             const pos = e.global;
             const grid = fromIso(pos.x, pos.y, this.renderer.offsetX, this.renderer.offsetY, this.renderer.mapScale);
 
@@ -464,6 +465,7 @@ export class TowerDefenseGame {
 
     setupWaveButton() {
         document.getElementById('wave-btn').addEventListener('click', () => {
+            if (document.getElementById('dlg-overlay')?.style.display !== 'none') return;
             if (!this.engine.waveInProgress && this.engine.wave < this.engine.currentWaves.length) {
                 this.engine.startWave();
             }

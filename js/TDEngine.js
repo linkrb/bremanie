@@ -304,7 +304,7 @@ export class TDEngine {
             y: spawn.y,
             hp: scaledHp,
             maxHp: scaledHp,
-            speed: config.speed,
+            speed: this.currentLevelData?.enemySpeeds?.[type] ?? config.speed,
             reward: config.reward,
             pathIndex: 0,
             route,
@@ -317,8 +317,16 @@ export class TDEngine {
             baseScaleY
         };
 
+        const levelResistances = LEVELS[this.level]?.enemyResistances;
+        if (levelResistances?.[type]) enemy.resistances = levelResistances[type];
+
         this.enemies.push(enemy);
         return enemy;
+    }
+
+    _resist(damage, towerType, enemy) {
+        const r = enemy.resistances?.[towerType];
+        return r !== undefined ? damage * r : damage;
     }
 
     update(delta, now) {
@@ -519,7 +527,7 @@ export class TDEngine {
             }
 
             let bestTarget = null;
-            let bestProgress = -1;
+            let bestScore  = -Infinity;
 
             for (const enemy of this.enemies) {
                 if (this.litTiles) {
@@ -530,14 +538,18 @@ export class TDEngine {
                 const dy = enemy.y - tower.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (dist <= tower.range && enemy.pathIndex > bestProgress) {
-                    if (tower.grasp && enemy.flying) continue;     // cemetery can't grab flying
-                    if (tower.burn && enemy.flying) continue;      // fire can't target flying
-                    if (tower.flyingOnly && !enemy.flying) continue;  // fauconnier: volants uniquement
-                    if (tower.noFlying  &&  enemy.flying) continue;  // archer/mage: pas de volants
-                    bestTarget = enemy;
-                    bestProgress = enemy.pathIndex;
-                }
+                if (dist > tower.range) continue;
+                if (tower.grasp     && enemy.flying)  continue;
+                if (tower.burn      && enemy.flying)  continue;
+                if (tower.flyingOnly && !enemy.flying) continue;
+                if (tower.noFlying   &&  enemy.flying) continue;
+
+                const score = tower.priority === 'fast'  ?  enemy.speed
+                            : tower.priority === 'tough' ?  enemy.hp
+                            : tower.priority === 'close' ? -dist
+                            :                               enemy.pathIndex;
+
+                if (score > bestScore) { bestTarget = enemy; bestScore = score; }
             }
 
             if (bestTarget) {
@@ -553,7 +565,7 @@ export class TDEngine {
 
     handleGraspAttack(tower, target, now) {
         const dmgMult = this.buffs.damage ? 1.5 : 1;
-        target.hp -= tower.damage * dmgMult;
+        target.hp -= this._resist(tower.damage * dmgMult, tower.type, target);
         target.graspUntil = now + tower.graspDuration;
         target.graspDotDmg = Math.round(tower.graspDot * dmgMult);
         target.graspDotNext = now + 500;
@@ -686,7 +698,7 @@ export class TDEngine {
 
     handleHit(proj, target, now) {
         const dmgMult = this.buffs.damage ? 1.5 : 1;
-        const damage = proj.damage * dmgMult;
+        const damage = this._resist(proj.damage * dmgMult, proj.type, target);
         target.hp -= damage;
 
         if (proj.slow) target.slowUntil = now + 2500;
@@ -719,7 +731,7 @@ export class TDEngine {
                 if (enemy.id === target.id) continue;
                 const d = Math.sqrt((enemy.x - target.x) ** 2 + (enemy.y - target.y) ** 2);
                 if (d <= proj.splash) {
-                    enemy.hp -= damage * 0.4;
+                    enemy.hp -= this._resist(proj.damage * dmgMult, proj.type, enemy) * 0.4;
                     if (proj.burn) {
                         enemy.burnUntil = now + proj.burnDuration;
                         enemy.burnDotDmg = proj.burnDot;

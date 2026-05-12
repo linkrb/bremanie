@@ -1,0 +1,4 @@
+romain(left):determined Dernière question. Face à une horde, qui est-ce qu'elle vise en priorité ?
+nathan_enfant(right):determined Hm... celui qui court le plus vite, avant qu'il passe ?
+romain:determined C'est une option. Mais n'oublie pas nos fameux dragons : ils ne sont pas bien rapides, par contre ce sont les plus blindés du plateau. Concentrer le feu sur le plus résistant pourrait s'avérer vital aujourd'hui. Ou alors le plus proche, pour sécuriser ta ligne au cas où. C'est toi le stratège.
+@choice Le plus rapide | Le plus résistant | Le plus proche
