@@ -3,9 +3,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 DIST="$ROOT/dist"
+VERSION=$(git -C "$ROOT" rev-parse --short HEAD)
 
-echo "Brémanie — build minifié"
-echo "========================"
+echo "Brémanie — build minifié (v=$VERSION)"
+echo "======================================="
 
 # ── Nettoyage ──────────────────────────────────────────────────────────────
 rm -rf "$DIST"
@@ -31,7 +32,7 @@ CSS_MIN=$(wc -c < "$DIST/css/styles.min.css")
 CSS_GAIN=$(( (CSS_SRC - CSS_MIN) * 100 / CSS_SRC ))
 echo "     ${CSS_SRC} octets → ${CSS_MIN} octets (-${CSS_GAIN}%)"
 
-# ── JS : réécriture imports absolus → relatifs, puis minification ──────────
+# ── JS : réécriture imports absolus → relatifs + ?v=HASH, puis minification ─
 echo ""
 echo "[2/3] JS..."
 
@@ -53,40 +54,46 @@ for f in "$ROOT"/js/chapters/*.js; do
     rm "$TMP"
 done
 
+# Cache-bust : ajoute ?v=HASH sur tous les imports relatifs dans les JS minifiés
+find "$DIST/js" -name "*.js" | while read -r f; do
+    sed -i "s|from\"\(\./[^\"]*\.js\)\"|from\"\1?v=$VERSION\"|g;
+            s|from\"\(\.\./[^\"]*\.js\)\"|from\"\1?v=$VERSION\"|g" "$f"
+done
+
 JS_SRC=$(find "$ROOT/js" -name "*.js" -exec cat {} \; | wc -c)
 JS_MIN=$(find "$DIST/js" -name "*.js" -exec cat {} \; | wc -c)
 JS_GAIN=$(( (JS_SRC - JS_MIN) * 100 / JS_SRC ))
 echo "     ${JS_SRC} octets → ${JS_MIN} octets (-${JS_GAIN}%)"
 
-# ── HTML : CSS → /dist/css/styles.min.css, JS → /dist/js/main.js ──────────
+# ── HTML : CSS + JS avec ?v=HASH ───────────────────────────────────────────
 echo ""
 echo "[3/3] HTML..."
-python3 - "$ROOT/index.html" "$ROOT/index.html" "$DIST/index.html" <<'PYEOF'
+python3 - "$ROOT/index.html" "$VERSION" "$ROOT/index.html" "$DIST/index.html" <<'PYEOF'
 import sys, re
 
 with open(sys.argv[1]) as f:
     html = f.read()
+v = sys.argv[2]
 
-# 7 liens CSS sources → un seul vers dist/ (idempotent : supprime aussi les doublons /dist/)
+# 7 liens CSS sources → un seul vers dist/ (idempotent)
 html = re.sub(r' {4}<link rel="stylesheet" href="/css/[^"]*">\n', '', html)
-html = re.sub(r'( {4}<link rel="stylesheet" href="/dist/css/styles\.min\.css">\n)+', '', html)
-html = html.replace('</head>', '    <link rel="stylesheet" href="/dist/css/styles.min.css">\n</head>')
+html = re.sub(r'( {4}<link rel="stylesheet" href="/dist/css/styles\.min\.css[^"]*">\n)+', '', html)
+html = html.replace('</head>', f'    <link rel="stylesheet" href="/dist/css/styles.min.css?v={v}">\n</head>')
 
-# Script principal → dist/
-html = html.replace('src="/js/main.js"', 'src="/dist/js/main.js"')
+# Script principal → dist/ avec ?v=
+html = re.sub(r'src="/(?:dist/)?js/main\.js(?:\?v=[^"]*)?\"', f'src="/dist/js/main.js?v={v}"', html)
 
 # Imports absolus dans les blocs <script type="module"> inline
-html = re.sub(r"from '/js/([^']*)'", r"from '/dist/js/\1'", html)
+html = re.sub(r"from '/(?:dist/)?js/([^'?]*)'", rf"from '/dist/js/\1?v={v}'", html)
 
-# Écrit à la racine ET dans dist/
-for path in sys.argv[2:]:
+for path in sys.argv[3:]:
     with open(path, 'w') as f:
         f.write(html)
 PYEOF
 
 # ── Résumé ─────────────────────────────────────────────────────────────────
 echo ""
-echo "✓ dist/ prêt — index.html à la racine patché"
+echo "✓ dist/ prêt (v=$VERSION) — cache bust actif sur tous les assets"
 echo "  → git add dist/ index.html && git push && (sur le serveur) git pull"
 echo ""
-echo "  Pour reprendre le dev : git restore index.html"
+echo "  Pour reprendre le dev : ./.dev.sh"
