@@ -54,10 +54,12 @@ for f in "$ROOT"/js/chapters/*.js; do
     rm "$TMP"
 done
 
-# Cache-bust : ajoute ?v=HASH sur tous les imports relatifs dans les JS minifiés
+# Cache-bust : ajoute ?v=HASH sur tous les imports JS et les URLs /audio/ /images/
 find "$DIST/js" -name "*.js" | while read -r f; do
     sed -i "s|from\"\(\./[^\"]*\.js\)\"|from\"\1?v=$VERSION\"|g;
-            s|from\"\(\.\./[^\"]*\.js\)\"|from\"\1?v=$VERSION\"|g" "$f"
+            s|from\"\(\.\./[^\"]*\.js\)\"|from\"\1?v=$VERSION\"|g;
+            s|\"/audio/\([^\"?]*\)\"|\"/audio/\1?v=$VERSION\"|g;
+            s|'/audio/\([^'?]*\)'|'/audio/\1?v=$VERSION'|g" "$f"
 done
 
 JS_SRC=$(find "$ROOT/js" -name "*.js" -exec cat {} \; | wc -c)
