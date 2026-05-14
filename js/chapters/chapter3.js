@@ -3,7 +3,7 @@
 import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
-                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme }) {
+                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme, dlg }) {
 
     // Dialogues déclenchés après chaque vague (clés = numéro de vague 1-based)
     const waveDialogues = {};
@@ -19,6 +19,10 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         audio.preload('explosion',          '/audio/explosion.mp3');
         audio.preload('strategy',          '/audio/strategy.mp3');
         audio.preload('tornado_spawn',     '/audio/tornado_spawn.mp3');
+        dlg.preload([
+            'chapter3/intro', 'chapter3/post_combat',
+            'chapter3/post_tornado', 'chapter3/victory',
+        ]);
     }
 
     function startChapter3() {

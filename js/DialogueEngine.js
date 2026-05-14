@@ -409,6 +409,7 @@ export class DialogueEngine {
         this.onChoice    = null; // callback(answerIndex) déclenché par @choice
         this._inChoice   = false;
         this.skipDisabled = false;
+        this._imgCache = new Map();
 
         // Track what's displayed on each side
         this.sides = {
@@ -593,7 +594,27 @@ export class DialogueEngine {
     }
 
     async preload(scriptNames) {
-        await Promise.all(scriptNames.map(n => this._fetchScript(n).catch(() => {})));
+        const scripts = await Promise.all(scriptNames.map(n => this._fetchScript(n).catch(() => [])));
+        const urls = new Set();
+        for (const script of scripts) {
+            for (const line of script) {
+                if (line.char && line.emotion) {
+                    urls.add(`${this.basePath}${line.char}/${line.emotion}.png`);
+                }
+            }
+        }
+        await Promise.all([...urls].map(url => this._preloadImage(url)));
+    }
+
+    _preloadImage(url) {
+        if (this._imgCache.has(url)) return this._imgCache.get(url);
+        const p = new Promise(resolve => {
+            const img = new Image();
+            img.onload = img.onerror = resolve;
+            img.src = url;
+        });
+        this._imgCache.set(url, p);
+        return p;
     }
 
     async _fetchScript(scriptName) {

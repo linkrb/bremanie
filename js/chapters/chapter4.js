@@ -3,7 +3,7 @@
 import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
-                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme }) {
+                        showVictoryBadgeInteractive, onChapterEnd, preloadTheme, dlg }) {
 
     const waveDialogues = {
         4: 'chapter4/wave4_clear',
@@ -23,6 +23,10 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         audio.preload('night',              '/audio/night_sound.mp3');
         audio.preload('wind',               '/audio/wind.mp3');
         audio.preload('boss_entry',               '/audio/boss_entry.mp3');
+        dlg.preload([
+            'chapter4/intro', 'chapter4/wave4_clear',
+            'chapter4/wave5_clear', 'chapter4/wave8_clear', 'chapter4/victory',
+        ]);
     }
 
     function startChapter4() {

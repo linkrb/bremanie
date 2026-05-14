@@ -5,7 +5,7 @@ import { SaveManager } from '/js/SaveManager.js';
 
 export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
                         showDefeatBadgeInteractive, showVictoryBadgeInteractive,
-                        fadeToBlack, fadeFromBlack, onChapterEnd, preloadTheme }) {
+                        fadeToBlack, fadeFromBlack, onChapterEnd, preloadTheme, dlg }) {
 
     // Preload des pistes du chapitre 1 (lancé une seule fois au démarrage du prologue)
     let _preloaded = false;
@@ -15,6 +15,11 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         audio.preload('prologue_siege', '/audio/prologue_siege.mp3');
         audio.preload('wind',          '/audio/wind.mp3');
         audio.preload('combat_theme',  '/audio/combat_theme.mp3');
+        dlg.preload([
+            'prologue/siege',
+            'chapter1/intro', 'chapter1/nathan_power',
+            'chapter1/towers_appear', 'chapter1/tutorial_win',
+        ]);
     }
 
     function startPrologue() {

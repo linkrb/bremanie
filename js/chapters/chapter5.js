@@ -54,6 +54,8 @@ function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         audio.preload('chessmatch_theme',   '/audio/chessmatch_theme.mp3');
         audio.preload('oboe_march_theme',   '/audio/oboe_march_theme.mp3');
         dlg.preload([
+            'chapter5/intro', 'chapter5/wave1_clear', 'chapter5/wave2_clear',
+            'chapter5/wave4_clear', 'chapter5/victory',
             'chapter5/quiz_q1', 'chapter5/quiz_q2', 'chapter5/quiz_q3',
             'chapter5/quiz_result_ice', 'chapter5/quiz_result_cannon', 'chapter5/quiz_result_fire',
         ]);
