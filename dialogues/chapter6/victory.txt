@@ -10,7 +10,7 @@ suzanne(right):determined Allez Martin, on ne ralentit pas ! Dans l'eau, tout de
 > Ils s'effondrent sur la berge opposée, trempés et haletants. 
 > De l'autre côté, les premiers squelettes tentent de traverser, mais le poids de leurs armures rouillées les entraîne immédiatement au fond de la rivière.
 
-@music stop
+@musicstop
 @scene scenes/river_bank_crossing.jpg
 
 suzanne(right):laughing Regardez-les couler comme des pierres, ces stupides tas d'os ! Le courant est bien trop fort pour eux !
