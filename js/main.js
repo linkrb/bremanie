@@ -433,7 +433,7 @@ const CHAPTERS = [
     { num: 3, title: "L'Assaut du Château",   sub: 'Le château assiégé',      start: () => chapter3.startChapter3()  },
     { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
     { num: 5, title: 'La Leçon du Roi',         sub: 'Le plateau enchanté',     start: () => chapter5.startChapter5()  },
-    { num: 6, title: '[Titre Chapitre VI]',      sub: '[Sous-titre]',            start: () => chapter6.startChapter6()  },
+    { num: 6, title: "L'Autre Rive",              sub: 'La fuite vers Vive-Eau',  start: () => chapter6.startChapter6()  },
 ];
 
 function showChapterSelect() {
