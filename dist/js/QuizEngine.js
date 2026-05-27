@@ -1,0 +1,1 @@
+export function runQuiz(i,n,o,s){const e={};let t=0;n.skipDisabled=!0,function c(){if(t>=o.length)return n.skipDisabled=!1,void s(e);const l=o[t++];n.onChoice=i=>{e[l.axis]=l.answers[i],n.onChoice=null},i(l.script,c)}()}
