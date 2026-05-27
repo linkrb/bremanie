@@ -3,7 +3,7 @@
 @scene scenes/river_bank_running.jpg
 
 anna(left):determined Vite, courez ! On y est presque ! Ne regardez pas derrière vous !
-suzanne(right):determined Allez le gamin, on ne ralentit pas ! Dans l'eau, tout de suite !
+suzanne(right):determined Allez Martin, on ne ralentit pas ! Dans l'eau, tout de suite !
 
 @sfx water
 > Le groupe plonge dans les eaux glacées de la Vive-Eau et lutte de toutes ses forces contre le courant pour atteindre l'autre rive.

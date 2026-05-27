@@ -39,8 +39,8 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
         preloadTheme('Forêt de la Vive-Eau');
         showTitle({
             label: 'Chapitre VI',
-            title: '[Titre]',
-            sub:   '[Sous-titre]',
+            title: "L'Autre Rive",
+            sub:   'La fuite vers Vive-Eau',
         }, () => {
             showDialogue('chapter6/intro', () => {
                 showGame('chapter6');
