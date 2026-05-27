@@ -34,6 +34,7 @@ export class TDEngine {
         this.hero = null; // { charge, maxCharge, chargeRate }
         this.routes = [];
         this.litTiles = null; // null = tout éclairé ; Set de "x,y" = tuiles éclairées (mode obscurité)
+        this.traps = [];
         this.initLevel();
 
         // Callbacks - wired by the orchestrator
@@ -61,6 +62,9 @@ export class TDEngine {
         this.onCemeteryGrasp = null;     // (tower, enemy, duration)
         this.onFireBurn = null;          // (enemy, duration)
         this.onEnemyDamaged = null;      // (enemy, damage)
+        this.onTrapTriggered = null;     // (trap, enemy)
+        this.onTrapApproach = null;      // (trap, enemy) — ennemi à ~0.5 tuile du piège
+        this.onTowerStunned = null;      // (tower, enemy) — banshee paralyse une tour
         this.onLevelChanged = null;      // (levelData)
     }
 
@@ -253,19 +257,24 @@ export class TDEngine {
 
         const waveConfig = waveSrc[waveSrc === GLOBAL_WAVES ? this.globalWave : this.wave]
                         || GLOBAL_WAVES[GLOBAL_WAVES.length - 1];
+        // Si la vague utilise des gaps, l'ordre est intentionnel — pas de shuffle
+        const hasGaps = waveConfig.some(g => g.gap);
+
         const start = [], others = [], end = [];
         waveConfig.forEach(group => {
-            for (let i = 0; i < group.count; i++) {
-                if (group.position === 'start') start.push(group.type);
-                else if (ENEMY_TYPES[group.type]?.darkness)  end.push(group.type);
-                else others.push(group.type);
-            }
+            const bucket = group.position === 'start' ? start
+                         : ENEMY_TYPES[group.type]?.darkness ? end
+                         : others;
+            for (let i = 0; i < group.count; i++) bucket.push(group.type);
+            if (group.gap && bucket === others) bucket.push({ pause: group.gap });
         });
 
-        // Shuffle les ennemis normaux ; tornades en tête (position:'start') ou en fin
-        for (let i = others.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [others[i], others[j]] = [others[j], others[i]];
+        // Shuffle les ennemis normaux sauf si des gaps structurent la vague
+        if (!hasGaps) {
+            for (let i = others.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [others[i], others[j]] = [others[j], others[i]];
+            }
         }
         this.spawnQueue = [...start, ...others, ...end];
         this._tornadoWarnLastRemaining = 0;
@@ -295,7 +304,8 @@ export class TDEngine {
 
         // HP scales +8% per global wave (wave 1 = base, wave 40 = ~4x)
         const hpScale = 1 + (this.globalWave - 1) * 0.08;
-        const scaledHp = Math.round(config.hp * hpScale);
+        const hpBonus = this.currentLevelData?.enemyHpBonus?.[type] ?? 0;
+        const scaledHp = Math.round(config.hp * hpScale) + hpBonus;
 
         const enemy = {
             id,
@@ -338,8 +348,8 @@ export class TDEngine {
 
         // Warning tornade : une alerte par tornade, ~2.4s avant son apparition
         if (this.onTornadoWarning) {
-            const count = this.spawnQueue.filter(t => ENEMY_TYPES[t]?.darkness).length;
-            const firstDarknessIdx = this.spawnQueue.findIndex(t => ENEMY_TYPES[t]?.darkness);
+            const count = this.spawnQueue.filter(t => typeof t === 'string' && ENEMY_TYPES[t]?.darkness).length;
+            const firstDarknessIdx = this.spawnQueue.findIndex(t => typeof t === 'string' && ENEMY_TYPES[t]?.darkness);
             if (count > 0 && firstDarknessIdx <= 3 && count !== this._tornadoWarnLastRemaining) {
                 this._tornadoWarnLastRemaining = count;
                 this.onTornadoWarning();
@@ -347,9 +357,14 @@ export class TDEngine {
         }
 
         if (this.spawnQueue.length > 0 && now - this.lastSpawn > spawnInterval) {
-            const type = this.spawnQueue.shift();
-            this.lastSpawn = now;
-            if (this.onEnemySpawned) this.onEnemySpawned(type);
+            const entry = this.spawnQueue.shift();
+            if (entry?.pause) {
+                // Sentinelle gap : décale le prochain spawn
+                this.lastSpawn = now + entry.pause - spawnInterval;
+            } else {
+                this.lastSpawn = now;
+                if (this.onEnemySpawned) this.onEnemySpawned(entry);
+            }
         }
 
         // Check wave complete
@@ -441,6 +456,21 @@ export class TDEngine {
                 }
             }
 
+            // Banshee : paralyse les tours proches (cooldown 3s entre chaque cri)
+            if (enemy.type === 'banshee' && !(enemy._stunCooldownUntil > now)) {
+                const { stunRadius, stunDuration } = ENEMY_TYPES.banshee;
+                for (const tower of this.towers) {
+                    const dx = tower.x - enemy.x;
+                    const dy = tower.y - enemy.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < stunRadius && !(tower.stunnedUntil > now)) {
+                        enemy._stunCooldownUntil = now + 3000;
+                        tower.stunnedUntil = now + stunDuration;
+                        if (this.onTowerStunned) this.onTowerStunned(tower, enemy);
+                        break;
+                    }
+                }
+            }
+
             // Smooth pushback: slide toward pushback target before resuming path
             if (enemy._pushbackTarget) {
                 const pbx = enemy._pushbackTarget.x - enemy.x;
@@ -476,11 +506,72 @@ export class TDEngine {
             const dist = Math.sqrt(dx * dx + dy * dy);
 
             const move = speed * dt * 0.35;
+
+            // Pré-déclenchement son piège quand l'ennemi est à ~0.5 tuile
+            if (this.onTrapApproach && dist < 0.5 && dist > move
+                    && !enemy._trapSoundFired && this.traps.length > 0) {
+                const trapAhead = this.traps.find(t => t.x === target.x && t.y === target.y);
+                if (trapAhead) {
+                    enemy._trapSoundFired = true;
+                    this.onTrapApproach(trapAhead, enemy);
+                }
+            }
+
             if (dist <= move) {
                 // Snap au waypoint et repartir immédiatement avec le budget restant
                 enemy.x = target.x;
                 enemy.y = target.y;
                 enemy.pathIndex++;
+                enemy._trapSoundFired = null;
+
+                // Trap check
+                if (this.traps.length > 0) {
+                    const curPos = enemy.route[enemy.pathIndex];
+                    if (curPos) {
+                        const trapIdx = this.traps.findIndex(t => t.x === curPos.x && t.y === curPos.y);
+                        if (trapIdx >= 0) {
+                            const trap = this.traps.splice(trapIdx, 1)[0];
+                            if (this.onTrapTriggered) this.onTrapTriggered(trap, enemy);
+
+                            // Rayon : tuile du piège + 2 tuiles en amont du chemin
+                            const trapRouteIdx = enemy.pathIndex;
+                            const splash = [enemy];
+                            for (let back = 1; back <= 2; back++) {
+                                const tile = enemy.route[trapRouteIdx - back];
+                                if (!tile) continue;
+                                for (const other of this.enemies) {
+                                    if (other !== enemy && Math.round(other.x) === tile.x && Math.round(other.y) === tile.y) {
+                                        splash.push(other);
+                                    }
+                                }
+                            }
+
+                            const dmg = 300;
+                            for (const target of splash) {
+                                target.slowUntil = now + 2000;
+                                target.hp -= dmg;
+                                if (this.onEnemyDamaged) this.onEnemyDamaged(target, dmg);
+                            }
+
+                            // Retirer les morts (boucle séparée pour ne pas perturber l'index i)
+                            for (const target of splash) {
+                                if (target.hp <= 0) {
+                                    const di = this.enemies.indexOf(target);
+                                    if (di >= 0) {
+                                        this.gold += target.reward;
+                                        this.enemies.splice(di, 1);
+                                        if (di <= i) i--;
+                                        if (this.onEnemyDied) this.onEnemyDied(target, di);
+                                        if (this.onGoldChanged) this.onGoldChanged(this.gold);
+                                    }
+                                }
+                            }
+
+                            if (enemy.hp <= 0) continue;
+                        }
+                    }
+                }
+
                 const nextTarget = enemy.route[enemy.pathIndex + 1];
                 if (nextTarget) {
                     const remaining = move - dist;
@@ -504,6 +595,7 @@ export class TDEngine {
     updateTowers(now) {
         for (const tower of this.towers) {
             if (TOWER_TYPES[tower.type]?.illuminates) continue; // tours lumière n'attaquent pas
+            if (tower.stunnedUntil > now) continue;
             if (now - tower.lastShot < tower.cooldown / this.gameSpeed) continue;
 
             // AoE pulse towers (wind) - hit all enemies in range, no projectile
@@ -821,7 +913,14 @@ export class TDEngine {
         this.buffs = { damage: false, slow: false };
         this.hero = null;
         this.litTiles = null;
+        this.traps = [];
         this.initLevel();
+    }
+
+    placeTrap(x, y) {
+        if (!this.traps.find(t => t.x === x && t.y === y)) {
+            this.traps.push({ x, y });
+        }
     }
 
     nextLevel() {

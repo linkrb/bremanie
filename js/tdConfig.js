@@ -22,6 +22,7 @@ export const ENEMY_TYPES = {
     tank2: { hp: 400, speed: 1.2, reward: 5, color: 0x9B59B6, size: 0.95, anchorY: 0.65 },
     boss: { hp: 1400, speed: 0.9, reward: 40, color: 0xC0392B, size: 1.3, anchorY: 0.85 },
     flying:  { hp: 90,   speed: 2.7, reward: 5,   color: 0xBB88FF, size: 0.70, anchorY: 0.5,  flying: true },
+    banshee: { hp: 400, speed: 1.8, reward: 8,   color: 0xAADDFF, size: 1.10, anchorY: 0.65, stunRadius: 2.2, stunDuration: 5000 },
     tornado:      { hp: 600, speed: 1.5, reward: 20, color: 0x88DDFF, size: 2.2, anchorY: 0.85, darkness: true },
     tornado_boss: { hp: 3500, speed: 1.0, reward: 300, color: 0x3399FF, size: 3.2, anchorY: 0.85, darkness: true }
 };
@@ -444,6 +445,63 @@ export const LEVELS = [
             [{ type: 'basic', count: 8 }, { type: 'fast', count: 3 }, { type: 'tank', count: 3 }],
             [{ type: 'basic', count: 8 }, { type: 'fast', count: 3 }, { type: 'tank', count: 6 }],
         ]
+    },
+    // ── Chapitre VI : Forêt de la Vive-Eau — Anna, Martin, Suzanne vs squelettes ──
+    {
+        name: 'Forêt de la Vive-Eau',
+        theme: {
+            id: 'night_forest',  // partage les assets du niveau Forêt de Nuit (ch4) — pas de rechargement
+            noCastle: true,
+            enemyFolder: 'enemies/skeleton',
+            enemyScales: { tank: 1.35 },
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, flying: 0.85 },
+            enemies: {
+                basic:   ['enemy_basic_1','enemy_basic_2','enemy_basic_3',
+                          'enemy_basic_4','enemy_basic_5','enemy_basic_6','enemy_basic_7'],
+                fast:    ['enemy_basic_1','enemy_basic_2','enemy_basic_7'],
+                tank:    'enemy_tank_knight',
+                flying:  'enemy_flying_crow',
+                banshee: 'enemy_banshee',
+            },
+            enemyAnchors: { basic: 0.85, fast: 0.85, tank: 0.85, flying: 0.85, banshee: 0.85 },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
+            grassVariants: [
+                'tile_grass_03', 'tile_grass_03', 'tile_grass_03',
+                'tile_flower_01', 'tile_flower_01',
+            ],
+            decoTiles: [
+                'deco/decor1', 'deco/decor1',
+                'deco/decor2', 'deco/decor2',
+                'deco/decor3',
+            ],
+            decorations: [],
+            decoRate: 0.18,
+        },
+        enemyHpBonus: { basic: 60, fast: 20 },
+        path: [
+            // Entrée milieu-gauche → diagonale droite jusqu'au bord → diagonale gauche → bas
+            {x:1,y:0},  {x:1,y:1},
+            {x:2,y:2},  {x:2,y:3},
+            {x:3,y:4},  {x:3,y:5},  {x:3,y:6},
+            {x:2,y:7},  {x:2,y:8},
+            {x:1,y:9},  {x:1,y:10},
+            {x:0,y:11}, {x:0,y:12}, {x:0,y:13},
+            {x:1,y:14}, {x:1,y:15},
+            {x:2,y:16}, {x:2,y:17},
+            {x:3,y:18},
+            {x:2,y:19}, {x:2,y:20},
+            {x:1,y:21},
+        ],
+        waves: [
+            [{ type: 'basic',   count: 4, gap: 1500 }, { type: 'basic',   count: 7 },{ type: 'tank', count: 2 }],
+            [{ type: 'basic',   count: 4, gap: 2500 }, { type: 'basic',   count: 8, gap: 1500 }, { type: 'tank', count: 2 }, { type: 'flying',  count: 2, gap: 1000 }, { type: 'fast',    count: 4 }, { type: 'basic',   count: 7, gap: 4000 }],
+            [{ type: 'basic',   count: 12, gap: 3500 }, { type: 'flying',  count: 2, gap: 1000 }, { type: 'tank',    count: 2, gap: 4000 }, { type: 'basic',    count: 12 }, { type: 'banshee', count: 1 }],
+            [{ type: 'banshee',   count: 1 }, { type: 'flying',  count: 3 }, { type: 'banshee', count: 2 }, { type: 'fast',    count: 12 }],
+            [{ type: 'fast',    count: 4 }, { type: 'banshee', count: 2 }, { type: 'tank',    count: 3, gap: 1000 },{ type: 'banshee', count: 2 }, { type: 'flying',  count: 3 }, { type: 'basic',   count: 3 }],
+            [{ type: 'basic',   count: 4, gap: 2000 }, { type: 'banshee', count: 2, gap: 1000 }, { type: 'tank',    count: 3, gap: 1000 }, { type: 'fast',    count: 5, gap: 2000 }, { type: 'tank',  count: 4 }, { type: 'banshee', count: 3 }],
+            [{ type: 'banshee',   count: 3, gap: 2000 }, { type: 'flying', count: 8, gap: 100 }, { type: 'tank',    count: 6, gap: 1000 }, { type: 'fast',    count: 12, gap: 2000 }, { type: 'flying',  count: 4, gap: 3500 }, { type: 'basic', count: 14 }],
+            [{ type: 'banshee',   count: 3, gap: 2000 }, { type: 'flying', count: 8, gap: 100 }, { type: 'tank',    count: 6, gap: 1000 }, { type: 'fast',    count: 12, gap: 2000 }, { type: 'banshee', count: 3 }, { type: 'flying',  count: 4, gap: 3500 }, { type: 'basic', count: 14 }],
+        ],
     },
     // ── Chapitre III : Château Boss (1 tornado, même carte que Château) ──
     {

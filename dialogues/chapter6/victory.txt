@@ -1,0 +1,30 @@
+# chapter6/end_escape.txt
+
+@scene scenes/river_bank_running.jpg
+
+anna(left):determined Vite, courez ! On y est presque ! Ne regardez pas derrière vous !
+suzanne(right):determined Allez le gamin, on ne ralentit pas ! Dans l'eau, tout de suite !
+
+@sfx water
+> Le groupe plonge dans les eaux glacées de la Vive-Eau et lutte de toutes ses forces contre le courant pour atteindre l'autre rive.
+> Ils s'effondrent sur la berge opposée, trempés et haletants. 
+> De l'autre côté, les premiers squelettes tentent de traverser, mais le poids de leurs armures rouillées les entraîne immédiatement au fond de la rivière.
+
+@music stop
+@scene scenes/river_bank_crossing.jpg
+
+suzanne(right):laughing Regardez-les couler comme des pierres, ces stupides tas d'os ! Le courant est bien trop fort pour eux !
+martin(right):surprised On... on est passés. Ils ne peuvent plus nous atteindre. On a vraiment réussi !
+
+anna(left):proud On a réussi grâce à toi, Martin. Tes pièges ont cassé leur rythme juste au bon moment. Sans ça, ils nous auraient attrapés avant l'eau.
+martin(right):proud J'ai fait ce que j'ai pu... Mais tes tours ont fait un travail incroyable, Anna ! Elles nous ont couverts tout le long du chemin.
+
+suzanne(right):proud Vous avez manœuvré comme de vrais soldats, tous les deux. Je suis impressionnée.
+anna(left):sad J'espère que Nathan s'en sort aussi bien de son côté... 
+
+anna(left):determined En tout cas, Séraphelle a sous-estimé les enfants de Romain. Reprenons notre souffle, on est en sécurité pour le moment.
+
+@bg black
+
+seraphelle(right):laughing "Sous-estimé"... ? C'est ce que vous croyez, chers enfants.
+seraphelle:proud Profitez bien de ce faux sentiment de sécurité. La vraie traque ne fait que commencer.

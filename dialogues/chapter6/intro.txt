@@ -1,0 +1,25 @@
+# chapter6/escape_intro.txt
+
+@scene scenes/dark-forest.png
+@music strategy
+
+> Au même moment dans la forêt de la Brémanie...
+> Le cliquetis sinistre des armures et le craquement des os se rapprochent.
+> Anna, Martin et Suzanne courent côte à côte, luttant contre l'épuisement.
+
+martin(right):worried Ils arrivent de partout ! À ce rythme, ils vont nous encercler avant qu'on sorte de ce bois !
+suzanne(right):determined Pas si je leur sers de comité d'accueil ! Je vais en briser quelques-uns, ça les calmera !
+anna(left):determined Non Suzanne, reste avec nous ! On ne doit pas se séparer. Il nous faut un plan pour les ralentir tous d'un coup.
+
+suzanne(right):determined La rivière Vive-Eau est à quelques minutes ! Si on atteint le gué, le courant s'occupera d'eux. Mais il faut tenir jusque-là !
+anna(left):proud Alors on va leur barrer la route. Je vais ériger des tours de garde à chaque point stratégique. Leurs flèches ne les tueront pas tous, mais elles briseront leur élan.
+
+martin(right):surprised Des tours ? Ici, dans la boue ?
+martin:worried Je... je pourrais peut-être essayer de t'aider ? J'ai quelques outils... je pourrais fabriquer des pièges pour les ralentir encore plus ? Enfin, si ça peut servir...
+suzanne(right):proud Des pièges ? C'est une idée de génie, frangin ! Pose tes chausse-trapes pendant qu'Anna monte ses tours !
+
+anna(left):determined Martin, c'est parfait ! Ne sois pas timide, on a besoin de ton talent. Suzanne, occupe-toi de ceux qui passent entre les mailles du filet.
+anna:determined On reste groupés ! Je place les tours, Martin pose les pièges, et Suzanne fait le ménage.
+
+suzanne(right):determined En avant ! Destination la rivière !
+anna(left):determined C'est notre seule chance. Courez !

@@ -1,0 +1,4 @@
+> Martin sort de son sac quelques petits pièges métalliques.
+
+martin(left):determined J'ai ça ! Ces pièges peuvent blesser et ralentir les ennemis qui marchent dessus. Il suffit de me désigner un point du chemin pour que j'en tende un.
+martin:worried Mais attention... nous n'en avons que trois dans le sac. Il va falloir bien choisir le moment pour les utiliser !

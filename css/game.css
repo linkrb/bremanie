@@ -24,6 +24,11 @@
 #screen-game.combat-mode.chapter5-mode {
     background: url('/images/scenes/plateau_bois.png') center center / cover no-repeat;
 }
+#screen-game.combat-mode.chapter6-mode {
+    background:
+        linear-gradient(rgba(2,5,18,0.45), rgba(2,5,18,0.45)),
+        url('/images/scenes/dark-forest.png') center center / cover no-repeat;
+}
 #screen-game.combat-mode #game-container { background: transparent; }
 
 /* Top bar masquée (remplacée par HUD flottant) */
@@ -244,6 +249,39 @@
     font-size: 1.1rem; font-weight: 700; cursor: pointer;
     box-shadow: 0 5px 20px rgba(78,205,196,0.4);
 }
+
+/* ── Trap counter (ch6) ─────────────────────────────────────── */
+@property --trap-sweep {
+    syntax: '<angle>';
+    inherits: false;
+    initial-value: 0deg;
+}
+.trap-icon-wrap {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.trap-clock-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+}
+@keyframes trapClockSweep {
+    from { --trap-sweep: 0deg; }
+    to   { --trap-sweep: 360deg; }
+}
+#trap-stat.trap-placing .trap-clock-overlay {
+    opacity: 1;
+    background: conic-gradient(rgba(0,0,0,0.7) var(--trap-sweep), transparent var(--trap-sweep));
+    animation: trapClockSweep 0.9s linear forwards;
+}
+#trap-stat.trap-empty .stat-icon { filter: grayscale(1) brightness(0.4); }
+#trap-stat.trap-empty .trap-clock-overlay { opacity: 1; background: rgba(0,0,0,0.5); }
 
 /* ── Loader ─────────────────────────────────────────────────── */
 .loader-overlay {

@@ -1,0 +1,3 @@
+martin(left):proud J'ai fouillé dans mon sac... j'avais encore des pièces détachées ! J'ai réussi à fabriquer deux nouveaux pièges.
+anna(right):determined Parfait Martin, bien joué. Place-les bien, on en aura besoin pour la suite.
+martin:determined Comptez sur moi !

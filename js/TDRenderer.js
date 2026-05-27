@@ -199,6 +199,17 @@ export class TDRenderer {
             } catch (e) { }
         }
 
+        // Stun cloud (effet banshee — global)
+        if (!this.assets['stun_cloud_frames']) {
+            try {
+                const sheet = await PIXI.Assets.load('/images/td/stun_cloud.png');
+                const fw = sheet.width / 8;
+                this.assets['stun_cloud_frames'] = Array.from({ length: 8 }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
+        }
+
         // Fallbacks globaux
         for (const name of ['tile_grass', 'castle', 'tree', 'tree_pine',
                             'coin', 'heart', 'proj_archer', 'proj_fauconnier',
@@ -224,10 +235,11 @@ export class TDRenderer {
             } catch (e) { }
         }
 
-        // Personnage Suzanne (idle + attack spritesheets)
+        // Personnage Suzanne + Martin
         for (const [key, file] of [
             ['suzanne_idle_frames',   'suzanne_idle.png'],
             ['suzanne_attack_frames', 'suzanne_attack_sheet.png'],
+            ['trap_placing_frames',    'martin/martin_trap.png'],
         ]) {
             try {
                 const sheet = await PIXI.Assets.load(`/images/td/characters/${file}`);
@@ -297,6 +309,24 @@ export class TDRenderer {
             } catch (e) { }
         }
 
+        // Trap tile (piège Martin — ch6, night_forest uniquement)
+        if (themeId === 'night_forest' && !this.assets['trap_tile_night_forest']) {
+            try {
+                this.assets['trap_tile_night_forest'] = await PIXI.Assets.load(`${basePath}/trap_tile.png`);
+            } catch (e) { }
+        }
+
+        // Fire burst effect (déclenchement piège — ch6)
+        if (themeId === 'night_forest' && !this.assets['fire_burst_frames']) {
+            try {
+                const sheet = await PIXI.Assets.load(`${basePath}/fire_burst.png`);
+                const fw = sheet.width / 8;
+                this.assets['fire_burst_frames'] = Array.from({ length: 8 }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
+        }
+
         // Enemies — spritesheet animé (_walk_right.png) uniquement
         const enemyBasePath = theme.enemyFolder ? `/images/td/${theme.enemyFolder}` : basePath;
         for (const enemyAsset of Object.values(theme.enemies || {})) {
@@ -314,6 +344,17 @@ export class TDRenderer {
                     } catch (e) { }
                 }
             }
+        }
+
+        // Banshee scream — animation stun
+        if (theme.enemies?.banshee && !this.assets['banshee_scream_frames']) {
+            try {
+                const sheet = await PIXI.Assets.load(`${enemyBasePath}/enemy_banshee_scream.png`);
+                const fw = sheet.width / 8;
+                this.assets['banshee_scream_frames'] = Array.from({ length: 8 }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
         }
     }
 
@@ -341,6 +382,9 @@ export class TDRenderer {
         this._suzanneSprite = null;
         this._heroChargeBar = null;
         this._heroAura      = null;
+
+        // Reset pièges Martin
+        this._trapSprites = {};
 
         // Remove fullscreen flash overlays added directly to app.stage
         const layers = new Set([this.groundLayer, this.rangeLayer, this.entityLayer,
@@ -867,11 +911,88 @@ export class TDRenderer {
         this._heroAura = new PIXI.Graphics();
         this.groundLayer.addChild(this._heroAura);
 
-        // Barre de charge + indicateur clic (entityLayer)
+        // Barre de charge + indicateur clic (effectLayer — au-dessus des ennemis)
         this._heroChargeBar = new PIXI.Graphics();
-        this.entityLayer.addChild(this._heroChargeBar);
+        this.effectLayer.addChild(this._heroChargeBar);
         this.entityLayer.addChild(sprite);
         this.sortEntities();
+    }
+
+    // ── Pièges Martin (ch6) ──────────────────────────────────────
+
+    playTrapPlacing(gridX, gridY, onDone) {
+        const frames = this.assets['trap_placing_frames'];
+        if (!frames || frames.length === 0) { onDone?.(); return; }
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 0.9);
+        sprite.width  = TILE_WIDTH * 1.1;
+        sprite.height = TILE_WIDTH * 1.1;
+        sprite.animationSpeed = 0.15;
+        sprite.loop = false;
+        const iso = toIso(gridX, gridY);
+        sprite.x = iso.x;
+        sprite.y = iso.y + TILE_HEIGHT / 2;
+        this.entityLayer.addChild(sprite);
+        sprite.play();
+        sprite.onComplete = () => {
+            sprite.destroy();
+            onDone?.();
+        };
+    }
+
+    placeTrapOnTile(gridX, gridY) {
+        const tex = this.assets['trap_tile_night_forest'];
+        if (!tex) return;
+        const frameW = Math.floor(tex.width / 8);
+        const frames = Array.from({ length: 8 }, (_, i) =>
+            new PIXI.Texture({ source: tex.source, frame: new PIXI.Rectangle(i * frameW, 0, frameW, tex.height) })
+        );
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 1);
+        sprite.width  = TILE_WIDTH;
+        sprite.height = TILE_HEIGHT / 2;
+        sprite.animationSpeed = 0.1;
+        sprite.loop = true;
+        const iso = toIso(gridX, gridY);
+        sprite.x = iso.x;
+        sprite.y = iso.y + TILE_HEIGHT / 2 + 45;
+        sprite.play();
+        this.entityLayer.addChild(sprite);
+        if (!this._trapSprites) this._trapSprites = {};
+        this._trapSprites[`${gridX},${gridY}`] = sprite;
+    }
+
+    removeTrapFromTile(gridX, gridY) {
+        if (!this._trapSprites) return;
+        const key = `${gridX},${gridY}`;
+        const sprite = this._trapSprites[key];
+        if (sprite) {
+            sprite.destroy();
+            delete this._trapSprites[key];
+        }
+    }
+
+    playTrapBurstEffect(gridX, gridY) {
+        const frames = this.assets['fire_burst_frames'];
+        if (!frames) return;
+        const iso = toIso(gridX, gridY);
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 1);
+        sprite.width  = TILE_WIDTH * 1.5;
+        sprite.height = TILE_HEIGHT * 3;
+        sprite.x = iso.x;
+        sprite.y = iso.y + TILE_HEIGHT / 2 + 45;
+        sprite.animationSpeed = 0.25;
+        sprite.loop = false;
+        sprite.onComplete = () => sprite.destroy();
+        this.entityLayer.addChild(sprite);
+        sprite.play();
+    }
+
+    clearTrapSprites() {
+        if (!this._trapSprites) return;
+        for (const s of Object.values(this._trapSprites)) s.destroy();
+        this._trapSprites = {};
     }
 
     updateHeroCharge(charge, maxCharge, now) {
@@ -1528,6 +1649,10 @@ export class TDRenderer {
         tile.tint = canPlace ? 0x88ff88 : 0xff8888;
     }
 
+    setTrapHoverTint(tile) {
+        tile.tint = 0xffaa44;
+    }
+
     clearTileHoverTint(tile) {
         if (this._litTiles) {
             const key = `${tile.gridX},${tile.gridY}`;
@@ -1535,6 +1660,54 @@ export class TDRenderer {
         } else {
             tile.tint = tile.originalTint || 0xffffff;
         }
+    }
+
+    applyStunTint(tower) {
+        if (!tower.sprite) return;
+        tower.sprite.tint = 0x88ccff;
+        const check = () => {
+            if (!tower.sprite) return;
+            if (performance.now() < tower.stunnedUntil) {
+                tower.sprite.tint = (Math.floor(performance.now() / 200) % 2 === 0) ? 0x88ccff : 0xaaddff;
+                requestAnimationFrame(check);
+            } else {
+                tower.sprite.tint = 0xffffff;
+            }
+        };
+        requestAnimationFrame(check);
+    }
+
+    showStunCloud(tower, duration) {
+        const frames = this.assets['stun_cloud_frames'];
+        if (!frames) return;
+        const iso = toIso(tower.x, tower.y);
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 1);
+        sprite.width  = TILE_WIDTH * 1.1;
+        sprite.height = TILE_HEIGHT * 2.0;
+        sprite.x = iso.x;
+        sprite.y = iso.y + TILE_HEIGHT / 2;
+        sprite.animationSpeed = 0.15;
+        sprite.loop = true;
+        this.entityLayer.addChild(sprite);
+        sprite.play();
+        setTimeout(() => sprite.destroy(), duration);
+    }
+
+    playBansheeScream(enemy) {
+        const screamFrames = this.assets['banshee_scream_frames'];
+        if (!screamFrames || !enemy.body || !(enemy.body instanceof PIXI.AnimatedSprite)) return;
+        const walkFrames = enemy.body.textures;
+        enemy.body.textures = screamFrames;
+        enemy.body.loop = false;
+        enemy.body.onComplete = () => {
+            if (!enemy.body) return;
+            enemy.body.textures = walkFrames;
+            enemy.body.loop = true;
+            enemy.body.onComplete = null;
+            enemy.body.play();
+        };
+        enemy.body.gotoAndPlay(0);
     }
 
     highlightTowerSprite(tower) {

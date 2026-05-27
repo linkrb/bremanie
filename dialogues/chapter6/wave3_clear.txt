@@ -1,0 +1,6 @@
+martin(left):worried Anna... tu as vu comme nos tours se sont figées ? Cette créature a fait taire nos archers d'un seul cri !
+anna(right):worried Une banshee... j'en ai lu une description dans un vieux grimoire de ma grand-mère. Un spectre dont le cri paralyse tout ce qu'il atteint. Les tours dans son couloir deviennent inutiles le temps qu'elle passe.
+suzanne(right):angry C'est une abomination ! Il faut la tuer avant qu'elle arrive à portée !
+anna(left):determined On ne peut pas se contenter d'une seule ligne de tir. Si une banshee passe, il faut d'autres tours en retrait pour prendre le relais.
+martin:worried Et si y'en a plusieurs en même temps ?
+anna(right):determined On multiplie les lignes. Et on s'assure d'avoir des fauconniers en hauteur, ils ne l'entendent pas de là où ils sont.

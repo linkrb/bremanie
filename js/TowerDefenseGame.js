@@ -39,9 +39,13 @@ export class TowerDefenseGame {
         this.onChateauWin       = null;  // ()
         this.onChateauBossWin   = null;  // ()
         this.onChateauFinalWin  = null;  // ()
+        this.onChapter6Win      = null;  // ()
+        this._chapter6Traps     = 0;
+        this._trapPlacing     = false;
         this.onTornadoSpawned   = null;  // ()
         this.onTowerPlaced      = null;  // () — son de pose
         this.onHeroPunch        = null;  // () — bruitage coup héros
+        this.onTrapTriggered    = null;  // (trap, enemy)
     }
 
     // Affiche un dialogue en pausant le jeu, puis reprend à la fin
@@ -183,6 +187,12 @@ export class TowerDefenseGame {
             this.renderer.removeEnemyFromStage(enemy);
         };
 
+        this.engine.onTowerStunned = (tower, enemy) => {
+            this.renderer.applyStunTint(tower);
+            this.renderer.showStunCloud(tower, ENEMY_TYPES.banshee.stunDuration);
+            this.renderer.playBansheeScream(enemy);
+        };
+
         this.engine.onTowerFired = (tower, target, projectile) => {
             this.renderer.animateTowerShot(tower);
             this.renderer.createMuzzleFlash(tower, target);
@@ -319,6 +329,11 @@ export class TowerDefenseGame {
                         this.renderer.showGhostTower(grid.x, grid.y, this.selectedTower, orientation);
                     }
                 }
+            } else if (this._chapter6Mode && cell.type === 'path'
+                    && this._chapter6Traps > 0 && !this._trapPlacing
+                    && !this.engine.traps.find(t => t.x === grid.x && t.y === grid.y)) {
+                app.stage.cursor = 'pointer';
+                this.renderer.setTrapHoverTint(tile);
             }
             this.hoveredTile = tile;
         });
@@ -350,6 +365,12 @@ export class TowerDefenseGame {
         if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return;
 
         const cell = this.engine.grid[y][x];
+
+        // Ch6 : clic sur tuile de chemin → pose de piège Martin
+        if (this._chapter6Mode && cell.type === 'path' && this._chapter6Traps > 0 && !this._trapPlacing) {
+            this._placeTrap(x, y);
+            return;
+        }
 
         // Click on existing tower -> show info panel
         if (cell.tower) {
@@ -642,6 +663,7 @@ export class TowerDefenseGame {
         if (this._chateauFinalMode){ this.onChateauFinalWin?.(); return; }
         if (this._chapter4Mode)    { this.onChapter4Win?.();     return; }
         if (this._chapter5Mode)    { this.onChapter5Win?.();     return; }
+        if (this._chapter6Mode)    { this.onChapter6Win?.();     return; }
         this._continuing = true;
     }
 
@@ -756,6 +778,31 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // ── Pièges Martin (ch6) ──────────────────────────────────────
+
+    _placeTrap(x, y) {
+        if (this._trapPlacing) return;
+        if (this.engine.traps.find(t => t.x === x && t.y === y)) return;
+        this._trapPlacing = true;
+        this.updateTrapUI();
+        this.renderer.playTrapPlacing(x, y, () => {
+            this.engine.placeTrap(x, y);
+            this.renderer.placeTrapOnTile(x, y);
+            this._chapter6Traps--;
+            this._trapPlacing = false;
+            this.updateTrapUI();
+        });
+    }
+
+    updateTrapUI() {
+        const el    = document.getElementById('trap-stat');
+        const count = document.getElementById('trap-count');
+        if (!el) return;
+        count.textContent = this._chapter6Traps;
+        el.classList.toggle('trap-placing', this._trapPlacing);
+        el.classList.toggle('trap-empty',   !this._trapPlacing && this._chapter6Traps <= 0);
+    }
+
     async setNormalMode() {
         this._scriptedMode = false;
         this._tutorialMode = false;
@@ -767,6 +814,7 @@ export class TowerDefenseGame {
         if (this._fortMode) { this.setFortMode(); return; }
         if (this._chapter4Mode) { this.setChapter4Mode(); return; }
         if (this._chapter5Mode) { this.setChapter5Mode(); return; }
+        if (this._chapter6Mode) { this.setChapter6Mode(); return; }
         if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
         if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
         if (this._chateauMode)     { this.setChateauMode();     return; }
@@ -1049,6 +1097,63 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // Chapitre 6 : Forêt de la Vive-Eau — Anna, Martin, Suzanne
+    async setChapter6Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chapter6Mode    = true;
+        this._chapter6Traps   = 3;
+        this._trapPlacing   = false;
+        this._availableTowers = new Set(['archer', 'mage', 'fauconnier']);
+
+        const _img = document.getElementById('hero-ability-img');
+        if (_img && !_img.src.includes('suzanne_attack')) _img.src = '/images/suzanne_attack.png';
+
+        const levelIndex = LEVELS.findIndex(l => l.name === 'Forêt de la Vive-Eau');
+        if (levelIndex < 0) { console.error('[Brémanie] Niveau Forêt de la Vive-Eau introuvable'); return; }
+        this.engine.resetGameState(levelIndex, true);
+        this.engine.gold   = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        await this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+
+        // Suzanne présente dès le début — tuile bas-droite
+        const tx = GRID_WIDTH - 1, ty = GRID_HEIGHT - 1;
+        const towerAtTile = this.engine.towers.find(t => t.x === tx && t.y === ty);
+        if (towerAtTile) {
+            this.engine.grid[ty][tx].tower = null;
+            const idx = this.engine.towers.indexOf(towerAtTile);
+            if (idx > -1) this.engine.towers.splice(idx, 1);
+            this.renderer.removeTowerFromStage(towerAtTile);
+        }
+        this.engine.grid[ty][tx].blockedByHero = true;
+        this.renderer.placeSuzanneOnTile(tx, ty);
+        this.engine.initHero();
+        this.engine.hero.charge = this.engine.hero.maxCharge;
+        this.renderer.onHeroClick = () => this._triggerHeroAbility();
+
+        // Pièges Martin
+        this.engine.onTrapTriggered = (trap, enemy) => {
+            this.renderer.playTrapBurstEffect(trap.x, trap.y);
+            setTimeout(() => this.renderer.removeTrapFromTile(trap.x, trap.y), 350);
+            this.onTrapTriggered?.(trap, enemy);
+        };
+
+        // UI piège
+        const trapStat = document.getElementById('trap-stat');
+        if (trapStat) trapStat.style.display = '';
+        this.updateTrapUI();
+
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+        this.updateUI();
+    }
+
     _resetForMode() {
         this._chapter2Mode = false;
         this._fortMode     = false;
@@ -1057,7 +1162,14 @@ export class TowerDefenseGame {
         this._chateauFinalMode = false;
         this._chapter4Mode     = false;
         this._chapter5Mode     = false;
+        this._chapter6Mode     = false;
+        this._chapter6Traps    = 0;
+        this._trapPlacing    = false;
         this._availableTowers  = new Set(['archer']);
+        const trapStat = document.getElementById('trap-stat');
+        if (trapStat) trapStat.style.display = 'none';
+        this.engine.traps = [];
+        this.renderer.clearTrapSprites?.();
         // Restaure l'UI
         const show = (sel) => document.querySelector(sel)?.style.removeProperty('display');
         show('.tower-bar');

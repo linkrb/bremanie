@@ -6,6 +6,7 @@ import { setup as setupChapter2 } from './chapters/chapter2.js';
 import { setup as setupChapter3 } from './chapters/chapter3.js';
 import { setup as setupChapter4 } from './chapters/chapter4.js';
 import setupChapter5 from './chapters/chapter5.js';
+import { setup as setupChapter6 } from './chapters/chapter6.js';
 import { SaveManager }     from './SaveManager.js';
 
 // ── Instances globales ────────────────────────────────────────
@@ -149,6 +150,7 @@ function showDefeatBadgeInteractive(next)  { showBadgeInteractive(defeatBadge,  
 const combatThemes = {
     4: 'night_battle_theme',
     5: 'chessmatch_theme',
+    6: 'strategy',
 };
 function startCombatMusic() {
     if (combatMusicStarted) return;
@@ -161,6 +163,7 @@ const heroPortraitImg = document.getElementById('hero-portrait-img');
 const heroPortraits = {
     4: '/images/anna/neutral.png',
     // 5: '/images/xxx/neutral.png',  // TODO: portrait héros ch5
+    6: '/images/anna/neutral.png',
 };
 const heroPortraitDefault = '/images/nathan/neutral.png';
 
@@ -169,6 +172,7 @@ function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('chapter2-mode', on && chapter === 2);
     screenGame.classList.toggle('chapter4-mode', on && chapter === 4);
     screenGame.classList.toggle('chapter5-mode', on && chapter === 5);
+    screenGame.classList.toggle('chapter6-mode', on && chapter === 6);
     heroPortraitImg.src = (on && heroPortraits[chapter]) || heroPortraitDefault;
     currentCombatChapter = on ? chapter : null;
     combatMusicStarted = false;
@@ -211,8 +215,12 @@ function onChapterEnd(chapterNumber) {
         showChapterEnd('Chapitre IV', () => chapter5.startChapter5());
     }
     if (chapterNumber === 5) {
+        SaveManager.save({ stage: 'chapter6_start' });
+        showChapterEnd('Chapitre V', () => chapter6.startChapter6());
+    }
+    if (chapterNumber === 6) {
         SaveManager.save({ stage: 'complete' });
-        showChapterEnd('Chapitre V', () => { /* chapitre VI à venir */ });
+        showChapterEnd('Chapitre VI', () => { /* chapitre VII à venir */ });
     }
 }
 
@@ -247,8 +255,14 @@ async function resumeFromSave(save) {
         return;
     }
 
+    if (save.stage === 'chapter6_start') {
+        chapter6._preload();
+        chapter6.startChapter6();
+        return;
+    }
+
     if (save.stage === 'complete') {
-        showChapterEnd('Chapitre V', () => { /* Chapitre VI à venir */ });
+        showChapterEnd('Chapitre VI', () => { /* Chapitre VII à venir */ });
         return;
     }
 
@@ -268,6 +282,7 @@ const chapter2 = setupChapter2(ctx);
 const chapter3 = setupChapter3(ctx);
 const chapter4 = setupChapter4(ctx);
 const chapter5 = setupChapter5(ctx);
+const chapter6 = setupChapter6(ctx);
 
 // ── Lazy init + callbacks ─────────────────────────────────────
 
@@ -291,6 +306,7 @@ function wireGameCallbacks() {
     chapter3.wireCallbacks(game);
     chapter4.wireCallbacks(game);
     chapter5.wireCallbacks(game);
+    chapter6.wireCallbacks(game);
 }
 
 // Démarre l'init du jeu en tâche de fond, sans spinner (appelé dès que possible)
@@ -379,6 +395,11 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true;
         return game.setChapter5Mode();
+    } else if (mode === 'chapter6') {
+        setCombatMode(true, 6);
+        showCombatBadge();
+        skipEntryWaveBadge = true;
+        return game.setChapter6Mode();
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -412,6 +433,7 @@ const CHAPTERS = [
     { num: 3, title: "L'Assaut du Château",   sub: 'Le château assiégé',      start: () => chapter3.startChapter3()  },
     { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
     { num: 5, title: 'La Leçon du Roi',         sub: 'Le plateau enchanté',     start: () => chapter5.startChapter5()  },
+    { num: 6, title: '[Titre Chapitre VI]',      sub: '[Sous-titre]',            start: () => chapter6.startChapter6()  },
 ];
 
 function showChapterSelect() {
@@ -524,3 +546,5 @@ if (dev === 'end_ch4')    { chapter4._preload(); showDialogue('chapter4/victory'
 if (dev === 'chapter5')   { chapter5._preload(); chapter5.startChapter5(); }
 if (dev === 'combat_ch5') { chapter5._preload(); ensureGameInit().then(() => showGame('chapter5')); }
 if (dev === 'end_ch5')    { chapter5._preload(); showDialogue('chapter5/victory', () => { onChapterEnd(5); }); }
+if (dev === 'chapter6')   { chapter6._preload(); chapter6.startChapter6(); }
+if (dev === 'end_ch6')    { chapter6._preload(); showDialogue('chapter6/victory', () => { onChapterEnd(6); }); }

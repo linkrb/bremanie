@@ -1,0 +1,8 @@
+anna(left):surprised Je l'entends ! J'entends le courant ! La rivière Vive-Eau est juste devant nous !
+suzanne(right):angry Tant mieux, parce que ces sacs d'os ne lâchent rien ! Ils grouillent de partout, on va se faire submerger si on s'arrête une seconde !
+
+martin(right):determined J'ai une bonne nouvelle ! En courant, j'ai réussi à bricoler deux derniers pièges avec des bouts de ferraille de mon sac ! 
+martin:worried C'est tout ce qu'il me reste, mais ça devrait briser leur élan pour le sprint final.
+
+anna(left):determined C'est exactement ce qu'il nous fallait, Martin ! 
+anna:determined Ne relâchez rien maintenant ! Accrochez-vous, on donne tout pour cette dernière percée vers l'eau !

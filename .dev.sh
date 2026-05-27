@@ -18,11 +18,12 @@ CSS_LINKS = """\
     <link rel="stylesheet" href="/css/towers.css">
     <link rel="stylesheet" href="/css/hero-ability.css">
     <link rel="stylesheet" href="/css/chapter-select.css">"""
-html = html.replace('    <link rel="stylesheet" href="/dist/css/styles.min.css">', CSS_LINKS)
+html = re.sub(r' {4}<link rel="stylesheet" href="/dist/css/styles\.min\.css(?:\?v=[^"]*)?">',
+              CSS_LINKS.rstrip(), html)
 
 # JS → chemins sources
-html = html.replace('src="/dist/js/main.js"', 'src="/js/main.js"')
-html = re.sub(r"from '/dist/js/([^']*)'", r"from '/js/\1'", html)
+html = re.sub(r'src="/dist/js/main\.js(?:\?v=[^"]*)?\"', 'src="/js/main.js"', html)
+html = re.sub(r"from '/dist/js/([^'?]*)(?:\?v=[^']*)?'", r"from '/js/\1'", html)
 
 with open(sys.argv[1], 'w') as f:
     f.write(html)
