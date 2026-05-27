@@ -24,6 +24,9 @@ anna(left):sad J'espère que Nathan s'en sort aussi bien de son côté...
 
 anna(left):determined En tout cas, Séraphelle a sous-estimé les enfants de Romain. Reprenons notre souffle, on est en sécurité pour le moment.
 
+
+@hide right
+@hide left
 @bg black
 
 seraphelle(right):laughing "Sous-estimé"... ? C'est ce que vous croyez, chers enfants.
