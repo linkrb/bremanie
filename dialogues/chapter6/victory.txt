@@ -29,5 +29,6 @@ anna(left):determined En tout cas, Séraphelle a sous-estimé les enfants de Rom
 @hide left
 @bg black
 
+> ...
 seraphelle(right):laughing "Sous-estimé"... ? C'est ce que vous croyez, chers enfants.
 seraphelle:proud Profitez bien de ce faux sentiment de sécurité. La vraie traque ne fait que commencer.
