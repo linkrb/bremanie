@@ -8,8 +8,8 @@
     <link rel="icon" href="data:,">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://pixijs.download/v8.0.0/pixi.min.js"></script>
-    <link rel="stylesheet" href="/dist/css/styles.min.css?v=d301623">
+    <script src="https://pixijs.download/v8.6.6/pixi.min.js"></script>
+    <link rel="stylesheet" href="/dist/css/styles.min.css?v=991da26">
 </head>
 <body>
 
@@ -70,6 +70,9 @@
 
     <!-- ══ ÉCRAN 3 : JEU TD ══════════════════════════════════ -->
     <div id="screen-game" class="screen">
+
+        <!-- Décor de combat sur calque haut (pan caméra ch7) -->
+        <div id="combat-bg"></div>
 
         <!-- Portrait héros (visible en mode combat, src changée via JS) -->
         <div class="hero-portrait">
@@ -199,7 +202,7 @@
         }
     </script>
 
-    <script type="module" src="/dist/js/main.js?v=d301623"></script>
+    <script type="module" src="/dist/js/main.js?v=991da26"></script>
     <script type="module">
         import { SaveManager } from '/js/SaveManager.js?v=c18637e';
         const save = SaveManager.load();
