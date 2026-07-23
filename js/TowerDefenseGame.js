@@ -1311,8 +1311,10 @@ export class TowerDefenseGame {
         this.engine.gold   = 150;
         this.engine.health = 15;
         this.engine.maxHealth = 15;
-        await this.renderer.setTheme(this.engine.currentLevelData);
+        // Vider la map précédente AVANT le chargement (long) du thème trône,
+        // sinon les tuiles prairie du niveau par défaut restent visibles → flash.
         this.renderer.clearStage();
+        await this.renderer.setTheme(this.engine.currentLevelData);
         this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
         this.renderer.calculateOffset();
         this.selectedPlacedTower = null;
