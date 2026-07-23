@@ -29,6 +29,7 @@ export class TDRenderer {
         this._lightingTweenFn = null; // tween de transition lumière/obscurité
         // Système héros
         this.onHeroClick = null;
+        this.onAllyImpact = null;      // () — allié qui touche le sol (chute) ou décolle (départ)
         this._suzanneSprite = null;
         this._suzanneGridX = 0;
         this._suzanneGridY = 0;
@@ -46,7 +47,7 @@ export class TDRenderer {
         await this.app.init({
             width,
             height,
-            backgroundColor: 0x1a1a2e,
+            backgroundColor: 0x000000, // neutre — jamais visible (alpha 0), évite tout voile teinté
             backgroundAlpha: 0,
             antialias: true,
             resolution: window.devicePixelRatio || 1,
@@ -79,9 +80,10 @@ export class TDRenderer {
     calculateOffset() {
         // Bounding box staggered iso avec emboîtement (row advance = TH/4 = TH_face/2)
         // Largeur : GRID_WIDTH tuiles + demi-tuile de décalage (rangées impaires)
-        // Hauteur : GRID_HEIGHT rangées × TH/4 (advance) + TH/2 (marge : demi-losange haut+bas)
+        // Hauteur : gridH rangées × TH/4 (advance) + TH/2 (marge : demi-losange haut+bas)
+        const gridH = this._gridHeight ?? GRID_HEIGHT;
         const mapWidth  = GRID_WIDTH * TILE_WIDTH + TILE_WIDTH / 2;
-        const mapHeight = GRID_HEIGHT * (TILE_HEIGHT / 4) + TILE_HEIGHT / 2;
+        const mapHeight = gridH * (TILE_HEIGHT / 4) + TILE_HEIGHT / 2;
 
         const pad = this.app.screen.width < 600 ? 4 : 10;
         const scaleX = (this.app.screen.width  - pad * 2) / mapWidth;
@@ -92,14 +94,17 @@ export class TDRenderer {
         this.offsetX = (this.app.screen.width  - mapWidth  * this.mapScale) / 2;
 
         // Centrage vertical : la grille va de sprite.y=0 (row 0) à sprite.y=(GH-1)*TH/4 (last row)
-        const gridCenterY = ((GRID_HEIGHT - 1) / 2) * (TILE_HEIGHT / 4);
+        const gridCenterY = ((gridH - 1) / 2) * (TILE_HEIGHT / 4);
         // Les decoTiles de la rangée 0 montent jusqu'à ~180px au-dessus de l'origine du layer.
         // offsetY doit être suffisamment grand pour qu'ils restent dans le canvas.
         const DECO_TOP_PAD = 180;
-        this.offsetY = Math.max(
-            this.app.screen.height / 2 - gridCenterY * this.mapScale,
-            DECO_TOP_PAD * this.mapScale
-        );
+        this.offsetY = this.currentTheme?.pinTop
+            // pinTop : grille ancrée en haut du canvas (marge mini pour les décos de la rangée 0)
+            ? DECO_TOP_PAD * this.mapScale
+            : Math.max(
+                this.app.screen.height / 2 - gridCenterY * this.mapScale,
+                DECO_TOP_PAD * this.mapScale
+            );
 
         [this.groundLayer, this.rangeLayer, this.entityLayer, this.projectileLayer, this.effectLayer, this.debugLayer].forEach(layer => {
             layer.x = this.offsetX;
@@ -284,6 +289,17 @@ export class TDRenderer {
             try {
                 this.assets[key] = await PIXI.Assets.load(`${basePath}/${tileName}.png`);
             } catch (e) { }
+            // Variante animée : uniquement si listée dans theme.animatedDecoTiles (évite les 404)
+            if (theme.animatedDecoTiles?.includes(tileName)) {
+                try {
+                    const sheet = await PIXI.Assets.load(`${basePath}/${tileName}_sheet.png`);
+                    const n  = Math.round(sheet.width / sheet.height);
+                    const fw = sheet.width / n;
+                    this.assets[`${tileName}_frames_${themeId}`] = Array.from({ length: n }, (_, i) =>
+                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                    );
+                } catch (e) { }
+            }
         }
 
         // Grass variants
@@ -300,6 +316,75 @@ export class TDRenderer {
             try {
                 this.assets[`castle_${themeId}`] = await PIXI.Assets.load(`${basePath}/castle.png`);
             } catch (e) { }
+        }
+
+        // Alliés décoratifs posés sur des tuiles (ex. Nathan/David ch7) + poussière d'impact
+        for (const ally of (theme.allies || [])) {
+            const key = `ally_${ally.name}_${themeId}`;
+            if (this.assets[`${key}_frames`]) continue;
+            try {
+                const sheet = await PIXI.Assets.load(`${basePath}/hero_${ally.name}_sheet.png`);
+                const n  = Math.round(sheet.width / sheet.height);
+                const fw = sheet.width / n;
+                this.assets[`${key}_frames`] = Array.from({ length: n }, (_, i) =>
+                    new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                );
+            } catch (e) { }
+        }
+        if (theme.allies?.length && !this.assets[`impact_dust_${themeId}`]) {
+            try {
+                this.assets[`impact_dust_${themeId}`] = await PIXI.Assets.load(`${basePath}/impact_dust.png`);
+            } catch (e) { }
+        }
+        if (theme.allies?.length && !this.assets[`claymore_${themeId}`]) {
+            try {
+                this.assets[`claymore_${themeId}`] = await PIXI.Assets.load(`${basePath}/claymore.png`);
+            } catch (e) { }
+            // Dragon en vol (raid aérien) — spritesheet
+            try {
+                const ds = await PIXI.Assets.load(`${basePath}/dragon_fly_sheet.png`);
+                const n = Math.round(ds.width / ds.height), fw = ds.width / n;
+                this.assets[`dragon_fly_frames_${themeId}`] = Array.from({ length: n }, (_, i) =>
+                    new PIXI.Texture({ source: ds.source, frame: new PIXI.Rectangle(i * fw, 0, fw, ds.height) })
+                );
+            } catch (e) { }
+            // Nuage de poussière (tour détruite par le dragon) — spritesheet animée
+            try {
+                const dc = await PIXI.Assets.load(`${basePath}/dust_cloud_sheet.png`);
+                const n = Math.round(dc.width / dc.height), fw = dc.width / n;
+                this.assets[`dust_cloud_frames_${themeId}`] = Array.from({ length: n }, (_, i) =>
+                    new PIXI.Texture({ source: dc.source, frame: new PIXI.Rectangle(i * fw, 0, fw, dc.height) })
+                );
+            } catch (e) { }
+            // David de dos qui lève son épée (pouvoir) — spritesheet optionnelle
+            try {
+                const sh = await PIXI.Assets.load(`${basePath}/hero_david_raise_sheet.png`);
+                const n  = Math.round(sh.width / sh.height), fw = sh.width / n;
+                this.assets[`david_raise_frames_${themeId}`] = Array.from({ length: n }, (_, i) =>
+                    new PIXI.Texture({ source: sh.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sh.height) })
+                );
+            } catch (e) { }
+        }
+
+        // Boss posé sur la première tuile de chemin (ex. Romain possédé ch7)
+        if (theme.spawnBoss) {
+            try {
+                this.assets[`${theme.spawnBoss}_${themeId}`] = await PIXI.Assets.load(`${basePath}/${theme.spawnBoss}.png`);
+            } catch (e) { }
+            // Spritesheets du boss : idle (_sheet), invocation (_summon_sheet), + VFX mains (summon_hands)
+            const _loadSheet = async (file, key) => {
+                try {
+                    const sheet = await PIXI.Assets.load(`${basePath}/${file}.png`);
+                    const n  = Math.round(sheet.width / sheet.height);
+                    const fw = sheet.width / n;
+                    this.assets[key] = Array.from({ length: n }, (_, i) =>
+                        new PIXI.Texture({ source: sheet.source, frame: new PIXI.Rectangle(i * fw, 0, fw, sheet.height) })
+                    );
+                } catch (e) { }
+            };
+            await _loadSheet(`${theme.spawnBoss}_sheet`,        `${theme.spawnBoss}_frames_${themeId}`);
+            await _loadSheet(`${theme.spawnBoss}_summon_sheet`, `${theme.spawnBoss}_summon_frames_${themeId}`);
+            await _loadSheet('summon_hands_sheet',              `summon_hands_frames_${themeId}`);
         }
 
         // Scene background
@@ -360,6 +445,7 @@ export class TDRenderer {
 
     async setTheme(levelData) {
         this.currentTheme = levelData?.theme || null;
+        this._gridHeight  = levelData?.gridHeight ?? GRID_HEIGHT;
         const bg = this.currentTheme?.bgColor;
         if (bg !== undefined) {
             this.app.renderer.background.color = bg;
@@ -506,7 +592,7 @@ export class TDRenderer {
 
         const isPath = (cell) => cell && (cell.type === 'path' || cell.type === 'spawn');
 
-        for (let y = 1; y < GRID_HEIGHT - 1; y++) {
+        for (let y = 1; y < grid.length - 1; y++) {
             for (let x = 1; x < GRID_WIDTH - 1; x++) {
                 if (grid[y][x].type !== 'grass') continue;
                 const up    = grid[y-1]?.[x];
@@ -569,7 +655,7 @@ export class TDRenderer {
             : null;
 
         // Staggered iso : ordre rangée par rangée (haut → bas) = algorithme du peintre correct
-        for (let y = 0; y < GRID_HEIGHT; y++) {
+        for (let y = 0; y < grid.length; y++) {
             for (let x = 0; x < GRID_WIDTH; x++) {
 
                 const iso = toIso(x, y);
@@ -586,16 +672,20 @@ export class TDRenderer {
                     let texture;
                     let cornerFlip = 0; // 0=normal, -1=miroir
                     let decoTileScale = 1.0;
+                    let decoFrames = null; // frames si la déco a une variante animée (_sheet.png)
                     if (cell.type === 'grass') {
                         // Deco tiles (base iso baked-in) — remplacent la tuile herbe
-                        const _onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
+                        const _onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === grid.length - 1;
                         const decoTileList = theme?.decoTiles;
                         if (!_onBorder && !sceneBgTex && decoTileList?.length > 0) {
                             if (Math.random() < decoRate) {
                                 const entry = decoTileList[Math.floor(Math.random() * decoTileList.length)];
                                 const tileName = typeof entry === 'string' ? entry : entry.name;
                                 const decoTex = this.assets[`${tileName}_${theme?.id}`];
-                                if (decoTex) { texture = decoTex; isDecoTile = true; decoTileScale = entry.scale ?? 1.0; }
+                                if (decoTex) {
+                                    texture = decoTex; isDecoTile = true; decoTileScale = entry.scale ?? 1.0;
+                                    decoFrames = this.assets[`${tileName}_frames_${theme?.id}`] || null;
+                                }
                             }
                         }
                         if (!isDecoTile) {
@@ -620,7 +710,14 @@ export class TDRenderer {
                         texture = grassTex;
                     }
 
-                    tile = new PIXI.Sprite(texture);
+                    if (isDecoTile && decoFrames) {
+                        // Déco animée : même pattern que tours/Suzanne (AnimatedSprite ~8fps)
+                        tile = new PIXI.AnimatedSprite(decoFrames);
+                        tile.animationSpeed = 0.13;
+                        tile.gotoAndPlay(Math.floor(Math.random() * decoFrames.length)); // désynchronise les instances
+                    } else {
+                        tile = new PIXI.Sprite(texture);
+                    }
                     const tileScale = (this.currentTheme && this.currentTheme.tileScale) || 1.0;
                     if (isDecoTile) {
                         tile.anchor.set(0.5, 1.0);
@@ -633,7 +730,8 @@ export class TDRenderer {
                         if (cornerFlip !== 0) tile.scale.x = cornerFlip * Math.abs(tile.scale.x);
                     }
 
-                    if (cell.type === 'spawn') {
+                    // Teinte rouge du spawn : inutile si un boss marque déjà le départ
+                    if (cell.type === 'spawn' && !theme?.spawnBoss) {
                         tile.tint = 0xffaaaa;
                     }
                 } else {
@@ -664,6 +762,8 @@ export class TDRenderer {
                 tile.x = iso.x;
                 // Deco tile : ancre bas → bas de la face diamant ; normal : centre de la face
                 tile.y = iso.y + TILE_HEIGHT / 2 + (isDecoTile ? TILE_HEIGHT / 4 : 0);
+                // Clé de profondeur = position au SOL (le décalage d'ancrage ne doit pas fausser le tri)
+                tile._sortY = iso.y + TILE_HEIGHT / 2;
                 tile.gridX = x;
                 tile.gridY = y;
                 tile.eventMode = 'none';
@@ -673,6 +773,44 @@ export class TDRenderer {
 
                 (isDecoTile ? this.entityLayer : this.groundLayer).addChild(tile);
                 this.tileSprites.push(tile);
+
+                if (cell.type === 'spawn' && theme?.spawnBoss) {
+                    // Boss invocateur fixé sur la première tuile de chemin (Romain possédé ch7)
+                    const bossFrames = this.assets[`${theme.spawnBoss}_frames_${theme.id}`];
+                    const bossTex    = this.assets[`${theme.spawnBoss}_${theme.id}`];
+                    if (bossFrames || bossTex) {
+                        const boss = bossFrames ? new PIXI.AnimatedSprite(bossFrames) : new PIXI.Sprite(bossTex);
+                        if (bossFrames) { boss.animationSpeed = 0.13; boss.play(); }
+                        boss.anchor.set(0.5, theme.spawnBossAnchorY ?? 0.75);
+                        const bScale = theme.spawnBossScale ?? 1.8;
+                        boss.width  = TILE_WIDTH * bScale;
+                        boss.height = TILE_WIDTH * bScale;
+                        boss.x = iso.x + (theme.spawnBossOffsetX ?? 0);
+                        boss.y = iso.y + TILE_HEIGHT * 0.6 + (theme.spawnBossOffsetY ?? 0);
+                        this.entityLayer.addChild(boss);
+                        this._bossSprite = boss;
+                        this._bossIso    = { x: boss.x, y: iso.y };
+                        this._bossIdleFrames   = bossFrames || null;
+                        this._bossSummonFrames = this.assets[`${theme.spawnBoss}_summon_frames_${theme.id}`] || null;
+                        this._bossSummoning    = false;
+                        // VFX des mains : sur la tuile de CHEMIN devant Romain (là où les ennemis
+                        // émergent), sinon elles restent cachées sous son grand sprite
+                        let handTile = { x: iso.x, y: iso.y + TILE_HEIGHT / 2 };
+                        const neighbours = [[x, y + 1], [x + 1, y], [x - 1, y], [x, y - 1]];
+                        for (const [nx, ny] of neighbours) {
+                            if (grid[ny]?.[nx]?.type === 'path') {
+                                const ni = toIso(nx, ny);
+                                handTile = { x: ni.x, y: ni.y + TILE_HEIGHT / 2 };
+                                break;
+                            }
+                        }
+                        this._spawnTileIso = handTile;
+                        this._possessionBar = new PIXI.Graphics();
+                        this._possessionBar.alpha = 0;   // révélée après le dialogue d'arrivée
+                        this.effectLayer.addChild(this._possessionBar);
+                        this.setPossession(1);
+                    }
+                }
 
                 if (cell.type === 'base') {
                     // Pas de château sprite si le fond scène intègre déjà la forteresse, ou si désactivé
@@ -702,7 +840,7 @@ export class TDRenderer {
                         cell.hasTree = true;
                     } else {
                     const rand = Math.random();
-                    const onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === GRID_HEIGHT - 1;
+                    const onBorder = x === 0 || x === GRID_WIDTH - 1 || y === 0 || y === grid.length - 1;
                     const isWindmillCell = windmillCell && windmillCell.x === x && windmillCell.y === y;
 
                     // Case moulin garantie
@@ -883,6 +1021,509 @@ export class TDRenderer {
         this.removeTowerXpBar(tower);
         const iso = toIso(tower.x, tower.y);
         this.createPlaceEffect(iso.x, iso.y + TILE_HEIGHT / 2);
+    }
+
+    // ── Jauge de possession (ch7) : l'emprise du Nécro sur Romain ──
+    // ratio 1 = emprise totale, 0 = libéré. L'aura du boss faiblit avec elle.
+    setPossession(ratio) {
+        const bar = this._possessionBar;
+        if (!bar || !this._bossIso) return;
+        const r = Math.max(0, Math.min(1, ratio));
+        const W = TILE_WIDTH * 1.5, H = 16;
+        const x = this._bossIso.x - W / 2;
+        const y = this._bossIso.y - TILE_HEIGHT * 0.42;
+
+        bar.clear();
+        // socle sombre
+        bar.roundRect(x - 2, y - 2, W + 4, H + 4, 5);
+        bar.fill({ color: 0x0a0512, alpha: 0.85 });
+        // remplissage violet, d'autant plus pâle que l'emprise faiblit
+        bar.roundRect(x, y, W * r, H, 4);
+        bar.fill({ color: 0x8c1ed6, alpha: 0.55 + 0.45 * r });
+        // liseré
+        bar.roundRect(x - 2, y - 2, W + 4, H + 4, 5);
+        bar.stroke({ width: 2, color: 0xb266ff, alpha: 0.5 + 0.5 * r });
+    }
+
+    // Apparition en fondu de la jauge (après le dialogue, quand Nathan comprend la mécanique)
+    revealPossession(duration = 900) {
+        const bar = this._possessionBar;
+        if (!bar) return;
+        const t0 = performance.now();
+        const fade = () => {
+            const p = Math.min(1, (performance.now() - t0) / duration);
+            bar.alpha = p;
+            if (p >= 1) this.app.ticker.remove(fade);
+        };
+        this.app.ticker.add(fade);
+    }
+
+    clearPossession() {
+        this._possessionBar?.destroy();
+        this._possessionBar = null;
+        this._bossSprite = null;
+        this._bossIso = null;
+        this._bossIdleFrames = this._bossSummonFrames = null;
+        this._bossSummoning = false;
+    }
+
+    // Le boss invoque : geste one-shot, puis les mains jaillissent au spawn, retour à l'idle
+    playBossSummon() {
+        const boss = this._bossSprite;
+        if (!boss || !this._bossSummonFrames || this._bossSummoning) return;
+        this._bossSummoning = true;
+
+        boss.textures = this._bossSummonFrames;
+        boss.loop = false;
+        boss.animationSpeed = 0.14;
+        boss.gotoAndPlay(0);
+
+        // Les mains jaillissent quand il projette la main (~frame 5, à ~8,4 fps)
+        const frameMs = 1000 / (0.14 * 60);
+        clearTimeout(this._handsTimer);
+        this._handsTimer = setTimeout(() => this.playSummonHands(), 5 * frameMs);
+
+        boss.onComplete = () => {
+            boss.onComplete = null;
+            if (this._bossIdleFrames) {
+                boss.textures = this._bossIdleFrames;
+                boss.loop = true;
+                boss.animationSpeed = 0.13;
+                boss.gotoAndPlay(0);
+            }
+            this._bossSummoning = false;
+        };
+    }
+
+    playSummonHands() {
+        const frames = this.assets[`summon_hands_frames_${this.currentTheme?.id}`];
+        if (!frames || !this._spawnTileIso) return;
+        const fx = new PIXI.AnimatedSprite(frames);
+        fx.anchor.set(0.5, 0.7);
+        fx.width  = TILE_WIDTH * 1.1;
+        fx.height = TILE_WIDTH * 1.1;
+        fx.x = this._spawnTileIso.x;
+        fx.y = this._spawnTileIso.y;
+        fx._sortY = fx.y + 500;   // toujours devant Romain
+        fx.loop = false;
+        fx.animationSpeed = 0.16;
+        fx.onComplete = () => fx.destroy();
+        this.entityLayer.addChild(fx);
+        this.sortEntities();
+        fx.play();
+    }
+
+    // ── Alliés décoratifs : chute du ciel + impact, puis idle en boucle ──
+    // delay : décalage de départ (ms) pour désynchroniser plusieurs arrivées
+    dropAllyOnTile(name, gridX, gridY, { scale = 1.15, delay = 0, flip = false } = {}) {
+        const theme  = this.currentTheme;
+        const frames = this.assets[`ally_${name}_${theme?.id}_frames`];
+        if (!frames || frames.length === 0) return;
+
+        const iso     = toIso(gridX, gridY);
+        const groundY = iso.y + TILE_HEIGHT / 2;
+        // Assez haut pour démarrer HORS champ (la carte est scalée, d'où le /mapScale)
+        const FALL_H  = Math.max(620, (this.app.screen.height / (this.mapScale || 1)) * 0.85);
+        const FALL_MS = 520;
+        const ANTICIP = 280;   // l'ombre seule apparaît avant la chute → l'œil se prépare
+        const SFX_LEAD = 500;  // le son part 0,5s avant le contact (peut démarrer pendant l'anticipation)
+        let soundFired = false;
+
+        // Ombre au sol : grandit et fonce à l'approche → c'est elle qui donne la profondeur
+        const shadow = new PIXI.Graphics();
+        shadow.x = iso.x; shadow.y = groundY;
+        this.groundLayer.addChild(shadow);
+
+        const sprite = new PIXI.AnimatedSprite(frames);
+        sprite.anchor.set(0.5, 0.9);
+        sprite.width  = TILE_WIDTH * scale;
+        sprite.height = TILE_WIDTH * scale;
+        if (flip) sprite.scale.x *= -1;
+        const baseSX = sprite.scale.x, baseSY = sprite.scale.y;
+        sprite.x = iso.x;
+        sprite.y = groundY - FALL_H;
+        sprite.alpha = 0;
+        sprite.animationSpeed = 0.12;
+        sprite.play();
+        this.entityLayer.addChild(sprite);
+
+        this._allies = this._allies || {};
+        this._allies[name] = { sprite, shadow, groundY, baseSX, baseSY, fallH: FALL_H, gridX, gridY };
+
+        const start     = performance.now() + delay;
+        const fallStart = start + ANTICIP;
+        const landAt    = fallStart + FALL_MS;   // instant du contact
+        const tick = () => {
+            const now = performance.now();
+            if (now < start) return;
+
+            // Son : lancé SFX_LEAD ms avant le contact, quelle que soit la phase en cours
+            if (!soundFired && now >= landAt - SFX_LEAD) {
+                soundFired = true;
+                this.onAllyImpact?.();
+            }
+
+            // Phase 1 — anticipation : l'ombre seule, qui naît et grandit sur la tuile
+            if (now < fallStart) {
+                const a = (now - start) / ANTICIP;
+                shadow.clear();
+                shadow.ellipse(0, 0, TILE_WIDTH * 0.105 * a, TILE_HEIGHT * 0.046 * a);
+                shadow.fill({ color: 0x000000, alpha: 0.12 * a });
+                return;
+            }
+
+            const t = Math.min(1, (now - fallStart) / FALL_MS);
+            const ease = t * t;                     // easeIn = accélération (gravité)
+            sprite.y     = groundY - FALL_H * (1 - ease);
+            sprite.alpha = 1;                       // pas de fondu : il entre par le haut du cadre
+            // étirement proportionnel à la vitesse (squash & stretch) → sensation de poids
+            const stretch = 1 + 0.38 * t;
+            sprite.scale.y = baseSY * stretch;
+            sprite.scale.x = baseSX / stretch;
+            // ombre : petite/pâle en haut → large/dense à l'impact
+            shadow.clear();
+            shadow.ellipse(0, 0, TILE_WIDTH * 0.30 * (0.35 + 0.65 * ease), TILE_HEIGHT * 0.13 * (0.35 + 0.65 * ease));
+            shadow.fill({ color: 0x000000, alpha: 0.12 + 0.33 * ease });
+
+            if (t >= 1) {
+                this.app.ticker.remove(tick);
+                sprite.y = groundY;
+                if (!soundFired) { this.onAllyImpact?.(); soundFired = true; } // filet de sécurité
+                this.playImpactDust(gridX, gridY);
+                this.shakeCamera(4, 140);
+                // squash à l'atterrissage : compression puis retour
+                const sq = performance.now();
+                const squash = () => {
+                    const p = Math.min(1, (performance.now() - sq) / 140);
+                    const k = 1 - 0.09 * Math.sin(p * Math.PI); // 1 → 0.91 → 1
+                    sprite.scale.y = baseSY * k;
+                    sprite.scale.x = baseSX * (2 - k);
+                    if (p >= 1) { sprite.scale.x = baseSX; sprite.scale.y = baseSY; this.app.ticker.remove(squash); }
+                };
+                this.app.ticker.add(squash);
+            }
+        };
+        this.app.ticker.add(tick);
+        return sprite;
+    }
+
+    // Un allié quitte le combat : accroupi d'élan puis bond hors champ (miroir de l'arrivée)
+    exitAlly(name, { crouch = 200, rise = 420 } = {}) {
+        const a = this._allies?.[name];
+        if (!a) return;
+        const { sprite, shadow, groundY, baseSX, baseSY, fallH, gridX, gridY } = a;
+        delete this._allies[name];
+
+        const t0 = performance.now();
+        const step = () => {
+            const now = performance.now();
+
+            // Phase 1 — accroupissement : il prend son élan
+            if (now < t0 + crouch) {
+                const p = (now - t0) / crouch;
+                const k = 1 - 0.16 * Math.sin(p * Math.PI * 0.5);
+                sprite.scale.y = baseSY * k;
+                sprite.scale.x = baseSX * (2 - k);
+                return;
+            }
+
+            // Phase 2 — détente : il s'étire et accélère vers le haut
+            const p = Math.min(1, (now - t0 - crouch) / rise);
+            if (p === 0 || (p > 0 && !a._launched)) {
+                a._launched = true;
+                this.playImpactDust(gridX, gridY);   // poussière au décollage
+                this.onAllyImpact?.();
+            }
+            const ease = p * p;                       // accélère en sortant du cadre
+            sprite.y = groundY - fallH * ease;
+            const stretch = 1 + 0.42 * p;
+            sprite.scale.y = baseSY * stretch;
+            sprite.scale.x = baseSX / stretch;
+            // l'ombre rétrécit et s'efface à mesure qu'il s'élève
+            shadow.clear();
+            shadow.ellipse(0, 0, TILE_WIDTH * 0.30 * (1 - 0.8 * ease), TILE_HEIGHT * 0.13 * (1 - 0.8 * ease));
+            shadow.fill({ color: 0x000000, alpha: 0.45 * (1 - ease) });
+
+            if (p >= 1) {
+                this.app.ticker.remove(step);
+                sprite.destroy();
+                shadow.destroy();
+            }
+        };
+        this.app.ticker.add(step);
+    }
+
+    clearAllies() {
+        for (const k of Object.keys(this._allies || {})) {
+            this._allies[k].sprite?.destroy();
+            this._allies[k].shadow?.destroy();
+        }
+        this._allies = {};
+        // Réinitialise le héros David : sinon updateDavidCharge lit un sprite détruit au rejeu
+        this._davidAura?.destroy();
+        this._davidChargeBar?.destroy();
+        this._davidSprite = null;
+        this._davidAura = null;
+        this._davidChargeBar = null;
+        this._davidBaseFrames = null;
+    }
+
+    playImpactDust(gridX, gridY) {
+        const tex = this.assets[`impact_dust_${this.currentTheme?.id}`];
+        if (!tex) return;
+        const iso = toIso(gridX, gridY);
+        const dust = new PIXI.Sprite(tex);
+        dust.anchor.set(0.5, 0.5);
+        dust.x = iso.x;
+        dust.y = iso.y + TILE_HEIGHT / 2;
+        this.entityLayer.addChild(dust);
+        const t0 = performance.now();
+        const DUR = 340;
+        const grow = () => {
+            const p = Math.min(1, (performance.now() - t0) / DUR);
+            const s = (0.25 + 0.65 * p) * (TILE_WIDTH * 0.9 / tex.width); // onde qui s'étend
+            dust.scale.set(s, s * 0.55);   // aplati = raccord perspective iso
+            dust.alpha = 0.75 * (1 - p * p);
+            if (p >= 1) { this.app.ticker.remove(grow); dust.destroy(); }
+        };
+        this.app.ticker.add(grow);
+    }
+
+    // Gros nuage de poussière animé (tour pulvérisée par le dragon) — joué une fois
+    playDustCloud(gridX, gridY) {
+        const frames = this.assets[`dust_cloud_frames_${this.currentTheme?.id}`];
+        if (!frames || frames.length === 0) { this.playImpactDust(gridX, gridY); return; }
+        const iso = toIso(gridX, gridY);
+        const cloud = new PIXI.AnimatedSprite(frames);
+        cloud.anchor.set(0.5, 0.7);          // ancré bas : la poussière monte depuis le sol
+        cloud.width  = TILE_WIDTH * 1.7;
+        cloud.scale.y = cloud.scale.x;       // ratio conservé
+        cloud.x = iso.x;
+        cloud.y = iso.y + TILE_HEIGHT / 2;
+        cloud._sortY = cloud.y + 999;        // toujours au premier plan de sa tuile
+        cloud.loop = false;
+        cloud.animationSpeed = 0.24;
+        cloud.play();
+        this.entityLayer.addChild(cloud);
+        this.sortEntities();
+        const t0 = performance.now(), DUR = frames.length / (0.24 * 60) * 1000;
+        const fade = () => {
+            const p = Math.min(1, (performance.now() - t0) / DUR);
+            cloud.alpha = p < 0.7 ? 1 : 1 - (p - 0.7) / 0.3;   // s'estompe sur la fin
+            if (p >= 1) { this.app.ticker.remove(fade); cloud.destroy(); }
+        };
+        this.app.ticker.add(fade);
+    }
+
+    shakeCamera(amplitude = 8, duration = 200) {
+        const layers = [this.groundLayer, this.rangeLayer, this.entityLayer,
+                        this.projectileLayer, this.effectLayer];
+        const baseX = this.offsetX, baseY = this.offsetY;
+        const t0 = performance.now();
+        const shake = () => {
+            const p = Math.min(1, (performance.now() - t0) / duration);
+            const a = amplitude * (1 - p);   // décroissance linéaire
+            const dx = (Math.random() * 2 - 1) * a;
+            const dy = (Math.random() * 2 - 1) * a;
+            layers.forEach(l => { l.x = baseX + dx; l.y = baseY + dy; });
+            if (p >= 1) {
+                layers.forEach(l => { l.x = baseX; l.y = baseY; });
+                this.app.ticker.remove(shake);
+            }
+        };
+        this.app.ticker.add(shake);
+    }
+
+    // ── David héros (ch7) : barre de charge + clic, sur son sprite d'allié posé ──
+    enableDavidHero() {
+        const a = this._allies?.['david'];
+        if (!a) return;
+        this._davidSprite = a.sprite;
+        this._davidGridX  = a.gridX;
+        this._davidGridY  = a.gridY;
+        this._davidBaseFrames = a.sprite.textures;   // idle de dos (pour restaurer après le raise)
+        a.sprite.eventMode = 'static';
+        a.sprite.cursor = 'pointer';
+        a.sprite.on('pointerdown', () => this.onHeroClick?.());
+        this._davidAura = new PIXI.Graphics();
+        this.groundLayer.addChild(this._davidAura);
+        this._davidChargeBar = new PIXI.Graphics();
+        this.effectLayer.addChild(this._davidChargeBar);
+    }
+
+    updateDavidCharge(charge, maxCharge, now) {
+        const bar = this._davidChargeBar, sprite = this._davidSprite;
+        if (!bar || !sprite || sprite.destroyed || !sprite.visible) return;
+        const ratio = charge / maxCharge, charged = ratio >= 1;
+        const iso = toIso(this._davidGridX, this._davidGridY);
+        const cx = iso.x, baseY = iso.y + TILE_HEIGHT / 2;
+
+        if (this._davidAura) {
+            this._davidAura.clear();
+            if (charged) {   // aura verte pulsée quand le pouvoir est prêt
+                const aAlpha = 0.16 + Math.sin(now * 0.005) * 0.09;
+                const aR = TILE_WIDTH * 0.60 + Math.sin(now * 0.003) * 8;
+                this._davidAura.circle(cx, baseY, aR);
+                this._davidAura.fill({ color: 0x44dd66, alpha: aAlpha });
+                this._davidAura.circle(cx, baseY, aR * 1.2);
+                this._davidAura.stroke({ color: 0x88ffaa, alpha: aAlpha * 0.8, width: 2.5 });
+            }
+        }
+
+        bar.clear();
+        const barW = 52, barH = 7, bx = cx - barW / 2, by = baseY - sprite.height * 0.95 - 14;
+        bar.roundRect(bx - 1, by - 1, barW + 2, barH + 2, 3);
+        bar.fill({ color: 0x111111, alpha: 0.75 });
+        if (ratio > 0) {
+            const fill = charged ? (Math.sin(now * 0.007) > 0 ? 0x66ee88 : 0x33bb55) : 0x44AAFF;
+            bar.roundRect(bx, by, barW * Math.min(ratio, 1), barH, 2);
+            bar.fill({ color: fill });
+        }
+    }
+
+    // David lève son épée (wind-up), puis revient à l'idle
+    playDavidRaise() {
+        const s = this._davidSprite;
+        const frames = this.assets[`david_raise_frames_${this.currentTheme?.id}`];
+        if (!s || !frames) return;
+        s.textures = frames;
+        s.loop = false;
+        s.animationSpeed = 0.14;
+        s.gotoAndPlay(0);
+        s.onComplete = () => {
+            s.onComplete = null;
+            if (this._davidBaseFrames) { s.textures = this._davidBaseFrames; s.loop = true; s.animationSpeed = 0.12; s.gotoAndPlay(0); }
+        };
+    }
+
+    // Une claymore s'abat du ciel sur une tuile ; onImpact au contact (dégâts)
+    dropClaymore(gridX, gridY, onImpact) {
+        const tex = this.assets[`claymore_${this.currentTheme?.id}`];
+        if (!tex) { onImpact?.(); return; }
+        const iso = toIso(gridX, gridY);
+        const groundY = iso.y + TILE_HEIGHT / 2;
+        const FALL_H = 720, FALL_MS = 340;
+
+        const shadow = new PIXI.Graphics();
+        shadow.x = iso.x; shadow.y = groundY;
+        this.groundLayer.addChild(shadow);
+
+        const sword = new PIXI.Sprite(tex);
+        sword.anchor.set(0.5, 1.0);          // pivot = pointe de la lame (en bas)
+        sword.height = TILE_WIDTH * 1.55;
+        sword.scale.x = sword.scale.y;       // ratio conservé
+        sword.rotation = (Math.random() * 0.3 - 0.15);
+        sword.x = iso.x;
+        sword.y = groundY - FALL_H;
+        this.entityLayer.addChild(sword);
+        this.sortEntities();
+
+        const t0 = performance.now();
+        let hit = false;
+        const tick = () => {
+            const t = Math.min(1, (performance.now() - t0) / FALL_MS);
+            const ease = t * t;              // accélération (gravité)
+            sword.y = groundY - FALL_H * (1 - ease);
+            shadow.clear();
+            shadow.ellipse(0, 0, TILE_WIDTH * 0.15 * (0.3 + 0.7 * ease), TILE_HEIGHT * 0.065 * (0.3 + 0.7 * ease));
+            shadow.fill({ color: 0x000000, alpha: 0.1 + 0.3 * ease });
+
+            if (t >= 1 && !hit) {
+                hit = true;
+                this.app.ticker.remove(tick);
+                sword.y = groundY;
+                this.playImpactDust(gridX, gridY);
+                this.shakeCamera(6, 150);
+                onImpact?.();
+                shadow.destroy();
+                // la lame reste plantée un instant puis s'estompe
+                const st = performance.now();
+                const settle = () => {
+                    const p = Math.min(1, (performance.now() - st) / 550);
+                    if (p > 0.45) sword.alpha = 1 - (p - 0.45) / 0.55;
+                    if (p >= 1) { sword.destroy(); this.app.ticker.remove(settle); }
+                };
+                this.app.ticker.add(settle);
+            }
+        };
+        this.app.ticker.add(tick);
+    }
+
+    // ── Raid du dragon (ch7) : télégraphe puis piqué sur une tour ──
+    showDragonWarning(gridX, gridY) {
+        const iso = toIso(gridX, gridY);
+        const g = new PIXI.Graphics();
+        g.x = iso.x; g.y = iso.y + TILE_HEIGHT / 2;
+        this.effectLayer.addChild(g);
+        const t0 = performance.now();
+        const anim = () => {
+            const now = performance.now();
+            const p = Math.min(1, (now - t0) / 1500);
+            const pulse = 0.5 + 0.5 * Math.sin(now * 0.013);
+            g.clear();
+            g.ellipse(0, 0, TILE_WIDTH * 0.42 * p, TILE_HEIGHT * 0.2 * p);
+            g.fill({ color: 0x000000, alpha: 0.2 + 0.3 * p });
+            g.ellipse(0, 0, TILE_WIDTH * 0.44 * p, TILE_HEIGHT * 0.21 * p);
+            g.stroke({ color: 0xcc2222, alpha: (0.35 + 0.45 * pulse) * p, width: 3 });
+            if (g._stop) { this.app.ticker.remove(anim); g.destroy(); }
+        };
+        this.app.ticker.add(anim);
+        this._dragonWarning = g;
+    }
+
+    clearDragonWarning() {
+        if (this._dragonWarning) { this._dragonWarning._stop = true; this._dragonWarning = null; }
+    }
+
+    playDragonDive(gridX, gridY, onImpact) {
+        const frames = this.assets[`dragon_fly_frames_${this.currentTheme?.id}`];
+        const iso = toIso(gridX, gridY);
+        const targetX = iso.x, targetY = iso.y + TILE_HEIGHT / 2;
+        if (!frames) { onImpact?.(); return; }
+
+        const dragon = new PIXI.AnimatedSprite(frames);
+        dragon.anchor.set(0.5, 0.5);
+        dragon.width  = TILE_WIDTH * 2.6;
+        dragon.scale.y = dragon.scale.x;      // ratio conservé
+        dragon.animationSpeed = 0.28;         // battement d'ailes rapide
+        dragon.play();
+
+        // Approche depuis le haut-gauche (il regarde à droite), piqué vers la tuile
+        const offTop = (this.app.screen.height / (this.mapScale || 1)) * 0.85;
+        const startX = targetX - TILE_WIDTH * 3.2, startY = targetY - offTop;
+        dragon.x = startX; dragon.y = startY;
+        this.entityLayer.addChild(dragon);
+        this.sortEntities();
+
+        const DIVE = 1000, RISE = 820;
+        const t0 = performance.now();
+        let impacted = false, impactStart = 0;
+        const step = () => {
+            const now = performance.now();
+            if (!impacted) {
+                const t = Math.min(1, (now - t0) / DIVE);
+                const e = t * t;                 // accélère (piqué)
+                dragon.x = startX + (targetX - startX) * e;
+                dragon.y = startY + (targetY - startY) * e;
+                dragon.rotation = 0.2 * t;        // tête qui plonge
+                if (t >= 1) {
+                    impacted = true; impactStart = now;
+                    dragon.rotation = 0;
+                    this.playImpactDust(gridX, gridY);
+                    this.shakeCamera(9, 230);
+                    onImpact?.();
+                }
+            } else {
+                const t = Math.min(1, (now - impactStart) / RISE);
+                const e = t * t;                 // remonte vers la droite en accélérant
+                dragon.x = targetX + TILE_WIDTH * 3.6 * e;
+                dragon.y = targetY - offTop * 0.9 * e;
+                dragon.rotation = -0.15 * t;
+                if (t > 0.5) dragon.alpha = 1 - (t - 0.5) * 2;
+                if (t >= 1) { this.app.ticker.remove(step); dragon.destroy(); }
+            }
+        };
+        this.app.ticker.add(step);
     }
 
     placeSuzanneOnTile(gridX, gridY) {
@@ -2008,7 +2649,8 @@ export class TDRenderer {
             // Flying enemies always render on top of everything
             if (a._flying && !b._flying) return 1;
             if (!a._flying && b._flying) return -1;
-            return a.y - b.y;
+            // _sortY : position au sol (les décos ont un décalage d'ancrage à ignorer)
+            return (a._sortY ?? a.y) - (b._sortY ?? b.y);
         });
     }
 

@@ -3,6 +3,7 @@
 
 const CHAR_NAMES = {
     romain:       'Romain',
+    romain_possede: 'Romain',
     nathan:         'Nathan',
     anna:           'Anna',
     nathan_enfant:  'Nathan',
@@ -26,6 +27,7 @@ const CHAR_SCALE = {
 
 const CHAR_COLORS = {
     romain:       { bg: '#2d4f8a', border: '#7aa3d4' },
+    romain_possede: { bg: '#2d4f8a', border: '#7aa3d4' },
     nathan:         { bg: '#6b4a12', border: '#c8952a' },
     anna:           { bg: '#7a1f1f', border: '#c85050' },
     nathan_enfant:  { bg: '#6b4a12', border: '#c8952a' },
@@ -383,6 +385,141 @@ const CSS = `
     transform: scaleX(1);
     transition: transform 1s linear;
 }
+
+/* ── Diaporama (@slide) : images plein écran, fondu croisé + Ken Burns, auto ── */
+#dlg-overlay.slideshow .dlg-box        { opacity: 0; pointer-events: none; }
+#dlg-overlay.slideshow .dlg-scene-hint { opacity: 0 !important; }
+
+/* Photos paysage : crop centré (cover, centré, jamais de répétition) */
+#dlg-overlay.slideshow .dlg-bg-layer,
+#dlg-overlay.slideshow .dlg-glitch-fx {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #000;
+}
+
+.dlg-bg-layer.kb-in  { animation: dlgKenBurnsIn  var(--kb-duration, 4000ms) ease-out forwards; }
+.dlg-bg-layer.kb-out { animation: dlgKenBurnsOut var(--kb-duration, 4000ms) ease-out forwards; }
+
+/* ── Effet glitch (@glitch) : RGB split + slices + jitter sur l'image active ── */
+.dlg-glitch-fx {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0; pointer-events: none; z-index: 3;
+}
+.dlg-glitch-fx.active {
+    animation: dlgGlitchBase var(--glitch-duration, 600ms) steps(2, end);
+    box-shadow: inset 0 0 110px 25px rgba(120, 20, 190, 0.5); /* aura pourpre du Nécro */
+}
+.dlg-glitch-fx.active::before,
+.dlg-glitch-fx.active::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: inherit; background-size: cover; background-position: center;
+    mix-blend-mode: screen;
+}
+/* canal magenta-violet décalé à gauche */
+.dlg-glitch-fx.active::before {
+    filter: sepia(1) saturate(8) hue-rotate(240deg) brightness(1.15);
+    animation: dlgGlitchR var(--glitch-duration, 600ms) steps(3, end);
+}
+/* canal bleu-violet décalé à droite */
+.dlg-glitch-fx.active::after {
+    filter: sepia(1) saturate(8) hue-rotate(285deg) brightness(1.15);
+    animation: dlgGlitchB var(--glitch-duration, 600ms) steps(3, end);
+}
+@keyframes dlgGlitchBase {
+    0%, 100% { opacity: 0; }
+    4%   { opacity: 1;  filter: sepia(.7) saturate(6) hue-rotate(250deg) contrast(1.5) brightness(1.1); transform: translate(3px, -2px); }
+    22%  { opacity: .9; filter: sepia(.7) saturate(7) hue-rotate(230deg) contrast(1.4);                transform: translate(-4px, 1px); }
+    45%  { opacity: 1;  filter: sepia(.8) saturate(8) hue-rotate(265deg) contrast(1.6);                transform: translate(2px, 2px); }
+    68%  { opacity: .85; filter: sepia(.6) saturate(6) hue-rotate(245deg) contrast(1.4);               transform: translate(-2px, -1px); }
+    88%  { opacity: .6; filter: sepia(.6) saturate(5) hue-rotate(250deg);                              transform: translate(1px, 0); }
+}
+@keyframes dlgGlitchR {
+    0%   { transform: translate(-6px, 0);  clip-path: inset(8%  0 78% 0); }
+    20%  { transform: translate(7px, 0);   clip-path: inset(38% 0 42% 0); }
+    40%  { transform: translate(-9px, 0);  clip-path: inset(66% 0 12% 0); }
+    60%  { transform: translate(5px, 0);   clip-path: inset(18% 0 62% 0); }
+    80%  { transform: translate(-4px, 0);  clip-path: inset(82% 0 4%  0); }
+    100% { transform: translate(0, 0);     clip-path: inset(0 0 0 0); }
+}
+@keyframes dlgGlitchB {
+    0%   { transform: translate(6px, 0);   clip-path: inset(30% 0 55% 0); }
+    20%  { transform: translate(-7px, 0);  clip-path: inset(60% 0 20% 0); }
+    40%  { transform: translate(9px, 0);   clip-path: inset(5%  0 80% 0); }
+    60%  { transform: translate(-5px, 0);  clip-path: inset(72% 0 8%  0); }
+    80%  { transform: translate(4px, 0);   clip-path: inset(45% 0 40% 0); }
+    100% { transform: translate(0, 0);     clip-path: inset(0 0 0 0); }
+}
+
+/* ── Flash d'impact (@flash) : éclat bref plein écran ── */
+.dlg-flash-fx {
+    position: absolute; inset: 0; z-index: 5;
+    opacity: 0; pointer-events: none;
+    background: var(--flash-color, rgba(170, 60, 255, 0.92));
+    mix-blend-mode: screen;
+}
+.dlg-flash-fx.active { animation: dlgFlash var(--flash-duration, 150ms) ease-out; }
+@keyframes dlgFlash {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── Yeux du Nécromancien (@eyes) : vignette plein écran, fond noir, sprite animée ── */
+.dlg-eyes-fx {
+    position: absolute; inset: 0; z-index: 4;
+    background: #000; opacity: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1s ease;         /* fondu à l'entrée ET à la sortie */
+}
+.dlg-eyes-fx.active { opacity: 1; }
+.dlg-eyes-fx .eyes-sprite {
+    position: relative;
+    width: min(82vw, 760px);
+    aspect-ratio: 256 / 120;
+    overflow: hidden;                    /* ne montre qu'une frame */
+}
+.dlg-eyes-fx .eyes-strip {
+    position: absolute; top: 0; left: 0;
+    height: 100%; width: 800%;           /* bande de 8 frames */
+    background-repeat: no-repeat;
+    background-size: 100% 100%;          /* la spritesheet remplit la bande */
+}
+.dlg-eyes-fx.active .eyes-strip {
+    animation: dlgEyesPlay 4s steps(8) infinite;
+}
+/* Maintien "yeux ouverts" (0→60%) puis clignement rapide sur les 8 frames (60→100%).
+   Plus d'espace entre clignements. Augmenter la durée = clignements plus espacés. */
+@keyframes dlgEyesPlay {
+    0%, 60% { transform: translateX(0);     }
+    100%    { transform: translateX(-100%); }
+}
+
+/* Glitch appliqué directement aux yeux (le calque yeux est au-dessus du calque glitch) */
+.dlg-eyes-fx.glitching .eyes-sprite {
+    animation: dlgEyesGlitch var(--glitch-duration, 600ms) steps(2, end);
+}
+@keyframes dlgEyesGlitch {
+    0%   { transform: translateX(0);    filter: none; clip-path: inset(0 0 0 0); }
+    12%  { transform: translateX(-9px); filter: contrast(1.6) brightness(1.3) drop-shadow(4px 0 rgba(200,60,255,.85)) drop-shadow(-4px 0 rgba(90,0,200,.85)); clip-path: inset(15% 0 55% 0); }
+    28%  { transform: translateX(11px); filter: invert(.2) hue-rotate(270deg) drop-shadow(-6px 0 rgba(200,60,255,.85)); clip-path: inset(55% 0 15% 0); }
+    45%  { transform: translateX(-6px); filter: contrast(1.8) drop-shadow(5px 0 rgba(160,40,255,.9)) drop-shadow(-5px 0 rgba(120,0,220,.9)); clip-path: inset(35% 0 30% 0); }
+    62%  { transform: translateX(8px);  filter: brightness(1.4) hue-rotate(300deg); clip-path: inset(70% 0 5% 0); }
+    80%  { transform: translateX(-3px); filter: contrast(1.5) drop-shadow(3px 0 rgba(200,60,255,.7)); clip-path: inset(5% 0 80% 0); }
+    100% { transform: translateX(0);    filter: none; clip-path: inset(0 0 0 0); }
+}
+
+/* On ne descend jamais sous scale(1) → l'image couvre toujours, pas de bord noir */
+@keyframes dlgKenBurnsIn {
+    from { transform: scale(1.0)  translate(0, 0); }
+    to   { transform: scale(1.14) translate(-1.5%, -1%); }
+}
+@keyframes dlgKenBurnsOut {
+    from { transform: scale(1.14) translate(1.5%, 1%); }
+    to   { transform: scale(1.0)  translate(0, 0); }
+}
 `;
 
 export class DialogueEngine {
@@ -410,6 +547,13 @@ export class DialogueEngine {
         this._inChoice   = false;
         this.skipDisabled = false;
         this._imgCache = new Map();
+        this._slideTimer = null;   // minuterie du diaporama @slide
+        this._autoSlide  = false;  // true pendant qu'une slide s'affiche (avance auto, tap ignoré)
+        this._fxCues   = [];       // effets programmés (@glitch/@flash…) calés sur départ musique/diaporama
+        this._fxTimers = [];       // setTimeout des cues armées
+        this._fxArmed  = false;
+        this._glitchHideTimer = null;
+        this._flashHideTimer  = null;
 
         // Track what's displayed on each side
         this.sides = {
@@ -438,6 +582,9 @@ export class DialogueEngine {
             <div id="dlg-scene">
                 <div class="dlg-bg-layer" id="dlg-bg-a"></div>
                 <div class="dlg-bg-layer hidden" id="dlg-bg-b"></div>
+                <div class="dlg-glitch-fx" id="dlg-glitch"></div>
+                <div class="dlg-flash-fx" id="dlg-flash"></div>
+                <div class="dlg-eyes-fx" id="dlg-eyes"><div class="eyes-sprite"><div class="eyes-strip"></div></div></div>
                 <div class="dlg-char dlg-left hidden" id="dlg-left">
                     <img id="dlg-img-left" src="" alt="">
                 </div>
@@ -475,6 +622,10 @@ export class DialogueEngine {
         this.els = {
             bgA:      overlay.querySelector('#dlg-bg-a'),
             bgB:      overlay.querySelector('#dlg-bg-b'),
+            glitch:     overlay.querySelector('#dlg-glitch'),
+            flash:      overlay.querySelector('#dlg-flash'),
+            eyes:       overlay.querySelector('#dlg-eyes'),
+            eyesSprite: overlay.querySelector('#dlg-eyes .eyes-strip'),
             left:     overlay.querySelector('#dlg-left'),
             right:    overlay.querySelector('#dlg-right'),
             imgLeft:  overlay.querySelector('#dlg-img-left'),
@@ -532,9 +683,117 @@ export class DialogueEngine {
         elNext.style.backgroundColor   = url === 'black' ? '#000' : '';
         elNext.style.backgroundPosition = position || 'center';
         elNext.style.backgroundSize     = size || '';
-        elNext.classList.remove('hidden');  // fade in next
+        elNext.classList.remove('hidden', 'kb-in', 'kb-out');  // fade in next, coupe tout Ken Burns résiduel
         elCurr.classList.add('hidden');     // fade out current
         this._bgActive = next;
+    }
+
+    // ── Diaporama : fondu croisé + Ken Burns (zoom/pan lent) ──
+    _setBgKenBurns(url, duration, alt) {
+        const next  = this._bgActive === 'a' ? 'b' : 'a';
+        const elNext = next === 'a' ? this.els.bgA : this.els.bgB;
+        const elCurr = next === 'a' ? this.els.bgB : this.els.bgA;
+
+        elNext.style.backgroundImage    = `url('${url}')`;
+        elNext.style.backgroundColor    = '';
+        elNext.style.backgroundPosition = 'center';
+        elNext.style.backgroundSize     = '';  // → cover (CSS de base)
+        elNext.style.setProperty('--kb-duration', duration + 'ms');
+
+        // Redémarre l'animation : retire la classe, force un reflow, puis la remet.
+        // Alterne zoom-in / zoom-out d'une slide à l'autre pour varier.
+        elNext.classList.remove('kb-in', 'kb-out');
+        void elNext.offsetWidth;
+        elNext.classList.add(alt ? 'kb-out' : 'kb-in');
+
+        elNext.classList.remove('hidden');
+        elCurr.classList.add('hidden');
+        this._bgActive = next;
+    }
+
+    _clearSlideTimer() {
+        if (this._slideTimer) { clearTimeout(this._slideTimer); this._slideTimer = null; }
+        this._autoSlide = false;
+    }
+
+    // Choisit la variante mobile d'une slide si dispo et écran étroit, sinon la desktop
+    _slideScene(line) {
+        if (line.sceneMobile && window.matchMedia?.('(max-width: 768px)').matches) {
+            return line.sceneMobile;
+        }
+        return line.scene;
+    }
+
+    // ── Effets d'impact (@glitch/@flash…) : programmés une fois, calés sur le départ musique/diaporama ──
+    _armFxCues() {
+        if (this._fxArmed || !this._fxCues.length) return;
+        this._fxArmed = true;
+        for (const cue of this._fxCues) {
+            const id = setTimeout(() => this._triggerFx(cue), cue.at);
+            this._fxTimers.push(id);
+        }
+    }
+
+    _triggerFx(cue) {
+        if (cue.type === 'flash') this._triggerFlash(cue);
+        else                      this._triggerGlitch(cue.dur);
+    }
+
+    _triggerGlitch(dur = 600) {
+        // Pendant la vignette des yeux, on glitche directement ce calque (il est au-dessus)
+        if (this.els.eyes?.classList.contains('active')) {
+            const eye = this.els.eyes;
+            eye.style.setProperty('--glitch-duration', dur + 'ms');
+            eye.classList.remove('glitching');
+            void eye.offsetWidth; // reflow → redémarre l'animation
+            eye.classList.add('glitching');
+            clearTimeout(this._glitchHideTimer);
+            this._glitchHideTimer = setTimeout(() => eye.classList.remove('glitching'), dur);
+            return;
+        }
+        const el = this.els.glitch;
+        if (!el) return;
+        const activeBg = this._bgActive === 'a' ? this.els.bgA : this.els.bgB;
+        el.style.backgroundImage = activeBg.style.backgroundImage;
+        el.style.setProperty('--glitch-duration', dur + 'ms');
+        el.classList.remove('active');
+        void el.offsetWidth; // reflow → redémarre l'animation
+        el.classList.add('active');
+        clearTimeout(this._glitchHideTimer);
+        this._glitchHideTimer = setTimeout(() => el.classList.remove('active'), dur);
+    }
+
+    _triggerFlash(cue) {
+        const el = this.els.flash;
+        if (!el) return;
+        const dur = cue.dur || 150;
+        const colors = {
+            violet: 'rgba(170, 60, 255, 0.92)',
+            blanc:  'rgba(255, 255, 255, 0.95)',
+            noir:   'rgba(0, 0, 0, 0.95)',
+        };
+        el.style.setProperty('--flash-color', colors[cue.color] || colors.violet);
+        // le noir doit couvrir (normal), les couleurs claires éclatent (screen)
+        el.style.mixBlendMode = cue.color === 'noir' ? 'normal' : 'screen';
+        el.style.setProperty('--flash-duration', dur + 'ms');
+        el.classList.remove('active');
+        void el.offsetWidth; // reflow → redémarre l'animation
+        el.classList.add('active');
+        clearTimeout(this._flashHideTimer);
+        this._flashHideTimer = setTimeout(() => el.classList.remove('active'), dur);
+    }
+
+    _clearFx() {
+        this._fxTimers.forEach(clearTimeout);
+        this._fxTimers = [];
+        clearTimeout(this._glitchHideTimer);
+        clearTimeout(this._flashHideTimer);
+        this._glitchHideTimer = null;
+        this._flashHideTimer  = null;
+        this._fxArmed = false;
+        if (this.els.glitch) this.els.glitch.classList.remove('active');
+        if (this.els.flash)  this.els.flash.classList.remove('active');
+        if (this.els.eyes)   this.els.eyes.classList.remove('glitching');
     }
 
     // ── Public API ──────────────────────────────────────────
@@ -551,13 +810,22 @@ export class DialogueEngine {
         // Couper tous les sfxloop actifs au démarrage d'un nouveau dialogue
         this.onSfxLoopStopAll?.();
 
+        // Réinitialiser l'état diaporama + glitch
+        this._clearSlideTimer();
+        this._clearFx();
+        this._fxCues = script._fxCues || [];
+
         // Réinitialiser le fond — chaque dialogue commence sans bg hérité du précédent
         this.els.bgA.style.backgroundImage = '';
         this.els.bgA.style.backgroundColor = '';
         this.els.bgA.classList.add('hidden');
+        this.els.bgA.classList.remove('kb-in', 'kb-out');
         this.els.bgB.style.backgroundImage = '';
         this.els.bgB.style.backgroundColor = '';
         this.els.bgB.classList.add('hidden');
+        this.els.bgB.classList.remove('kb-in', 'kb-out');
+        this.overlay.classList.remove('slideshow');
+        this.els.eyes?.classList.remove('active');
         this._bgActive = 'a';
 
         // Réinitialiser les choix (onChoice est réinitialisé dans _end(), pas ici)
@@ -601,6 +869,13 @@ export class DialogueEngine {
                 if (line.char && line.emotion) {
                     urls.add(`${this.basePath}${line.char}/${line.emotion}.png`);
                 }
+                // Spritesheet des yeux du Nécro (@eyes)
+                if (line.type === 'eyes') { urls.add(`${this.basePath}effects/ch7_necro_eyes_sheet.png`); }
+                // Images de fond plein écran (@slide / @scene) — préchargées pour un fondu net
+                const sceneImg = line.type === 'slide' ? this._slideScene(line) : (line.scene || line.bg);
+                if (sceneImg && sceneImg !== 'black') {
+                    urls.add(`${this.basePath}${sceneImg}`);
+                }
             }
         }
         await Promise.all([...urls].map(url => this._preloadImage(url)));
@@ -636,10 +911,12 @@ export class DialogueEngine {
     static parse(rawText) {
         const lines  = rawText.split('\n');
         const script = [];
+        const fxCues = []; // effets @glitch/@flash… { type, at:ms, dur:ms, … } calés sur le départ musique
         let pendingBg    = null;
         let pendingBgPos = null;
         let pendingBgSize = null;
         let pendingMusic = null;
+        let pendingMusicNoLoop = false;
         let pendingMusicStop = false;
         let pendingSfx     = null;
         let pendingSfxLoop = null;
@@ -680,6 +957,60 @@ export class DialogueEngine {
                     pendingBgSize = null;
                     continue;
                 }
+                if (cmd === 'slide') {
+                    // @slide desktop.jpg [mobile.jpg] [duréeMs]  → diaporama auto en fondu croisé
+                    // La 2e image (optionnelle) sert de variante mobile (écran étroit).
+                    const parts = val.split(/\s+/);
+                    let duration = 3500, imgs = parts;
+                    const maybeDur = parts[parts.length - 1];
+                    if (/^\d+$/.test(maybeDur) && parts.length > 1) {
+                        duration = parseInt(maybeDur, 10);
+                        imgs = parts.slice(0, -1);
+                    }
+                    const slideEntry = { type: 'slide', scene: imgs[0], sceneMobile: imgs[1] || null, duration };
+                    // La musique / les sons en attente démarrent sur la 1re slide (départ diaporama)
+                    if (pendingMusic)     { slideEntry.music     = pendingMusic;     slideEntry.musicNoLoop = pendingMusicNoLoop; pendingMusic = null; pendingMusicNoLoop = false; }
+                    if (pendingMusicStop) { slideEntry.musicStop = true;             pendingMusicStop = false; }
+                    if (pendingSfx)       { slideEntry.sfx       = pendingSfx;       pendingSfx       = null; }
+                    if (pendingSfxLoop)   { slideEntry.sfxloop   = pendingSfxLoop;   pendingSfxLoop   = null; }
+                    if (pendingSfxStop)   { slideEntry.sfxstop   = pendingSfxStop;   pendingSfxStop   = null; }
+                    script.push(slideEntry);
+                    continue;
+                }
+                if (cmd === 'pause') {
+                    // @pause <ms>  → attente auto (écran noir), la musique en attente démarre ici
+                    const pauseEntry = { type: 'pause', duration: parseInt(val, 10) || 0 };
+                    if (pendingMusic)     { pauseEntry.music     = pendingMusic;     pauseEntry.musicNoLoop = pendingMusicNoLoop; pendingMusic = null; pendingMusicNoLoop = false; }
+                    if (pendingMusicStop) { pauseEntry.musicStop = true;             pendingMusicStop = false; }
+                    if (pendingSfx)       { pauseEntry.sfx       = pendingSfx;       pendingSfx       = null; }
+                    if (pendingSfxLoop)   { pauseEntry.sfxloop   = pendingSfxLoop;   pendingSfxLoop   = null; }
+                    if (pendingSfxStop)   { pauseEntry.sfxstop   = pendingSfxStop;   pendingSfxStop   = null; }
+                    script.push(pauseEntry);
+                    continue;
+                }
+                if (cmd === 'glitch') {
+                    // @glitch <sec> [duréeSec]  → effet glitch calé sur le départ musique/diaporama
+                    const parts = val.split(/\s+/);
+                    const at  = parseFloat(parts[0]);
+                    const dur = parts.length > 1 ? parseFloat(parts[1]) : 0.6;
+                    if (!isNaN(at)) fxCues.push({ type: 'glitch', at: Math.round(at * 1000), dur: Math.round(dur * 1000) });
+                    continue;
+                }
+                if (cmd === 'flash') {
+                    // @flash <sec> [duréeSec] [couleur: violet|blanc|noir]  → flash d'impact
+                    const parts = val.split(/\s+/);
+                    const at  = parseFloat(parts[0]);
+                    const dur = (parts[1] && /^[\d.]+$/.test(parts[1])) ? parseFloat(parts[1]) : 0.15;
+                    const color = parts.find(p => /^(violet|blanc|noir)$/.test(p)) || 'violet';
+                    if (!isNaN(at)) fxCues.push({ type: 'flash', at: Math.round(at * 1000), dur: Math.round(dur * 1000), color });
+                    continue;
+                }
+                if (cmd === 'eyes') {
+                    // @eyes [duréeMs]  → vignette yeux du Nécro animés, plein écran fond noir
+                    const ms = parseInt(val, 10);
+                    script.push({ type: 'eyes', duration: isNaN(ms) ? 4000 : ms });
+                    continue;
+                }
                 if (cmd === 'hide')  { script.push({ type: 'hide', side: val }); continue; }
                 if (cmd === 'video') { script.push({ type: 'video', src: val }); continue; }
 
@@ -687,7 +1018,15 @@ export class DialogueEngine {
                 // (ex. @scene X\n@music Y → la musique démarre quand la scène apparaît)
                 const last = script[script.length - 1];
                 const attachToScene = last?.type === 'scene_pause';
-                if (cmd === 'music')     { if (attachToScene) last.music     = val;  else pendingMusic     = val;  continue; }
+                if (cmd === 'music')     {
+                    // @music <track> [once]  → "once" = joue une seule fois (pas de boucle)
+                    const mp = val.split(/\s+/);
+                    const mtrack = mp[0];
+                    const mNoLoop = mp.slice(1).includes('once');
+                    if (attachToScene) { last.music = mtrack; last.musicNoLoop = mNoLoop; }
+                    else { pendingMusic = mtrack; pendingMusicNoLoop = mNoLoop; }
+                    continue;
+                }
                 if (cmd === 'musicstop') { if (attachToScene) last.musicStop = true; else pendingMusicStop = true; continue; }
                 if (cmd === 'sfx')       { if (attachToScene) last.sfx       = val;  else pendingSfx       = val;  continue; }
                 if (cmd === 'sfxloop')   { if (attachToScene) last.sfxloop   = val;  else pendingSfxLoop   = val;  continue; }
@@ -700,7 +1039,7 @@ export class DialogueEngine {
                 const narText = line.slice(1).trim();
                 const entry = { type: 'narration', text: narText };
                 if (pendingBg) { entry.bg = pendingBg; entry.bgPos = pendingBgPos; pendingBg = null; pendingBgPos = null; }
-                if (pendingMusic)     { entry.music     = pendingMusic;     pendingMusic     = null; }
+                if (pendingMusic)     { entry.music     = pendingMusic;     entry.musicNoLoop = pendingMusicNoLoop; pendingMusic = null; pendingMusicNoLoop = false; }
                 if (pendingMusicStop) { entry.musicStop = true;             pendingMusicStop = false; }
                 if (pendingSfx)       { entry.sfx       = pendingSfx;       pendingSfx       = null; }
                 if (pendingSfxLoop)   { entry.sfxloop   = pendingSfxLoop;   pendingSfxLoop   = null; }
@@ -729,6 +1068,7 @@ export class DialogueEngine {
             script.push(entry);
         }
 
+        script._fxCues = fxCues;
         return script;
     }
 
@@ -740,6 +1080,7 @@ export class DialogueEngine {
 
     _advance() {
         if (this._inChoice) return;
+        if (this._autoSlide) return; // le diaporama avance tout seul, le tap est ignoré
         if (this.typing) {
             // Skip typewriter → show full text instantly
             clearTimeout(this.typeTimer);
@@ -748,7 +1089,10 @@ export class DialogueEngine {
             this.els.arrow.classList.remove('hidden');
             return;
         }
+        this._next();
+    }
 
+    _next() {
         this.index++;
         if (this.index >= this.script.length) {
             this._end();
@@ -759,12 +1103,19 @@ export class DialogueEngine {
 
     _showLine(line) {
         // ── Musique (@music / @musicstop) ────────────────────
-        if (line.music)     this.onMusic?.(line.music);
+        if (line.music)     this.onMusic?.(line.music, { loop: !line.musicNoLoop });
         if (line.musicStop) this.onMusicStop?.();
+
+        // Les glitchs sont calés sur le départ musique (ou, à défaut, la 1re slide)
+        if (line.music || line.type === 'slide') this._armFxCues();
 
         // ── Sons (@sfx / @sfxloop / @sfxstop) ───────────────
         if (line.sfx)     this.onSfx?.(line.sfx);
-        if (line.sfxloop) this.onSfxLoop?.(line.sfxloop);
+        if (line.sfxloop) {
+            // @sfxloop <nom> [volume 0-1]
+            const [lname, lvol] = String(line.sfxloop).split(/\s+/);
+            this.onSfxLoop?.(lname, lvol !== undefined ? parseFloat(lvol) : undefined);
+        }
         if (line.sfxstop) this.onSfxStop?.(line.sfxstop);
 
         // ── Choix interactifs (@choice) ──────────────────────────
@@ -790,6 +1141,57 @@ export class DialogueEngine {
             return;
         }
 
+        // ── Pré-roll (@pause) : écran noir + musique, avance auto après <ms> ──
+        if (line.type === 'pause') {
+            this._clearSlideTimer();
+            this.overlay.classList.add('cinematic', 'slideshow');
+            this.overlay.classList.remove('scene-pause');
+            this.typing = false;
+            this._autoSlide = true;
+            this._slideTimer = setTimeout(() => {
+                this._autoSlide  = false;
+                this._slideTimer = null;
+                this._next();
+            }, line.duration);
+            return;
+        }
+
+        // ── Vignette yeux du Nécro (@eyes) : sprite animée plein écran sur noir ──
+        if (line.type === 'eyes') {
+            this._clearSlideTimer();
+            this.overlay.classList.add('cinematic', 'slideshow');
+            this.overlay.classList.remove('scene-pause');
+            if (this.els.eyesSprite) {
+                this.els.eyesSprite.style.backgroundImage = `url('${this.basePath}effects/ch7_necro_eyes_sheet.png')`;
+            }
+            this.els.eyes?.classList.add('active');
+            this.typing = false;
+            this._autoSlide = true;
+            this._slideTimer = setTimeout(() => {
+                this._autoSlide  = false;
+                this._slideTimer = null;
+                this._next();
+            }, line.duration);
+            return;
+        }
+
+        // ── Diaporama (@slide) ───────────────────────────────
+        // Image plein écran, fondu croisé + Ken Burns, avance automatiquement
+        if (line.type === 'slide') {
+            this._clearSlideTimer();
+            this.overlay.classList.add('cinematic', 'slideshow');
+            this.overlay.classList.remove('scene-pause');
+            this._setBgKenBurns(`${this.basePath}${this._slideScene(line)}`, line.duration, this.index % 2 === 1);
+            this.typing = false;
+            this._autoSlide = true;
+            this._slideTimer = setTimeout(() => {
+                this._autoSlide  = false;
+                this._slideTimer = null;
+                this._next();
+            }, line.duration);
+            return;
+        }
+
         // ── Scene pause (@scene) ─────────────────────────────
         // Image plein écran sans boîte de dialogue — tap pour continuer
         if (line.type === 'scene_pause') {
@@ -799,8 +1201,10 @@ export class DialogueEngine {
             return;
         }
 
-        // Pour tout autre type : sortir du mode scene-pause et cinématique
-        this.overlay.classList.remove('scene-pause', 'cinematic');
+        // Pour tout autre type : sortir des modes scene-pause / cinématique / diaporama
+        this._clearSlideTimer();
+        this.overlay.classList.remove('scene-pause', 'cinematic', 'slideshow');
+        this.els.eyes?.classList.remove('active');
 
         // ── Narration (>) ────────────────────────────────────
         if (line.type === 'narration') {
@@ -961,6 +1365,10 @@ export class DialogueEngine {
 
     _end() {
         clearTimeout(this.typeTimer);
+        this._clearSlideTimer();
+        this._clearFx();
+        this.overlay.classList.remove('slideshow');
+        this.els.eyes?.classList.remove('active');
         this.typing = false;
         // Fermer la vidéo si elle tourne encore (ex: skip pendant une vidéo)
         if (this._videoWrap.style.display !== 'none') {

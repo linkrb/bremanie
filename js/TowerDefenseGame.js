@@ -40,6 +40,7 @@ export class TowerDefenseGame {
         this.onChateauBossWin   = null;  // ()
         this.onChateauFinalWin  = null;  // ()
         this.onChapter6Win      = null;  // ()
+        this.onChapter7Win      = null;  // ()
         this._chapter6Traps     = 0;
         this._trapPlacing     = false;
         this.onTornadoSpawned   = null;  // ()
@@ -86,10 +87,14 @@ export class TowerDefenseGame {
             const now = performance.now();
             this.engine.update(ticker.deltaTime, now);
             this.renderer.updateParticles((ticker.deltaTime / 60) * this.engine.gameSpeed);
+            if (this._chapter7Mode) this._updateDragonRaids((ticker.deltaTime / 60) * this.engine.gameSpeed);
             this.renderer.updateGraspEffects(now);
             this.renderer.updateWindAnimation(now);
             this.renderer.animateWindTowers(this.engine.towers, now);
-            if (this.engine.hero) this.renderer.updateHeroCharge(this.engine.hero.charge, this.engine.hero.maxCharge, now);
+            if (this.engine.hero) {
+                if (this._chapter7Mode) this.renderer.updateDavidCharge(this.engine.hero.charge, this.engine.hero.maxCharge, now);
+                else                    this.renderer.updateHeroCharge(this.engine.hero.charge, this.engine.hero.maxCharge, now);
+            }
             this.renderer.sortEntities();
             this.updateEnemyCount();
         });
@@ -152,6 +157,8 @@ export class TowerDefenseGame {
                 this.renderer.setTileLighting(this.engine.litTiles);
                 this.onTornadoSpawned?.();
             }
+            // Ch7 : chaque invocation consume l'emprise du Nécro sur Romain
+            if (this._chapter7Mode) this._drainPossession();
         };
 
         this.engine.onEnemyMoved = (enemy, now, isSlow) => {
@@ -312,7 +319,7 @@ export class TowerDefenseGame {
                 app.stage.cursor = 'default';
             }
 
-            if (grid.x < 0 || grid.x >= GRID_WIDTH || grid.y < 0 || grid.y >= GRID_HEIGHT) return;
+            if (grid.x < 0 || grid.x >= GRID_WIDTH || grid.y < 0 || grid.y >= this.engine.grid.length) return;
 
             const tile = this.renderer.tileMap[`${grid.x},${grid.y}`];
             if (!tile) return;
@@ -343,7 +350,7 @@ export class TowerDefenseGame {
             const pos = e.global;
             const grid = fromIso(pos.x, pos.y, this.renderer.offsetX, this.renderer.offsetY, this.renderer.mapScale);
 
-            if (grid.x < 0 || grid.x >= GRID_WIDTH || grid.y < 0 || grid.y >= GRID_HEIGHT) {
+            if (grid.x < 0 || grid.x >= GRID_WIDTH || grid.y < 0 || grid.y >= this.engine.grid.length) {
                 this.hideTowerInfo();
                 return;
             }
@@ -362,7 +369,7 @@ export class TowerDefenseGame {
     }
 
     handleTileClick(x, y) {
-        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return;
+        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= this.engine.grid.length) return;
 
         const cell = this.engine.grid[y][x];
 
@@ -664,6 +671,7 @@ export class TowerDefenseGame {
         if (this._chapter4Mode)    { this.onChapter4Win?.();     return; }
         if (this._chapter5Mode)    { this.onChapter5Win?.();     return; }
         if (this._chapter6Mode)    { this.onChapter6Win?.();     return; }
+        if (this._chapter7Mode)    { this.onChapter7Win?.();     return; }
         this._continuing = true;
     }
 
@@ -778,6 +786,129 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // ── Pouvoir de David (ch7) : pluie de claymores ─────────────
+    _triggerDavidAbility() {
+        const hero = this.engine.hero;
+        if (!hero || hero.charge < hero.maxCharge) return;
+        hero.charge = 0;
+
+        // 1) David lève son épée sur sa tuile (on le voit faire le geste, wind-up ~0,6s)
+        this.renderer.playDavidRaise();
+        if (this.renderer._davidAura) this.renderer._davidAura.clear();
+
+        // 2) puis la carte de pouvoir monte et le jeu se met en pause
+        const overlay = document.getElementById('hero-ability-overlay');
+        const titleEl = overlay?.querySelector('.hero-ability-title');
+        setTimeout(() => {
+            if (titleEl) titleEl.textContent = '✦ Pouvoir de David ✦';
+            if (overlay) { overlay.dataset.hero = 'david'; overlay.classList.add('active'); }
+            this.engine.paused = true;
+        }, 550);
+
+        // Cibles : jusqu'à 8 ennemis répartis sur le chemin
+        const all = [...this.engine.enemies].sort((a, b) => a.pathIndex - b.pathIndex);
+        const targets = [];
+        if (all.length > 0) {
+            const count = Math.min(8, all.length);
+            if (all.length <= count) targets.push(...all);
+            else { const step = (all.length - 1) / (count - 1); for (let i = 0; i < count; i++) targets.push(all[Math.round(i * step)]); }
+        }
+
+        // Pluie étalée : les claymores tombent une à une sur toute la durée (avec léger jitter)
+        const strikeStart = 1700, strikeInterval = 430;
+        let pending = targets.length;
+        const onDone = () => { pending--; if (pending <= 0) this._endDavidAbility(); };
+
+        if (targets.length === 0) {
+            setTimeout(() => this._endDavidAbility(), 2800);
+        } else {
+            targets.forEach((enemy, i) => {
+                const at = strikeStart + i * strikeInterval + (Math.random() * 160 - 80);
+                setTimeout(() => {
+                    if (!this.engine.enemies.includes(enemy)) { onDone(); return; }
+                    this.renderer.dropClaymore(enemy.x, enemy.y, () => {
+                        if (!this.engine.enemies.includes(enemy)) { onDone(); return; }
+                        enemy.hp -= 350;
+                        this.onClaymoreHit?.();   // son : la claymore a touché un squelette
+                        if (this.engine.onEnemyDamaged) this.engine.onEnemyDamaged(enemy, 90);
+                        if (enemy.hp <= 0) {
+                            this.engine.gold += enemy.reward;
+                            const idx = this.engine.enemies.indexOf(enemy);
+                            if (idx > -1) {
+                                this.engine.enemies.splice(idx, 1);
+                                if (this.engine.onEnemyDied)   this.engine.onEnemyDied(enemy, idx);
+                                if (this.engine.onGoldChanged) this.engine.onGoldChanged(this.engine.gold);
+                            }
+                        }
+                        this.updateUI();
+                        onDone();
+                    });
+                }, Math.max(strikeStart, at));
+            });
+        }
+
+        // la carte est montée à 550ms, son anim CSS dure 2.8s → retrait après (550+2800)
+        setTimeout(() => { if (overlay) { overlay.classList.remove('active'); delete overlay.dataset.hero; } }, 3400);
+    }
+
+    _endDavidAbility() {
+        if (this.renderer._davidChargeBar) this.renderer._davidChargeBar.visible = true;
+        this.engine.paused = false;
+        this.updateUI();
+    }
+
+    // ── Raid du dragon (ch7) : pique et détruit une tour au hasard ──
+    // Cadence pilotée en TEMPS-JEU (scalé par gameSpeed) : accélérer le jeu
+    // accélère proportionnellement les raids, et la pause les gèle.
+    // L'intervalle démarre à startIntervalSec et se réduit de decaySec à chaque raid
+    // jusqu'au plancher minIntervalSec → le dragon revient de plus en plus vite.
+    startDragonRaids(startIntervalSec = 40, firstDelaySec = 10, minIntervalSec = 25, decaySec = 3) {
+        this._dragonActive      = true;
+        this._dragonInterval    = startIntervalSec;
+        this._dragonMinInterval = minIntervalSec;
+        this._dragonDecay       = decaySec;
+        this._dragonCountdown   = firstDelaySec;   // secondes-jeu avant le prochain raid
+    }
+
+    stopDragonRaids() { this._dragonActive = false; }
+
+    // Appelé chaque frame avec dtSec = secondes-jeu écoulées (delta × gameSpeed)
+    _updateDragonRaids(dtSec) {
+        if (!this._dragonActive || !this._chapter7Mode || this.engine.paused) return;
+        this._dragonCountdown -= dtSec;
+        if (this._dragonCountdown <= 0) {
+            this._dragonCountdown += this._dragonInterval;
+            // Accélération : chaque raid rapproche le suivant, jusqu'au plancher
+            this._dragonInterval = Math.max(this._dragonMinInterval, this._dragonInterval - this._dragonDecay);
+            this._dragonRaid();
+        }
+    }
+
+    _dragonRaid() {
+        const towers = this.engine.towers;
+        if (!towers || towers.length === 0) return;   // rien à détruire → pas de raid
+        const tower = towers[Math.floor(Math.random() * towers.length)];
+
+        // Télégraphe : ombre qui grandit sur la tour + rugissement (~1,5s pour réagir)
+        this.renderer.showDragonWarning(tower.x, tower.y);
+        this.onDragonRoar?.();
+
+        setTimeout(() => {
+            this.renderer.clearDragonWarning();
+            this.renderer.playDragonDive(tower.x, tower.y, () => {
+                // détruit la tour (sans remboursement) si elle est toujours là
+                if (this.engine.grid[tower.y]?.[tower.x]?.tower === tower) {
+                    this.engine.grid[tower.y][tower.x].tower = null;
+                    const idx = this.engine.towers.indexOf(tower);
+                    if (idx > -1) this.engine.towers.splice(idx, 1);
+                    this.renderer.removeTowerFromStage(tower);
+                    this.renderer.playDustCloud(tower.x, tower.y);   // la tour part en poussière
+                    this.updateUI();
+                }
+            });
+        }, 1500);
+    }
+
     // ── Pièges Martin (ch6) ──────────────────────────────────────
 
     _placeTrap(x, y) {
@@ -815,6 +946,7 @@ export class TowerDefenseGame {
         if (this._chapter4Mode) { this.setChapter4Mode(); return; }
         if (this._chapter5Mode) { this.setChapter5Mode(); return; }
         if (this._chapter6Mode) { this.setChapter6Mode(); return; }
+        if (this._chapter7Mode) { this.setChapter7Mode(); return; }
         if (this._chateauFinalMode) { this.setChateauFinalMode(); return; }
         if (this._chateauBossMode)  { this.setChateauBossMode();  return; }
         if (this._chateauMode)     { this.setChateauMode();     return; }
@@ -1154,7 +1286,90 @@ export class TowerDefenseGame {
         this.updateUI();
     }
 
+    // Chapitre 7 : Salle du Trône — Nathan libère son père (placeholder combat)
+    // TODO ch7 : sprite Romain possédé (invocateur invulnérable) en bout de chemin
+    //            + jauge de possession qui descend à chaque monstre neutralisé.
+    async setChapter7Mode() {
+        this._scriptedMode = false;
+        this._tutorialMode = false;
+        this._resetForMode();
+        this._chapter7Mode    = true;
+        this._availableTowers = new Set(['archer', 'mage']);
+
+        const levelIndex = LEVELS.findIndex(l => l.name === 'Salle du Trône');
+        if (levelIndex < 0) { console.error('[Brémanie] Niveau Salle du Trône introuvable'); return; }
+        this.engine.resetGameState(levelIndex, true);
+        // Héros David APRÈS le reset (resetGameState remet hero=null) : jauge → pluie de claymores
+        this.engine.hero = { charge: 0, maxCharge: 100, chargeRate: 2.8 };
+        const _img = document.getElementById('hero-ability-img');
+        if (_img) _img.src = '/images/david_power.png';   // carte du pouvoir de David
+        // David occupe sa tuile : on interdit d'y poser une tour
+        const _david = this.engine.currentLevelData?.theme?.allies?.find(a => a.name === 'david');
+        if (_david && this.engine.grid[_david.y]?.[_david.x]) {
+            this.engine.grid[_david.y][_david.x].blockedByHero = true;
+        }
+        this.engine.gold   = 150;
+        this.engine.health = 15;
+        this.engine.maxHealth = 15;
+        await this.renderer.setTheme(this.engine.currentLevelData);
+        this.renderer.clearStage();
+        this.renderer.drawGround(this.engine.grid, this.engine.currentLevelData?.path || []);
+        this.renderer.calculateOffset();
+        this.selectedPlacedTower = null;
+        this.hoveredTower = null;
+        this.hideTowerInfo();
+        this.updateUI();
+
+        // Jauge de possession : calibrée sur le total d'invocations des 4 vagues.
+        // Chaque squelette relevé la consume → à zéro, l'emprise se brise.
+        const waves = this.engine.currentLevelData?.waves || [];
+        this._possessionTotal = waves.flat().reduce((n, g) => n + (g.count || 0), 0) || 1;
+        this._possessionLeft  = this._possessionTotal;
+        this._possessionBroken = false;
+        this.renderer.setPossession(1);
+
+        // Nathan & David débarquent du ciel — après le pan caméra (4s) pour ne pas jouer hors champ
+        const allies = this.engine.currentLevelData?.theme?.allies || [];
+        clearTimeout(this._alliesTimer);
+        clearTimeout(this._alliesDoneTimer);
+        this._alliesTimer = setTimeout(() => {
+            allies.forEach(a => this.renderer.dropAllyOnTile(a.name, a.x, a.y, {
+                scale: a.scale, delay: a.delay, flip: a.flip,
+            }));
+            // Dialogue une fois le dernier posé (anticipation 280 + chute 520 + respiration)
+            const lastLanding = Math.max(0, ...allies.map(a => a.delay || 0)) + 1100;
+            this._alliesDoneTimer = setTimeout(() => this.onAlliesLanded?.(), lastLanding);
+        }, 4200);
+    }
+
+    // Ch7 : une invocation de plus → l'emprise faiblit
+    _drainPossession() {
+        if (this._possessionBroken) return;
+        this._possessionLeft = Math.max(0, this._possessionLeft - 1);
+        this.renderer.setPossession(this._possessionLeft / this._possessionTotal);
+
+        if (this._possessionLeft === 0) {
+            this._possessionBroken = true;
+            // On laisse finir les squelettes déjà sur le terrain avant de libérer Romain
+            const wait = setInterval(() => {
+                if (this.engine.enemies.length > 0 || this.engine._gameOver) return;
+                clearInterval(wait);
+                this.engine.paused = true;
+                this.onPossessionBroken?.();
+            }, 400);
+            this._possessionWatch = wait;
+        }
+    }
+
     _resetForMode() {
+        clearInterval(this._possessionWatch);
+        this._dragonActive = false;
+        this.renderer.clearDragonWarning?.();
+        clearTimeout(this._alliesTimer);
+        clearTimeout(this._alliesDoneTimer);
+        this._possessionBroken = false;
+        this.renderer.clearPossession?.();
+        this.renderer.clearAllies?.();
         this._chapter2Mode = false;
         this._fortMode     = false;
         this._chateauMode      = false;
@@ -1163,6 +1378,7 @@ export class TowerDefenseGame {
         this._chapter4Mode     = false;
         this._chapter5Mode     = false;
         this._chapter6Mode     = false;
+        this._chapter7Mode     = false;
         this._chapter6Traps    = 0;
         this._trapPlacing    = false;
         this._availableTowers  = new Set(['archer']);

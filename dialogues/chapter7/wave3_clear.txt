@@ -1,0 +1,21 @@
+# chapter7/wave3_clear.txt
+
+> La troisième vague reflue. Là-haut, le dragon décharné décrit un large cercle avant de se fondre dans l'ombre des voûtes. Le sol de la salle du trône est jonché d'ossements brisés.
+
+david(right):worried Ce monstre volant nous a déjà fauché plusieurs tours... La ligne tient de justesse. Combien de temps on va encore devoir tenir, Nathan ?
+
+> Nathan lève les yeux vers le trône. L'aura noire n'est plus qu'un mince voile tremblotant autour de Romain. Ses traits se tordent, comme sous l'effet d'une violente lutte intérieure.
+
+nathan(left):surprised Regarde, mon oncle ! L'ombre vacille. Le Nécromancien puise dans ses toutes dernières réserves !
+
+romain_possede(left):despairing N... Nathan... fuyez... la horde... est encore longue...
+
+nathan(left):sad Papa ! C'est lui, il lutte ! Il essaie de nous prévenir !
+
+david(right):determined Il résiste de l'intérieur, c'est bon signe. Mais s'il dit vrai, le Nécromancien a encore de l'énergie à revendre. Il va falloir encaisser encore plusieurs vagues avant que le sortilège ne cède complètement.
+
+> Romain rejette brutalement la tête en arrière dans un râle étouffé. L'aura ténébreuse s'embrase à nouveau pour étouffer la volonté du roi : le Nécromancien force de nouvelles invocations.
+
+nathan(left):determined Alors on tiendra le temps qu'il faudra ! Répare la ligne de front, mon oncle. On va le vider de toute sa magie noire, monstre par monstre !
+
+david(right):angry Qu'il envoie tout ce qu'il a ! On les broiera jusqu'au dernier pour libérer mon frère !

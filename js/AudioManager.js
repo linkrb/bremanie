@@ -9,6 +9,7 @@ export class AudioManager {
         this._fadeTimers = new Map(); // name → intervalId  (un seul fade actif par piste)
         this._startTimer = null;      // setTimeout du prochain fade-in (crossfade en attente)
         this._sfxLoops   = {};
+        this._ambient    = null;   // canal ambiance (playAmbient/stopAmbient)
     }
 
     preload(name, src) {
@@ -32,7 +33,7 @@ export class AudioManager {
         this._setupLoop(track, name);
     }
 
-    crossfadeTo(name, ms = 2000) {
+    crossfadeTo(name, ms = 2000, { loop = true } = {}) {
         const newTrack = this._tracks[name];
         if (!newTrack || name === this._current) return;
 
@@ -50,7 +51,7 @@ export class AudioManager {
             newTrack.currentTime = 0;
             newTrack.play().catch(() => {});
             this._fadeIn(newTrack, name, ms);
-            this._setupLoop(newTrack, name);
+            if (loop) this._setupLoop(newTrack, name);  // sinon : joue une seule fois
         }, ms / 2);
     }
 
@@ -70,13 +71,13 @@ export class AudioManager {
         sfx.play().catch(() => {});
     }
 
-    playSfxLoop(name) {
+    playSfxLoop(name, volume = this._target) {
         if (this._sfxLoops[name]) return;
         const track = this._tracks[name];
         if (!track) return;
         const sfx = track.cloneNode();
         sfx.loop = true;
-        sfx.volume = this._target;
+        sfx.volume = (typeof volume === 'number' && !isNaN(volume)) ? volume : this._target;
         sfx.play().catch(() => {});
         this._sfxLoops[name] = sfx;
     }
@@ -90,6 +91,28 @@ export class AudioManager {
         if (!sfx) return;
         delete this._sfxLoops[name];
         this._fadeOut(sfx, `sfx_${name}`, ms, () => sfx.pause());
+    }
+
+    // ── Ambiance : canal dédié, indépendant des sfxloop du dialogue ──
+    // (les dialogues coupent tous les sfxloop à leur ouverture ; pas l'ambiance)
+    playAmbient(name, volume = 0.35) {
+        if (this._ambient?.name === name) return;
+        this.stopAmbient(0);
+        const track = this._tracks[name];
+        if (!track) return;
+        const sfx = track.cloneNode();
+        sfx.loop = true;
+        sfx.volume = (typeof volume === 'number' && !isNaN(volume)) ? volume : 0.35;
+        sfx.play().catch(() => {});
+        this._ambient = { name, sfx };
+    }
+
+    stopAmbient(ms = 800) {
+        const amb = this._ambient;
+        if (!amb) return;
+        this._ambient = null;
+        if (ms <= 0) { amb.sfx.pause(); return; }
+        this._fadeOut(amb.sfx, `amb_${amb.name}`, ms, () => amb.sfx.pause());
     }
 
     // ── Privé ──────────────────────────────────────────────────

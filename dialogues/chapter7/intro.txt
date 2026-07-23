@@ -1,0 +1,47 @@
+# chapter7/intro.txt — PLACEHOLDER
+# Ouverture : le rêve de Romain (diaporama auto en fondu + Ken Burns),
+# puis dialogue Nathan/David (à écrire). Images = placeholders existants.
+
+@music ch7_dream once
+
+# ── Pré-roll : la musique tourne 3 s sur écran noir avant le diaporama ──
+@pause 3000
+
+# ── Effet glitch nécro calé sur la musique (secondes depuis le départ) ──
+@glitch 17 0.6
+@flash 17 0.15 violet
+@glitch 27 0.6
+@glitch 30 1
+
+# ── Diaporama du rêve : @slide desktop.jpg [mobile.jpg] [duréeMs] ──
+@slide scenes/ch7_reve_1_bebe.jpg scenes/ch7_reve_1_bebe_portrait.jpg 4500
+@slide scenes/ch7_reve_2_bebe_fille.jpg scenes/ch7_reve_2_bebe_fille_portrait.jpg 4500
+@slide scenes/ch7_reve_4_fille.jpg scenes/ch7_reve_4_fille_portrait.jpg 4500
+@slide scenes/ch7_reve_3_enfance.jpg scenes/ch7_reve_3_enfance_portrait.jpg 4500
+@slide scenes/ch7_reve_5_arc.jpg scenes/ch7_reve_5_arc_portrait.jpg 4500
+@slide scenes/ch7_reve_6_epees.jpg scenes/ch7_reve_6_epees_portrait.jpg 5000
+
+# ── Dernière vignette : les yeux du Nécromancien s'allument dans le noir ──
+@eyes 6000
+
+# ── Après le fondu noir : Romain possédé, prostré ──
+@bg black
+romain_possede(left):despairing ...
+romain_possede(left):despairing ma tête
+@hide left
+
+# ── Enchaîne sur le dialogue (placeholder) ──
+
+@pause 3000
+
+> Le rêve se dissipe. Ailleurs, Nathan prépare son plan.
+
+nathan(left):determined ...
+david(right):worried T'es sûr que c'est par là ? Ton père ne m'a jamais parlé de cette cachette...
+
+nathan(left):determined Mon oncle, notre père ne révèle jamais toutes ses stratégies.
+nathan:sad Il avait fait construire ce passage en cas d'invasion. Une voie d'évacuation d'urgence pour Anna et moi.
+nathan:sad Quand on jouait à s'y cacher, il faisait semblant de ne pas nous trouver... En réalité, il s'assurait juste qu'on en connaissait le chemin par cœur. Ça mène droit derrière les tapisseries du trône.
+
+david(right):determined C'est du Romain tout craché. Toujours à protéger ses arrières... et les vôtres.
+david:determined Prépare-toi, mon garçon. On surgit, on élimine les gardes, et on sort ton père de là le plus vite possible.

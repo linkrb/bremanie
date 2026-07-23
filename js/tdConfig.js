@@ -24,7 +24,11 @@ export const ENEMY_TYPES = {
     flying:  { hp: 90,   speed: 2.7, reward: 5,   color: 0xBB88FF, size: 0.70, anchorY: 0.5,  flying: true },
     banshee: { hp: 400, speed: 1.8, reward: 8,   color: 0xAADDFF, size: 1.10, anchorY: 0.65, stunRadius: 2.2, stunDuration: 5000 },
     tornado:      { hp: 600, speed: 1.5, reward: 20, color: 0x88DDFF, size: 2.2, anchorY: 0.85, darkness: true },
-    tornado_boss: { hp: 3500, speed: 1.0, reward: 300, color: 0x3399FF, size: 3.2, anchorY: 0.85, darkness: true }
+    tornado_boss: { hp: 3500, speed: 1.0, reward: 300, color: 0x3399FF, size: 3.2, anchorY: 0.85, darkness: true },
+    // Chapitre VII — Salle du Trône
+    skel_wraith: { hp: 130, speed: 3.0, reward: 5,  color: 0x66DDCC, size: 0.9,  anchorY: 0.7 },  // spectral, éclaireur rapide
+    skel_mage:   { hp: 220, speed: 1.6, reward: 8,  color: 0x44CC88, size: 0.95, anchorY: 0.7 },  // nécro, cible prioritaire
+    skel_brute:  { hp: 550, speed: 1.1, reward: 12, color: 0x9A8C6E, size: 1.1,  anchorY: 0.75 }  // tank très lent
 };
 
 // ============== LEVELS ==============
@@ -539,6 +543,62 @@ export const LEVELS = [
         waves: [
             [{ type: 'tornado', count: 1 }, { type: 'basic', count: 4 }, { type: 'fast', count: 2 }],
         ]
+    },
+    // ── Chapitre VII : Salle du Trône — Nathan libère son père ──
+    // Thème dédié : sol dallé + tapis royaux, trône en objectif (castle.png),
+    // arches et braseros en décos. Décor mural = fond CSS .chapter7-mode (canvas transparent).
+    {
+        name: 'Salle du Trône',
+        theme: {
+            id: 'throne_room',
+            // pas de bgColor → canvas transparent, le décor CSS .chapter7-mode transparaît
+            noCastle: true,             // pas de siège en bas — l'objectif est défendu à nu
+            enemySpawnAdvance: true,    // les squelettes émergent une tuile devant Romain, pas sous lui
+            spawnBoss: 'boss_throne',   // Romain possédé animé, fixé sur la 1re tuile de chemin (en haut)
+            spawnBossScale: 1.8,
+            spawnBossOffsetX: -40,       // recentrage visuel du trône
+            spawnBossOffsetY: 0,
+            // Alliés décoratifs : chutent du ciel à l'entrée du combat (David plus grand que Nathan)
+            allies: [
+                { name: 'david',  x: 3, y: 23, scale: 1.25, delay: 0 },
+                { name: 'nathan', x: 3, y: 24, scale: 1.05, delay: 450 },
+            ],
+            enemyFolder: 'enemies/skeleton',
+            enemyAnchors: { skel_wraith: 0.85, skel_mage: 0.85, skel_brute: 0.85 },
+            enemies: {
+                skel_wraith: 'enemy_skel_wraith',
+                skel_mage:   'enemy_skel_mage',
+                skel_brute:  'enemy_skel_brute',
+            },
+            tiles: { grass: 'tile_grass', corner: 'tile_corner', straight: 'tile_path_straight' },
+            // Sol : pierre nue majoritaire, tapis royaux épars
+            grassVariants: ['stone', 'stone', 'stone', 'carpet_1', 'stone', 'stone', 'carpet_2', 'stone'],
+            decoTiles: [
+                'deco/arch', 'deco/brazier', 'deco/brazier',
+            ],
+            animatedDecoTiles: ['deco/brazier'],   // seul le brasero a un _sheet.png animé
+            decorations: [],
+            decoRate: 0.18,
+        },
+        gridHeight: 26,  // 4 rangées de plus que le standard (22) — remplit le bas de l'écran
+        path: [
+            {x:2,y:1}, {x:2,y:2}, {x:1,y:3}, {x:1,y:4}, {x:0,y:5}, {x:0,y:6},
+            {x:0,y:7}, {x:1,y:8}, {x:1,y:9}, {x:2,y:10}, {x:2,y:11}, {x:3,y:12},
+            {x:2,y:13}, {x:2,y:14}, {x:1,y:15}, {x:1,y:16}, {x:0,y:17}, {x:0,y:18},
+            {x:0,y:19}, {x:1,y:20}, {x:1,y:21},
+            {x:2,y:22}, {x:2,y:23}, {x:2,y:24}, {x:1,y:25},
+        ],
+        waves: [
+            // Que du lourd : les 3 squelettes custom, pas de piétaille ; le boss = Romain (spawnBoss)
+            [{ type: 'skel_wraith', count: 3 },  { type: 'skel_brute', count: 2 }, { type: 'skel_mage', count: 1 }],
+            [{ type: 'skel_wraith', count: 6 },  { type: 'skel_brute', count: 3 }, { type: 'skel_mage', count: 2 }],
+            [{ type: 'skel_wraith', count: 11 }, { type: 'skel_brute', count: 4 }, { type: 'skel_mage', count: 3 }],
+            [{ type: 'skel_wraith', count: 14 }, { type: 'skel_brute', count: 6 }, { type: 'skel_mage', count: 4 }],
+            [{ type: 'skel_wraith', count: 14 }, { type: 'skel_brute', count: 6 }, { type: 'skel_mage', count: 4 }],
+            [{ type: 'skel_wraith', count: 14 }, { type: 'skel_brute', count: 8 }, { type: 'skel_mage', count: 12 }],
+            [{ type: 'skel_wraith', count: 14 }, { type: 'skel_brute', count: 9 }, { type: 'skel_mage', count: 12 }],
+            [{ type: 'skel_wraith', count: 18 }, { type: 'skel_brute', count: 12 }, { type: 'skel_mage', count: 12 }],
+        ],
     },
 ];
 

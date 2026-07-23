@@ -29,6 +29,56 @@
         linear-gradient(rgba(2,5,18,0.45), rgba(2,5,18,0.45)),
         url('/images/scenes/dark-forest.png') center center / cover no-repeat;
 }
+#screen-game.combat-mode.chapter7-mode {
+    background:
+        linear-gradient(rgba(12,6,24,0.35), rgba(12,6,24,0.35)),
+        url('/images/scenes/salle_trone.jpg') center center / cover no-repeat;
+}
+
+/* ── Pan caméra cinématique (ch7) ──────────────────────────────────
+   Le décor est un calque plus HAUT que l'écran (165vh) et reste figé :
+   c'est la "caméra" (le cadre) qui remonte lentement du bas (le sol) vers
+   le haut (le terrain/trône). Le jeu + HUD n'apparaissent qu'à l'arrivée. */
+#screen-game.combat-mode.chapter7-mode { overflow: hidden; }
+
+#combat-bg {
+    display: none;
+    position: absolute; left: 0; top: 0;
+    width: 100%; height: 165vh;
+    background: url('/images/scenes/salle_trone.jpg') center top / cover no-repeat;
+    z-index: 0; pointer-events: none;
+    transform: translateY(-30vh);   /* repos = cadré sur le dallage (sous les tuiles) */
+}
+#screen-game.combat-mode.chapter7-mode #combat-bg { display: block; }
+
+/* La caméra remonte une scène RIGIDE : décor et jeu bougent du même delta (35vh),
+   parfaitement synchronisés → l'œil lit un mouvement de caméra, pas des objets.
+   Le jeu est collé en haut de la scène et la caméra le rejoint. */
+#screen-game.cam-panning #combat-bg {
+    animation: camPanUp 4s cubic-bezier(.4, 0, .2, 1) both;
+}
+#screen-game.cam-panning #game-container {
+    animation: camPanUpGame 4s cubic-bezier(.4, 0, .2, 1) both;
+}
+@keyframes camPanUp {
+    from { transform: translateY(-65vh); }  /* caméra en bas : le sol au premier plan */
+    to   { transform: translateY(-30vh); }  /* caméra posée sur le dallage du terrain */
+}
+@keyframes camPanUpGame {
+    from { transform: translateY(-35vh); }  /* même delta que le décor : scène rigide */
+    to   { transform: translateY(0);     }
+}
+
+/* Barre de tours + son overlay : cachée pendant le pan, puis glisse/fond en douceur à l'arrivée.
+   Hidden instantané (transition:none) pendant le pan ; le reveal joue le transition de repos. */
+#screen-game.combat-mode.chapter7-mode .tower-bar {
+    transition: transform .7s cubic-bezier(.18, .9, .28, 1.12), opacity .55s ease .1s;
+}
+#screen-game.cam-panning .tower-bar {
+    opacity: 0;
+    transform: translateY(120%);
+    transition: none;
+}
 #screen-game.combat-mode #game-container { background: transparent; }
 
 /* Top bar masquée (remplacée par HUD flottant) */

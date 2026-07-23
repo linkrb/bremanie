@@ -1,0 +1,71 @@
+# chapter7/victory.txt
+
+@musicstop
+
+> Le dernier squelette s'effondre en un tas de poussière. Sur le trône, l'épaisse aura noire qui enveloppait Romain éclate dans un bruit de verre brisé.
+> Libéré de ses entraves invisibles, le roi bascule en avant et s'effondre lourdement sur les dalles de pierre.
+
+nathan(left):surprised Papa !
+
+@music main_theme
+
+> Nathan et David se précipitent vers lui. L'oncle David soulève délicatement les épaules de son cadet.
+> Romain entrouvre lentement les yeux. La lueur glaciale a disparu, laissant place à un regard infiniment fatigué, mais humain.
+
+romain(center):sad David... ? Nathan... mon garçon... Vous êtes venus...
+nathan(left):sad On est là, papa. On a réussi. C'est fini, tu es libre.
+david(right):sad Sacré Romain... Tu m'as foutu une frousse bleue. Ne bouge pas, petit frère, garde tes forces. On va te sortir de là.
+
+romain(center):sad Je suis... tellement épuisé. Mon esprit... le Nécromancien a tout consumé...
+nathan(left):determined Repose-toi maintenant. On s'occupe de tout.
+
+@musicstop
+@sfx dragon_roar
+
+> Un rugissement assourdissant fait soudain trembler les vitraux de la salle.
+> Le dragon décharné, que tous croyaient vaincu, fond en piqué depuis les ténèbres de la voûte.
+
+david(right):angry Attention ! En l'air !
+
+> Avant que David ne puisse lever son épée, les immenses serres d'os de la créature s'abattent sur Nathan.
+> Le souffle coupé, le jeune Bâtisseur est violemment arraché du sol.
+
+nathan(left):surprised Aaaah ! Mon oncle ! Papa !
+david(right):worried Nathan ! Non ! Lâche-le, monstre de malheur !
+
+@scene scenes/ch7_dragon_capture.jpg
+> Toujours à terre, Romain lève des yeux horrifiés vers la créature qui emporte son fils. Son visage se crispe, une nouvelle force puisée dans le désespoir émane de lui.
+
+
+romain(left):angry Non... Pas lui... Lâche mon fils !
+romain(left):angry Par le sang des Bâtisseurs... entends ton roi. LÈVE-TOI !
+
+@video ch7_romain_wrath.mp4
+
+@bg black
+@music main_theme
+
+> Dans un dernier éclat, la lumière dorée reflue. Le silence retombe sur la salle du trône.
+> Nathan, indemne, est déposé au sol par une main de lumière qui s'évanouit aussitôt.
+
+nathan(left):surprised Papa... c'est toi qui as fait ça... ?
+
+> Au centre de la salle, Romain tient à peine debout, la main encore tendue, fumante.
+> Ses jambes se dérobent — David bondit et le retient de justesse.
+
+david(right):worried Doucement, petit frère ! Ne force plus, tu es complètement vidé.
+romain(center):worried Je ne savais pas... que j'en étais encore capable...
+romain(center):sad Nathan... tu es sauf. C'est tout ce qui compte.
+
+> Nathan saisit la main de son père, les yeux brillants de soulagement — et de questions.
+
+nathan(left):worried Cette lumière... Papa, d'où est-ce que ça vient... ?
+
+> Mais déjà, épuisé, Romain a sombré, inconscient dans les bras de son fils.
+
+david(right):worried Il ne tiendra pas debout, et nous non plus bien longtemps. On a fait ce qu'on était venus faire — il faut le mettre à l'abri, maintenant.
+nathan(left):determined On ne traîne pas ici. Aide-moi à le porter, on repart par les passages.
+
+nathan(left):sad Accroche-toi, papa. On te ramène à la maison.
+
+> Nathan et David hissent doucement le roi endormi sur leurs épaules et s'enfoncent dans l'ombre des couloirs, laissant derrière eux la salle du trône silencieuse.

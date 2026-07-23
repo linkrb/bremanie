@@ -66,3 +66,25 @@
     filter: drop-shadow(0 0 35px rgba(80,230,100,0.65));
     transform: translateX(-30px);
 }
+
+/* ── David : carte de pouvoir (portrait), centrée ────────────── */
+#hero-ability-overlay[data-hero="david"] img {
+    left: 50%; bottom: 50%;
+    height: 82vh; width: auto;
+    margin-left: 0;
+    transform-origin: center;
+    filter: drop-shadow(0 0 40px rgba(90,220,110,0.7));
+}
+/* recentre l'image (l'anim par défaut gère translateY, on ajoute le centrage X/Y) */
+#hero-ability-overlay[data-hero="david"].active img {
+    animation: heroImgAnimDavid 2.8s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes heroImgAnimDavid {
+    0%   { transform: translate(-50%, 150%) rotate(-4deg); opacity: 0; }
+    9%   { transform: translate(-50%, 50%)  rotate(0deg);  opacity: 1; }
+    68%  { transform: translate(-50%, 50%)  rotate(0deg);  opacity: 1; }
+    100% { transform: translate(-50%, 160%) rotate(3deg);  opacity: 0; }
+}
+#hero-ability-overlay[data-hero="david"] .hero-ability-title {
+    color: #c8f0c0;
+}

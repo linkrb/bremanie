@@ -85,7 +85,8 @@ export class TDEngine {
 
     createGrid(allTiles) {
         const grid = [];
-        for (let y = 0; y < GRID_HEIGHT; y++) {
+        const gridH = this.currentLevelData?.gridHeight ?? GRID_HEIGHT;
+        for (let y = 0; y < gridH; y++) {
             grid[y] = [];
             for (let x = 0; x < GRID_WIDTH; x++) {
                 grid[y][x] = { type: 'grass', tower: null };
@@ -135,7 +136,7 @@ export class TDEngine {
     }
 
     canPlaceTower(x, y, towerType) {
-        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return false;
+        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= this.grid.length) return false;
         const cell = this.grid[y][x];
         if (cell.type !== 'grass' || cell.tower || cell.hasTree || cell.blockedByHero) return false;
         if (!this.devMode && !this.isTowerAvailable(towerType)) return false;
@@ -153,7 +154,7 @@ export class TDEngine {
 
         for (const n of neighbors) {
             const nx = x + n.dx, ny = y + n.dy;
-            if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < GRID_HEIGHT) {
+            if (nx >= 0 && nx < GRID_WIDTH && ny >= 0 && ny < this.grid.length) {
                 const cell = this.grid[ny][nx];
                 if (cell.type === 'path' || cell.type === 'spawn' || cell.type === 'base') {
                     if (n.dir === 'up') return 'back';
@@ -300,7 +301,9 @@ export class TDEngine {
         } else {
             route = this.routes[id % this.routes.length];
         }
-        const spawn = route[0];
+        // enemySpawnAdvance : les ennemis émergent une tuile plus loin (ex. ch7 : devant le trône)
+        const startIdx = (!config.flying && this.currentLevelData?.enemySpawnAdvance && route.length > 1) ? 1 : 0;
+        const spawn = route[startIdx];
 
         // HP scales +8% per global wave (wave 1 = base, wave 40 = ~4x)
         const hpScale = 1 + (this.globalWave - 1) * 0.08;
@@ -316,7 +319,7 @@ export class TDEngine {
             maxHp: scaledHp,
             speed: this.currentLevelData?.enemySpeeds?.[type] ?? config.speed,
             reward: config.reward,
-            pathIndex: 0,
+            pathIndex: startIdx,
             route,
             flying: !!config.flying,
             slowUntil: 0,

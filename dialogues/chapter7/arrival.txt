@@ -1,0 +1,26 @@
+# chapter7/arrival.txt
+
+> Nathan et David s'extirpent de derrière la lourde tapisserie royale.
+> La salle est plongée dans un silence de mort. Seul Romain se tient assis sur le trône de Brémanie, la tête baissée, immobile.
+
+nathan(left):surprised Papa ! On est là ! On vient te ramener à la maison !
+
+> Romain lève lentement la tête. Son visage est d'une pâleur effrayante, et ses yeux sont vides, traversés par une lueur sombre et glaciale.
+> D'un geste saccadé, comme tiré par des fils invisibles, il lève la main. Une aura noire et étouffante s'embrase autour de lui.
+> Le sol tremble, et des dizaines de squelettes commencent à s'extraire des dalles.
+
+david(left):worried Par tous les dieux... Nathan, recule ! Le Nécromancien a pris possession de lui ! Il s'en sert comme d'une marionnette pour lever son armée !
+
+nathan(left):sad Non... Papa, lutte, je t'en prie !
+
+> Au moment où les monstres achèvent de se lever, Nathan remarque que l'aura noire autour de son père vacille et s'affine l'espace d'une fraction de seconde.
+
+nathan(left):surprised Attends, mon oncle... regarde ! Quand la magie a opéré, l'ombre autour de lui a diminué.
+nathan:determined Le Nécromancien l'utilise comme un catalyseur. La magie noire qui le maintient prisonnier se consomme à chaque créature qu'il est forcé d'invoquer !
+
+david(left):surprised Tu veux dire que si on résiste assez longtemps...
+
+nathan(left):determined Le maléfice finira par se briser ! Mon oncle, on ne l'attaque sous aucun prétexte !
+nathan:determined On dresse nos défenses et on écrase ses monstres vague après vague. On va l'épuiser pour le libérer !
+
+david(left):determined Compte sur moi, mon garçon. Je vais en fracasser autant qu'il le faudra sur le champ de bataille. Bâtis tes tours, je tiens la première ligne !

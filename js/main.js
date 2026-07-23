@@ -7,6 +7,7 @@ import { setup as setupChapter3 } from './chapters/chapter3.js';
 import { setup as setupChapter4 } from './chapters/chapter4.js';
 import setupChapter5 from './chapters/chapter5.js';
 import { setup as setupChapter6 } from './chapters/chapter6.js';
+import { setup as setupChapter7 } from './chapters/chapter7.js';
 import { SaveManager }     from './SaveManager.js';
 
 // ── Instances globales ────────────────────────────────────────
@@ -27,10 +28,10 @@ audio.preload('combat_sting', '/audio/combat_sting.mp3');
 audio.preload('tower_place',  '/audio/tower_place.mp3');
 // Les pistes par chapitre sont preloadées dans chaque chapter*.js au démarrage du chapitre
 
-dlg.onMusic     = (track) => audio.crossfadeTo(track, 1500);
+dlg.onMusic     = (track, opts = {}) => audio.crossfadeTo(track, 1500, { loop: opts.loop !== false });
 dlg.onMusicStop = ()      => audio.stop(1500);
 dlg.onSfx       = (track) => audio.playSfx(track);
-dlg.onSfxLoop        = (track) => audio.playSfxLoop(track);
+dlg.onSfxLoop        = (track, vol) => audio.playSfxLoop(track, vol);
 dlg.onSfxStop        = (track) => audio.stopSfx(track);
 dlg.onSfxLoopStopAll = ()      => audio.stopAllSfxLoops();
 
@@ -151,10 +152,12 @@ const combatThemes = {
     4: 'night_battle_theme',
     5: 'chessmatch_theme',
     6: 'strategy',
+    7: 'ch7_combat',
 };
 function startCombatMusic() {
     if (combatMusicStarted) return;
     combatMusicStarted = true;
+    audio.stopAmbient(1000);   // le braser cède la place à la musique de combat
     const track = combatThemes[currentCombatChapter] ?? 'combat_theme';
     audio.crossfadeTo(track, 2000);
 }
@@ -164,8 +167,26 @@ const heroPortraits = {
     4: '/images/anna/neutral.png',
     // 5: '/images/xxx/neutral.png',  // TODO: portrait héros ch5
     6: '/images/anna/neutral.png',
+    7: '/images/nathan/neutral.png',
 };
 const heroPortraitDefault = '/images/nathan/neutral.png';
+
+// Pan caméra cinématique à l'entrée du combat : la caméra remonte le décor fixe
+// (du sol vers le terrain). Le jeu est figé et masqué jusqu'à l'arrivée.
+function playCameraPan() {
+    const bg = document.getElementById('combat-bg');
+    if (game && game.engine) game.engine.paused = true;
+    screenGame.classList.add('cam-panning');
+    if (bg) { bg.style.animation = 'none'; void bg.offsetWidth; bg.style.animation = ''; } // relance
+    const done = (e) => {
+        if (e && e.animationName !== 'camPanUp') return;
+        screenGame.classList.remove('cam-panning');
+        if (game && game.engine) game.engine.paused = false;
+        if (bg) bg.removeEventListener('animationend', done);
+    };
+    if (bg) bg.addEventListener('animationend', done);
+    else done();
+}
 
 function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('combat-mode', on);
@@ -173,9 +194,11 @@ function setCombatMode(on, chapter = null) {
     screenGame.classList.toggle('chapter4-mode', on && chapter === 4);
     screenGame.classList.toggle('chapter5-mode', on && chapter === 5);
     screenGame.classList.toggle('chapter6-mode', on && chapter === 6);
+    screenGame.classList.toggle('chapter7-mode', on && chapter === 7);
     heroPortraitImg.src = (on && heroPortraits[chapter]) || heroPortraitDefault;
     currentCombatChapter = on ? chapter : null;
     combatMusicStarted = false;
+    if (!on) audio.stopAmbient(400);   // filet : coupe le braser si on quitte le combat
 }
 
 // ── Chapitres ─────────────────────────────────────────────────
@@ -219,8 +242,12 @@ function onChapterEnd(chapterNumber) {
         showChapterEnd('Chapitre V', () => chapter6.startChapter6());
     }
     if (chapterNumber === 6) {
+        SaveManager.save({ stage: 'chapter7_start' });
+        showChapterEnd('Chapitre VI', () => chapter7.startChapter7());
+    }
+    if (chapterNumber === 7) {
         SaveManager.save({ stage: 'complete' });
-        showChapterEnd('Chapitre VI', () => { /* chapitre VII à venir */ });
+        showChapterEnd('Chapitre VII', () => { /* chapitre VIII à venir */ });
     }
 }
 
@@ -261,8 +288,14 @@ async function resumeFromSave(save) {
         return;
     }
 
+    if (save.stage === 'chapter7_start') {
+        chapter7._preload();
+        chapter7.startChapter7();
+        return;
+    }
+
     if (save.stage === 'complete') {
-        showChapterEnd('Chapitre VI', () => { /* Chapitre VII à venir */ });
+        showChapterEnd('Chapitre VII', () => { /* Chapitre VIII à venir */ });
         return;
     }
 
@@ -275,6 +308,7 @@ const ctx = {
     showDefeatBadgeInteractive, showVictoryBadgeInteractive,
     fadeToBlack, fadeFromBlack,
     onChapterEnd, resumeFromSave, preloadTheme, dlg,
+    showCombatBadge, startCombatMusic,
 };
 
 const chapter1 = setupChapter1(ctx);
@@ -283,6 +317,7 @@ const chapter3 = setupChapter3(ctx);
 const chapter4 = setupChapter4(ctx);
 const chapter5 = setupChapter5(ctx);
 const chapter6 = setupChapter6(ctx);
+const chapter7 = setupChapter7(ctx);
 
 // ── Lazy init + callbacks ─────────────────────────────────────
 
@@ -307,6 +342,7 @@ function wireGameCallbacks() {
     chapter4.wireCallbacks(game);
     chapter5.wireCallbacks(game);
     chapter6.wireCallbacks(game);
+    chapter7.wireCallbacks(game);
 }
 
 // Démarre l'init du jeu en tâche de fond, sans spinner (appelé dès que possible)
@@ -400,6 +436,14 @@ function showGame(mode) {
         showCombatBadge();
         skipEntryWaveBadge = true;
         return game.setChapter6Mode();
+    } else if (mode === 'chapter7') {
+        setCombatMode(true, 7);
+        // Pas de badge ici : le combat ne commence vraiment qu'après le dialogue d'arrivée
+        audio.playAmbient('ambient_fire', 0.35);   // braseros dès l'arrivée, coupés au démarrage musique
+        skipEntryWaveBadge = true;
+        const _ch7 = game.setChapter7Mode();
+        playCameraPan();
+        return _ch7;
     } else {
         skipEntryWaveBadge = false;
         setCombatMode(false);
@@ -434,6 +478,7 @@ const CHAPTERS = [
     { num: 4, title: 'Évasion sous la Lune',  sub: 'La fuite nocturne',       start: () => chapter4.startChapter4()  },
     { num: 5, title: 'La Leçon du Roi',         sub: 'Le plateau enchanté',     start: () => chapter5.startChapter5()  },
     { num: 6, title: "L'Autre Rive",              sub: 'La fuite vers Vive-Eau',  start: () => chapter6.startChapter6()  },
+    { num: 7, title: 'La Salle du Trône',         sub: 'Délivrer le Roi',         start: () => chapter7.startChapter7()  },
 ];
 
 function showChapterSelect() {
@@ -548,3 +593,6 @@ if (dev === 'combat_ch5') { chapter5._preload(); ensureGameInit().then(() => sho
 if (dev === 'end_ch5')    { chapter5._preload(); showDialogue('chapter5/victory', () => { onChapterEnd(5); }); }
 if (dev === 'chapter6')   { chapter6._preload(); chapter6.startChapter6(); }
 if (dev === 'end_ch6')    { chapter6._preload(); showDialogue('chapter6/victory', () => { onChapterEnd(6); }); }
+if (dev === 'chapter7')   { chapter7._preload(); chapter7.startChapter7(); }
+if (dev === 'combat_ch7') { chapter7._preload(); ensureGameInit().then(() => showGame('chapter7')); }
+if (dev === 'end_ch7')    { chapter7._preload(); showDialogue('chapter7/victory', () => { onChapterEnd(7); }); }
