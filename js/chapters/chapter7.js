@@ -65,7 +65,7 @@ export function setup({ audio, showTitle, showDialogue, showGame, hideGame,
 
             // Le dragon entre en scène après la vague 2 (raids toutes les ~25s)
             // (intervalle départ, délai 1er raid, plancher, décroissance/raid) en secondes-jeu
-            if (waveNumber === 2) game.startDragonRaids(40, 10, 15, 3);
+            if (waveNumber === 2) game.startDragonRaids(40, 10, 25, 2);
 
             const script = waveDialogues[waveNumber];
             if (script) {
