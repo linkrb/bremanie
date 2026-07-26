@@ -667,6 +667,7 @@ export class TowerDefenseGame {
         if (this._chapter2Mode)    { this.onChapter2Win?.();     return; }
         if (this._fortMode)        { this.onChapter3Win?.();     return; }
         if (this._chateauMode)     { this.onChateauWin?.();      return; }
+        if (this._chateauBossMode) { this.onChateauBossWin?.();  return; }
         if (this._chateauFinalMode){ this.onChateauFinalWin?.(); return; }
         if (this._chapter4Mode)    { this.onChapter4Win?.();     return; }
         if (this._chapter5Mode)    { this.onChapter5Win?.();     return; }
