@@ -86,7 +86,8 @@ html = html.replace('</head>', f'    <link rel="stylesheet" href="/dist/css/styl
 html = re.sub(r'src="/(?:dist/)?js/main\.js(?:\?v=[^"]*)?\"', f'src="/dist/js/main.js?v={v}"', html)
 
 # Imports absolus dans les blocs <script type="module"> inline
-html = re.sub(r"from '/(?:dist/)?js/([^'?]*)'", rf"from '/dist/js/\1?v={v}'", html)
+# (?:\?v=[^']*)? gère le cas où l'import est déjà versionné par un build précédent
+html = re.sub(r"from '/(?:dist/)?js/([^'?]*)(?:\?v=[^']*)?'", rf"from '/dist/js/\1?v={v}'", html)
 
 for path in sys.argv[3:]:
     with open(path, 'w') as f:
